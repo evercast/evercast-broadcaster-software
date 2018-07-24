@@ -1,13 +1,13 @@
 #include<obs-module.h>
 
 struct webrtc_janus {
-    char *server, *room;
+    char *server, *room, *token;
 };
 
 static const char *webrtc_janus_name(void *unused)
 {
 	UNUSED_PARAMETER(unused);
-	return obs_module_text("WebRTC Janus Streaming Server");
+	return obs_module_text("Evercast");
 }
 
 static void webrtc_janus_update(void *data, obs_data_t *settings)
@@ -16,9 +16,11 @@ static void webrtc_janus_update(void *data, obs_data_t *settings)
 
     bfree(service->server);
 	bfree(service->room);
+    bfree(service->token);
 
-	service->server = bstrdup(obs_data_get_string(settings, "server"));
+    service->server = bstrdup(obs_data_get_string(settings, "server"));
 	service->room = bstrdup(obs_data_get_string(settings, "room"));
+    service->token = bstrdup(obs_data_get_string(settings, "token"));
 }
 
 static void webrtc_janus_destroy(void *data)
@@ -27,7 +29,8 @@ static void webrtc_janus_destroy(void *data)
 
 	bfree(service->server);
 	bfree(service->room);
-	bfree(service);
+    bfree(service->token);
+    bfree(service);
 }
 
 static void *webrtc_janus_create(obs_data_t *settings, obs_service_t *service)
@@ -49,7 +52,7 @@ static obs_properties_t *webrtc_janus_properties(void *unused)
 
 	obs_properties_add_text(ppts, "room", "Server Room", OBS_TEXT_DEFAULT);
 
-
+    obs_properties_add_text(ppts, "token", "Stream Key", OBS_TEXT_DEFAULT);
 
 	return ppts;
 }
@@ -66,6 +69,12 @@ static const char *webrtc_janus_room(void *data)
 	return service->room;
 }
 
+static const char *webrtc_janus_token(void *data)
+{
+    struct webrtc_janus *service = data;
+    return service->token;
+}
+
 struct obs_service_info webrtc_janus_service = {
 	.id             = "webrtc_janus",
 	.get_name       = webrtc_janus_name,
@@ -74,5 +83,6 @@ struct obs_service_info webrtc_janus_service = {
 	.update         = webrtc_janus_update,
 	.get_properties = webrtc_janus_properties,
 	.get_url        = webrtc_janus_url,
-	.get_room       = webrtc_janus_room
+	.get_room       = webrtc_janus_room,
+    .get_password   = webrtc_janus_token
 };

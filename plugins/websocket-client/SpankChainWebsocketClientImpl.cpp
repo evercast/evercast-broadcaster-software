@@ -20,7 +20,7 @@ SpankChainWebsocketClientImpl::~SpankChainWebsocketClientImpl()
     disconnect(false);
 }
 
-bool SpankChainWebsocketClientImpl::connect(std::string url, long long room, std::string username, std::string token, WebsocketClient::Listener* listener)
+bool SpankChainWebsocketClientImpl::connect(std::string url, std::string room, std::string username, std::string token, WebsocketClient::Listener* listener)
 {
     websocketpp::lib::error_code ec;
 

@@ -121,7 +121,7 @@ public:
 private:
   //Connection properties
   std::string url;
-  long long room;
+  std::string room;
   std::string username;
   std::string password;
   std::string codec;
