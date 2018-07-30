@@ -71,6 +71,10 @@ def add(name, external=False, copy_as=None):
 		copy_as = name.split("/")[-1]
 	if name[0] != "/":
 		name = build_path+"/"+name
+	if ("cosmo" in name):
+		name = "/usr/local/lib/" + name.split("/")[len(name.split("/")) - 1]
+		print "COSMO LIB FOUND - Replacing /Users/cosmo/ path with /usr/local/lib/"
+		print name
 	t = LibTarget(name, external, copy_as)
 	if t in inspected:
 		return
@@ -147,6 +151,12 @@ changes = list()
 for path, external, copy_as in inspected:
 	if not external:
 		continue #built with install_rpath hopefully
+	if ("libcrypto" in path):
+		libcrypto_path = "/Users/cosmo/DEV/libwebrtc-cmake/build_release/openssl_inst/lib/libcrypto.1.1.dylib"
+		changes.append("-change '%s' '@rpath/%s'"%(libcrypto_path, copy_as))
+	if ("libssl" in path):
+		libssl_path = "/Users/cosmo/DEV/libwebrtc-cmake/build_release/openssl_inst/lib/libssl.1.1.dylib"
+		changes.append("-change '%s' '@rpath/%s'"%(libssl_path, copy_as))
 	changes.append("-change '%s' '@rpath/%s'"%(path, copy_as))
 changes = " ".join(changes)
 
