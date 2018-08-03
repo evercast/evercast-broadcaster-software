@@ -1,5 +1,4 @@
 project(websocketclient)
-
 # -----------------------------------------------------------------------
 # Global set up
 #
@@ -8,6 +7,7 @@ if( WIN32 )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4503 /wd4267 /wd4244 /wd4996")
 endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/restclient-cpp/include)
 
 #------------------------------------------------------------------------
 # OpenSSL included in libwebrtc
@@ -19,13 +19,18 @@ find_package(libwebrtc REQUIRED)
 #
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/third_party/asio/include )
 
-#------------------------------------------------------------------------
+include_directories( ${CURL_INCLUDE_DIR} )
+
 # WebSocket
 #
 set( websocketclient_SOURCES 
   JanusWebsocketClientImpl.cpp
   SpankChainWebsocketClientImpl.cpp
+  MillicastWebsocketClientImpl.cpp
   WebsocketClient.cpp
+  restclient-cpp/source/connection.cc
+  restclient-cpp/source/helpers.cc
+  restclient-cpp/source/restclient.cc
 )
 if( WIN32 )
   set( websocketclient_SOURCES ${websocketclient_SOURCES} dllmain.cpp )
@@ -38,6 +43,7 @@ set( websocketclient_HEADERS
   json.hpp
   JanusWebsocketClientImpl.h
   SpankChainWebsocketClientImpl.h
+  MillicastWebsocketClientImpl.h
   WebsocketClient.h
   )
 
@@ -46,10 +52,23 @@ add_library( websocketclient SHARED
   ${websocketclient_HEADERS}
   )
 
+  # libcurl
+  #
+  if (WIN32)
+    set (curl_path "${CURL_INCLUDE_DIR}/../bin/libcurl.lib")
+  elseif (UNIX AND NOT APPLE)
+    set (curl_path "${CURL_INCLUDE_DIR}/../lib/libcurl.a")    
+  elseif (APPLE)
+    set (curl_path "${CURL_INCLUDE_DIR}/../lib/libcurl.dylib")
+  endif() 
+   
+  target_link_libraries(websocketclient ${curl_path})
+
 # why ?
 target_link_libraries( websocketclient
   ${WEBRTC_LIBRARIES}
 )
+
 install_obs_plugin(websocketclient)
 
 if ( APPLE )

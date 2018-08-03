@@ -44,7 +44,8 @@ class WebRTCStream : public rtc::RefCountedObject<WebRTCStreamInterface>
 public:
   enum Type {
     Janus = 0,
-    SpankChain = 1
+    SpankChain = 1,
+    Millicast = 2
   };
 public:
   WebRTCStream(obs_output_t *output);
@@ -66,13 +67,6 @@ public:
 	  this->codec = codec;
   }
   bool stop();
-
-  //stereo
-  static std::string stereoSDP(std::string sdp);
-  static std::string join(std::vector<std::string> vectorToJoin, char delim);
-  static void split(const std::string& str, std::vector<std::string> cont, char delim);
-  static int findLines(std::vector<std::string> sdpLines, std::string substr);
-  static void sdpToFile(std::string sdp, std::string fileName);
 
   //
   // WebsocketClient::Listener implementation.
@@ -100,7 +94,6 @@ public:
   // CreateSessionDescriptionObserver implementation.
   void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
   void OnFailure(const std::string& error) override;
-
   // SetSessionDescriptionObserver implementation
   void OnSuccess() override;
   //void OnFailure(const std::string& error) override;
@@ -118,6 +111,9 @@ public:
     delete(info);
   }
 
+  //bitrate
+  uint64_t getBitrate();
+
 private:
   //Connection properties
   std::string url;
@@ -126,6 +122,15 @@ private:
   std::string password;
   std::string codec;
   bool thumbnail;
+
+  //tracks
+  rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track;
+  rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track;
+
+  //bitrate and dropped frames
+  uint64_t bitrate;
+  int dropped_frame;
+
   //Websocket client
   WebsocketClient* client;
   //Audio Wrapper
@@ -150,7 +155,7 @@ private:
   obs_output_t *output;
 };
 
-class Stereo {
+class SDPModif {
 public:
   static void stereoSDP(std::string &sdp) {
       std::vector<std::string> sdpLines;
@@ -162,6 +167,18 @@ public:
         int artpLine = findLines(sdpLines, "a=rtpmap:111 opus/48000/2");
         sdpLines.insert(sdpLines.begin() + artpLine + 1, "a=fmtp:111 stereo=1;sprop-stereo=1");
       }
+      sdp = join(sdpLines, "\r\n");
+  }
+
+  static void bitrateSDP(std::string &sdp, int newBitrate) {
+      std::vector<std::string> sdpLines;
+      std::ostringstream newLineBitrate;
+
+      split(sdp, "\r\n", sdpLines);
+      int videoLine = findLines(sdpLines, "m=video ");
+      newLineBitrate << "b=AS:" << newBitrate;
+
+      sdpLines.insert(sdpLines.begin() + videoLine + 2, newLineBitrate.str()); 
       sdp = join(sdpLines, "\r\n");
   }
 

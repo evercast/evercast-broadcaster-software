@@ -1,35 +1,9 @@
-#include "SpankChainWebsocketClientImpl.h"
-#include "restclient-cpp/connection.h"
+#include "MillicastWebsocketClientImpl.h"
 #include "json.hpp"
 using json = nlohmann::json;
 typedef websocketpp::config::asio_client::message_type::ptr message_ptr;
 
-
-std::string urlencode(const std::string &s)
-{
-	static const char lookup[] = "0123456789abcdef";
-	std::stringstream e;
-	for (int i = 0, ix = s.length(); i<ix; i++)
-	{
-		const char& c = s[i];
-		if ((48 <= c && c <= 57)  || //0-9
-		    (65 <= c && c <= 90)  || //abc...xyz
-		    (97 <= c && c <= 122) || //ABC...XYZ
-		    (c == '-' || c == '_' || c == '.' || c == '~')
-		   )
-		{
-			e << c;
-		} else
-		{
-			e << '%';
-			e << lookup[(c & 0xF0) >> 4];
-			e << lookup[(c & 0x0F)];
-		}
-	}
-	return e.str();
-}
-
-SpankChainWebsocketClientImpl::SpankChainWebsocketClientImpl()
+MillicastWebsocketClientImpl::MillicastWebsocketClientImpl()
 {
     // Set logging to be pretty verbose (everything except message payloads)
     client.set_access_channels(websocketpp::log::alevel::all);
@@ -40,13 +14,13 @@ SpankChainWebsocketClientImpl::SpankChainWebsocketClientImpl()
     client.init_asio();
 }
 
-SpankChainWebsocketClientImpl::~SpankChainWebsocketClientImpl()
+MillicastWebsocketClientImpl::~MillicastWebsocketClientImpl()
 {
     //Disconnect just in case
     disconnect(false);
 }
 
-bool SpankChainWebsocketClientImpl::connect(std::string url, std::string room, std::string apiURL, std::string token, WebsocketClient::Listener* listener)
+bool MillicastWebsocketClientImpl::connect(std::string url, long long room, std::string apiURL, std::string token, WebsocketClient::Listener* listener)
 {
     websocketpp::lib::error_code ec;
 
@@ -87,21 +61,6 @@ bool SpankChainWebsocketClientImpl::connect(std::string url, std::string room, s
 		//Event
                 listener->onOpened(sdp);
 
-                std::cout << "Sending post with feedId: " << feedId << std::endl;
-
-                //Crate body of the rest request
-                std::string body = "{\"feedId\": \"" + feedId + "\"}";
-
-                //Create authentication bearer
-                std::string bearer = "Bearer " + token;
-
-                //Send request
-                RestClient::Connection conn(apiURL);
-                conn.AppendHeader("Authorization", bearer);
-                conn.AppendHeader("Content-Type", "application/json");
-                //Make post
-                auto ret = conn.put("/camshows/obs/update-show", body);
-
                 //Keep the connection alive
                 is_running.store(true);
             }
@@ -141,7 +100,7 @@ bool SpankChainWebsocketClientImpl::connect(std::string url, std::string room, s
             return ctx;
         });
 	//Create websocket connection and add token and callback parameters
-        std::string wss = url + "/?token=" + token + "&callback=" + urlencode(apiURL + "/camshows/auth/token/status");
+        std::string wss = url + "/?token=" + token;
         //Get connection
         connection = client.get_connection(wss, ec);
         
@@ -169,7 +128,7 @@ bool SpankChainWebsocketClientImpl::connect(std::string url, std::string room, s
     return true;
 }
 
-bool SpankChainWebsocketClientImpl::open(const std::string &sdp, const std::string& codec)
+bool MillicastWebsocketClientImpl::open(const std::string &sdp, const std::string& codec)
 {
     try
     {
@@ -182,14 +141,7 @@ bool SpankChainWebsocketClientImpl::open(const std::string &sdp, const std::stri
                 {
                     { "sdp"    , sdp   },
                     { "name"   , "obs" },
-		            { "codec"  , codec },
-                    { "tracks" ,
-                        {
-                            { "audio"     , "audio"     },
-                            { "webcam"    , "video"     },
-                            { "thumbnail" , "thumbnail" },
-                        }
-                    }
+		    { "codec"  , codec },
                 }
             }
         };
@@ -205,12 +157,12 @@ bool SpankChainWebsocketClientImpl::open(const std::string &sdp, const std::stri
     return true;
 }
 
-bool SpankChainWebsocketClientImpl::trickle(const std::string &mid, int index, const std::string &candidate, bool last)
+bool MillicastWebsocketClientImpl::trickle(const std::string &mid, int index, const std::string &candidate, bool last)
 {
   return true;
 }
 
-bool SpankChainWebsocketClientImpl::disconnect(bool wait)
+bool MillicastWebsocketClientImpl::disconnect(bool wait)
 {
     
     try

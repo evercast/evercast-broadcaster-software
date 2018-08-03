@@ -22,16 +22,17 @@
 
 #include "WebRTCStream.h"
 
-extern "C" const char *janus_stream_getname(void *unused)
+extern "C" const char *millicast_stream_getname(void *unused)
 {
-	info("janus_stream_getname");
+	info("millicast_stream_getname");
 	UNUSED_PARAMETER(unused);
-	return obs_module_text("JANUSStream");
+	return obs_module_text("MILLICASTStream");
 }
 
-extern "C" void janus_stream_destroy(void *data)
+
+extern "C" void millicast_stream_destroy(void *data)
 {
-	info("janus_stream_destroy");
+	info("millicast_stream_destroy");
 	//Get stream
 	WebRTCStream* stream = (WebRTCStream*)data;
 	//Stop it
@@ -40,9 +41,9 @@ extern "C" void janus_stream_destroy(void *data)
 	stream->Release();
 }
 
-extern "C" void *janus_stream_create(obs_data_t *settings, obs_output_t *output)
+extern "C" void *millicast_stream_create(obs_data_t *settings, obs_output_t *output)
 {
-	info("janus_stream_create");
+	info("millicast_stream_create");
 	//Create new stream
 	WebRTCStream* stream = new WebRTCStream(output);
 	//Don't allow it to be deleted
@@ -51,9 +52,9 @@ extern "C" void *janus_stream_create(obs_data_t *settings, obs_output_t *output)
 	return (void*)stream;
 }
 
-extern "C" void janus_stream_stop(void *data, uint64_t ts)
+extern "C" void millicast_stream_stop(void *data, uint64_t ts)
 {
-	info("janus_stream_stop");
+	info("millicast_stream_stop");
 	//Get stream
 	WebRTCStream* stream = (WebRTCStream*)data;
 	//Stop it
@@ -62,25 +63,25 @@ extern "C" void janus_stream_stop(void *data, uint64_t ts)
 	stream->Release();
 }
 
-extern "C" bool janus_stream_start(void *data)
+extern "C" bool millicast_stream_start(void *data)
 {
-	info("janus_stream_start");
+	info("millicast_stream_start");
 	//Get stream
 	WebRTCStream* stream = (WebRTCStream*)data;
 	//Don't allow it to be deleted
 	stream->AddRef();
 	//Start it
-	return stream->start(WebRTCStream::Janus);
+	return stream->start(WebRTCStream::Millicast);
 }
 
-extern "C" void janus_receive_video(void *data, struct video_data *frame)
+extern "C" void millicast_receive_video(void *data, struct video_data *frame)
 {
 	//Get stream
 	WebRTCStream* stream = (WebRTCStream*)data;
 	//Process audio
 	stream->onVideoFrame(frame);
 }
-extern "C" void janus_receive_audio(void *data, struct audio_data *frame)
+extern "C" void millicast_receive_audio(void *data, struct audio_data *frame)
 {
 	//Get stream
 	WebRTCStream* stream = (WebRTCStream*)data;
@@ -88,9 +89,9 @@ extern "C" void janus_receive_audio(void *data, struct audio_data *frame)
 	stream->onAudioFrame(frame);
 }
 
-extern "C" void janus_stream_defaults(obs_data_t *defaults)
+extern "C" void millicast_stream_defaults(obs_data_t *defaults)
 {
-        info("janus_stream_defaults");
+	info("millicast_stream_defaults");
 	obs_data_set_default_int(defaults, OPT_DROP_THRESHOLD, 700);
 	obs_data_set_default_int(defaults, OPT_PFRAME_DROP_THRESHOLD, 900);
 	obs_data_set_default_int(defaults, OPT_MAX_SHUTDOWN_TIME_SEC, 30);
@@ -99,63 +100,63 @@ extern "C" void janus_stream_defaults(obs_data_t *defaults)
 	obs_data_set_default_bool(defaults, OPT_LOWLATENCY_ENABLED, false);
 }
 
-extern "C" obs_properties_t *janus_stream_properties(void *unused)
+extern "C" obs_properties_t *millicast_stream_properties(void *unused)
 {
-	info("janus_stream_properties");
+	info("millicast_stream_properties");
 	UNUSED_PARAMETER(unused);
 
 	obs_properties_t *props = obs_properties_create();
 
 	obs_properties_add_int(props, OPT_DROP_THRESHOLD,
-			obs_module_text("JANUSStream.DropThreshold"),
+			obs_module_text("MILLICASTStream.DropThreshold"),
 			200, 10000, 100);
 
 	obs_properties_add_bool(props, OPT_NEWSOCKETLOOP_ENABLED,
-			obs_module_text("JANUSStream.NewSocketLoop"));
+			obs_module_text("MILLICASTStream.NewSocketLoop"));
 	obs_properties_add_bool(props, OPT_LOWLATENCY_ENABLED,
-			obs_module_text("JANUSStream.LowLatencyMode"));
+			obs_module_text("MILLICASTStream.LowLatencyMode"));
 
 	return props;
 }
 
-extern "C" uint64_t janus_stream_total_bytes_sent(void *data)
+extern "C" uint64_t millicast_stream_total_bytes_sent(void *data)
 {
-  //Get stream
-  WebRTCStream* stream = (WebRTCStream*) data;
-  return stream->getBitrate();
+	//Get stream
+	WebRTCStream* stream = (WebRTCStream*)data;
+	return stream->getBitrate ();
 }
 
-extern "C" int janus_stream_dropped_frames(void *data)
+extern "C" int millicast_stream_dropped_frames(void *data)
 {
-  return 0;
+	return 0;
 }
 
-extern "C" float janus_stream_congestion(void *data)
+extern "C" float millicast_stream_congestion(void *data)
 {
 	return 0.0f;
 }
 
 extern "C" {
-	struct obs_output_info janus_output_info = {
-		"janus_output", //id
+	struct obs_output_info millicast_output_info = {
+		"millicast_output", //id
 		OBS_OUTPUT_AV |	OBS_OUTPUT_SERVICE | OBS_OUTPUT_MULTI_TRACK, //flags
-		janus_stream_getname, //get_name
-		janus_stream_create, //create
-		janus_stream_destroy, //destroy
-		janus_stream_start, //start
-		janus_stream_stop, //stop
-		janus_receive_video, //raw_video
-		janus_receive_audio, //raw_audio
+		millicast_stream_getname, //get_name
+		millicast_stream_create, //create
+		millicast_stream_destroy, //destroy
+		millicast_stream_start, //start
+		millicast_stream_stop, //stop
+		millicast_receive_video, //raw_video
+		millicast_receive_audio, //raw_audio
 		nullptr, //encoded_packet
 		nullptr, //update
-		janus_stream_defaults, //get_defaults
-		janus_stream_properties, //get_properties
+		millicast_stream_defaults, //get_defaults
+		millicast_stream_properties, //get_properties
 		nullptr, //pause
-		janus_stream_total_bytes_sent, //get_total_bytes
-		janus_stream_dropped_frames, //get_dropped_frame
+		millicast_stream_total_bytes_sent, //get_total_bytes
+		millicast_stream_dropped_frames, //get_dropped_frame
 		nullptr, //type_data
 		nullptr, ////free_type_data
-		janus_stream_congestion, //get_congestion
+		millicast_stream_congestion, //get_congestion
 		nullptr, //get_connect_time_ms
 		"vp8", //encoded_video_codecs
 		"opus" //encoded_audio_codecs

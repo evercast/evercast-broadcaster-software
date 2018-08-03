@@ -50,7 +50,8 @@ extern "C" void *spankchain_stream_create(obs_data_t *settings, obs_output_t *ou
 	stream->AddRef();
 	//Enable thumbnails
 	stream->enableThumbnail(4, 3);
-	stream->setCodec("h264");
+	//TODO: Add codec selection
+	//stream->setCodec("h264");
 	//Return it
 	return (void*)stream;
 }
@@ -124,7 +125,9 @@ extern "C" obs_properties_t *spankchain_stream_properties(void *unused)
 
 extern "C" uint64_t spankchain_stream_total_bytes_sent(void *data)
 {
-	return 0;
+	//Get stream
+	WebRTCStream* stream = (WebRTCStream*)data;
+	return stream->getBitrate ();
 }
 
 extern "C" int spankchain_stream_dropped_frames(void *data)

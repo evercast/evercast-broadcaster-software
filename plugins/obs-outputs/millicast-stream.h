@@ -17,7 +17,7 @@
 #endif
 
 #define do_log(level, format, ...) \
-	blog(level, "[janus stream: '%s'] " format, \
+	blog(level, "[spankchain stream: '%s'] " format, \
 			obs_output_get_name(stream->output), ##__VA_ARGS__)
 
 #define warn(format, ...)  do_log(LOG_WARNING, format, ##__VA_ARGS__)
@@ -44,7 +44,7 @@ struct droptest_info {
 };
 #endif
 
-struct janus_stream {
+struct spankchain_stream {
 	obs_output_t     *output;
 
 	pthread_mutex_t  packets_mutex;
@@ -88,6 +88,8 @@ struct janus_stream {
 	size_t           droptest_size;
 #endif
 
+	RTMP             rtmp;
+
 	bool             new_socket_loop;
 	bool             low_latency_mode;
 	bool             disable_send_window_optimization;
@@ -106,3 +108,4 @@ struct janus_stream {
 #ifdef _WIN32
 void *socket_thread_windows(void *data);
 #endif
+
