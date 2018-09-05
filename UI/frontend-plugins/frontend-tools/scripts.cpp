@@ -2,6 +2,7 @@
 #include "frontend-tools-config.h"
 #include "../../properties-view.hpp"
 
+#include <QAction>
 #include <QFileDialog>
 #include <QPlainTextEdit>
 #include <QHBoxLayout>

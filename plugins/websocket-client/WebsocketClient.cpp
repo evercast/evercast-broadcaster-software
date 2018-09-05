@@ -18,7 +18,7 @@ WEBSOCKETCLIENT_API WebsocketClient* createWebsocketClient(int type)
     return new JanusWebsocketClientImpl();
   if (type == WEBSOCKETCLIENT_SPANKCHAIN)
     return new SpankChainWebsocketClientImpl();
-  if (type == WEBSOCKETCLIENT_MILLICAST)
-    return new MillicastWebsocketClientImpl();
+//  if (type == WEBSOCKETCLIENT_MILLICAST)
+//    return new MillicastWebsocketClientImpl();
   return nullptr;
 }
