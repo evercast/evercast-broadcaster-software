@@ -457,15 +457,16 @@ void WebRTCStream::onAudioFrame(audio_data *frame)
 
 //bitrate and dropped_frame
 uint64_t WebRTCStream::getBitrate() {
-    rtc::scoped_refptr<webrtc::MockStatsObserver> observerVideo (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
-	rtc::scoped_refptr<webrtc::MockStatsObserver> observerAudio (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
-
-    pc->GetStats (observerVideo, video_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
-	pc->GetStats (observerAudio, audio_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
-	
-	std::this_thread::sleep_for(std::chrono::milliseconds(2));
+//    rtc::scoped_refptr<webrtc::MockStatsObserver> observerVideo (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
+//	rtc::scoped_refptr<webrtc::MockStatsObserver> observerAudio (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
+//
+//    pc->GetStats (observerVideo, video_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
+//	pc->GetStats (observerAudio, audio_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
+//
+//	std::this_thread::sleep_for(std::chrono::milliseconds(2));
+//
+//	bitrate = observerVideo->BytesSent() + observerAudio->BytesSent();
+//	info("BITRATE?%ld",bitrate);
     
-	bitrate = observerVideo->BytesSent() + observerAudio->BytesSent();
-    
-	return bitrate;
+	return 0;
 }
