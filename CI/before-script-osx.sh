@@ -9,7 +9,7 @@ mkdir build
 cd build
 cmake \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.10 \
--DDepsPath=/tmp/obsdeps \
+-DDepsPath=/tmp/ebsdeps \
 -DVLCPath=$PWD/../../vlc-master \
--DCMAKE_INSTALL_PREFIX=/opt/obs \
+-DCMAKE_INSTALL_PREFIX=/opt/ebs \
 -DCMAKE_BUILD_TYPE=RelWithDebInfo ..

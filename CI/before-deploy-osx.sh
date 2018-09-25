@@ -61,7 +61,7 @@ packagesbuild ../CI/install/osx/CMakeLists.pkgproj
 # hr "Signing Package"
 # productsign --sign 2MMRE5MTB8 ./OBS.pkg ./$FILENAME
 
-mv ./OBS.pkg ./$FILENAME
+mv ./EBS.pkg ./$FILENAME
 
 # Move to the folder that travis uses to upload artifacts from
 hr "Moving package to nightly folder for distribution"

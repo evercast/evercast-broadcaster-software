@@ -103,10 +103,10 @@ static void AddExtraModulePaths()
 	char base_module_dir[512];
 #if defined(_WIN32) || defined(__APPLE__)
 	int ret = GetProgramDataPath(base_module_dir, sizeof(base_module_dir),
-			"obs-studio/plugins/%module%");
+			"ebs-studio/plugins/%module%");
 #else
 	int ret = GetConfigPath(base_module_dir, sizeof(base_module_dir),
-			"obs-studio/plugins/%module%");
+			"ebs-studio/plugins/%module%");
 #endif
 
 	if (ret <= 0)
@@ -116,8 +116,8 @@ static void AddExtraModulePaths()
 #if defined(__APPLE__)
 	obs_add_module_path((path + "/bin").c_str(), (path + "/data").c_str());
 
-	BPtr<char> config_bin = os_get_config_path_ptr("obs-studio/plugins/%module%/bin");
-	BPtr<char> config_data = os_get_config_path_ptr("obs-studio/plugins/%module%/data");
+	BPtr<char> config_bin = os_get_config_path_ptr("ebs-studio/plugins/%module%/bin");
+	BPtr<char> config_data = os_get_config_path_ptr("ebs-studio/plugins/%module%/data");
 	obs_add_module_path(config_bin, config_data);
 
 #elif ARCH_BITS == 64
@@ -191,7 +191,7 @@ OBSBasic::OBSBasic(QWidget *parent)
 	installEventFilter(CreateShortcutFilter());
 
 	stringstream name;
-	name << "OBS " << App()->GetVersionString();
+	name << "EBS " << App()->GetVersionString();
 	blog(LOG_INFO, "%s", name.str().c_str());
 	blog(LOG_INFO, "---------------------------------");
 
@@ -1425,7 +1425,7 @@ void OBSBasic::OBSInit()
 	if (!sceneCollection)
 		throw "Failed to get scene collection name";
 
-	ret = snprintf(fileName, 512, "obs-studio/basic/scenes/%s.json",
+	ret = snprintf(fileName, 512, "ebs-studio/basic/scenes/%s.json",
 			sceneCollection);
 	if (ret <= 0)
 		throw "Failed to create scene collection file name";
@@ -2002,7 +2002,7 @@ void OBSBasic::SaveProjectDeferred()
 	if (!sceneCollection)
 		return;
 
-	ret = snprintf(fileName, 512, "obs-studio/basic/scenes/%s.json",
+	ret = snprintf(fileName, 512, "ebs-studio/basic/scenes/%s.json",
 			sceneCollection);
 	if (ret <= 0)
 		return;
@@ -3164,7 +3164,7 @@ int OBSBasic::ResetVideo()
 
 		/* Try OpenGL if DirectX fails on windows */
 		if (astrcmpi(ovi.graphics_module, DL_OPENGL) != 0) {
-			blog(LOG_WARNING, "Failed to initialize obs video (%d) "
+			blog(LOG_WARNING, "Failed to initialize ebs video (%d) "
 					  "with graphics_module='%s', retrying "
 					  "with graphics_module='%s'",
 					  ret, ovi.graphics_module,
@@ -4223,7 +4223,7 @@ void OBSBasic::on_actionMoveToBottom_triggered()
 static BPtr<char> ReadLogFile(const char *log)
 {
 	char logDir[512];
-	if (GetConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
+	if (GetConfigPath(logDir, sizeof(logDir), "ebs-studio/logs") <= 0)
 		return nullptr;
 
 	string path = (char*)logDir;
@@ -4261,7 +4261,7 @@ void OBSBasic::UploadLog(const char *file)
 	obs_data_set_obj(files.get(), file, content.get());
 
 	stringstream ss;
-	ss << "OBS " << App()->GetVersionString()
+	ss << "EBS " << App()->GetVersionString()
 	   << " log file uploaded at " << CurrentDateTimeString();
 	obs_data_set_string(request.get(), "description", ss.str().c_str());
 	obs_data_set_bool(request.get(), "public", false);
@@ -4293,7 +4293,7 @@ void OBSBasic::UploadLog(const char *file)
 void OBSBasic::on_actionShowLogs_triggered()
 {
 	char logDir[512];
-	if (GetConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
+	if (GetConfigPath(logDir, sizeof(logDir), "ebs-studio/logs") <= 0)
 		return;
 
 	QUrl url = QUrl::fromLocalFile(QT_UTF8(logDir));
@@ -4313,7 +4313,7 @@ void OBSBasic::on_actionUploadLastLog_triggered()
 void OBSBasic::on_actionViewCurrentLog_triggered()
 {
 	char logDir[512];
-	if (GetConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
+	if (GetConfigPath(logDir, sizeof(logDir), "ebs-studio/logs") <= 0)
 		return;
 
 	const char* log = App()->GetCurrentLog();
@@ -4520,7 +4520,7 @@ inline void OBSBasic::OnActivate()
 {
 	if (ui->profileMenu->isEnabled()) {
 		ui->profileMenu->setEnabled(false);
-		ui->autoConfigure->setEnabled(false);
+//		ui->autoConfigure->setEnabled(false);
 		App()->IncrementSleepInhibition();
 		UpdateProcessPriority();
 
@@ -4533,12 +4533,12 @@ inline void OBSBasic::OnDeactivate()
 {
 	if (!outputHandler->Active() && !ui->profileMenu->isEnabled()) {
 		ui->profileMenu->setEnabled(true);
-		ui->autoConfigure->setEnabled(true);
+//		ui->autoConfigure->setEnabled(true);
 		App()->DecrementSleepInhibition();
 		ClearProcessPriority();
 
 		if (trayIcon)
-			trayIcon->setIcon(QIcon(":/res/images/obs.png"));
+			trayIcon->setIcon(QIcon(":/res/images/ebs.png"));
 	}
 }
 
@@ -5048,7 +5048,7 @@ void OBSBasic::on_actionWebsite_triggered()
 void OBSBasic::on_actionShowSettingsFolder_triggered()
 {
 	char path[512];
-	int ret = GetConfigPath(path, 512, "obs-studio");
+	int ret = GetConfigPath(path, 512, "ebs-studio");
 	if (ret <= 0)
 		return;
 
@@ -5772,7 +5772,7 @@ void OBSBasic::UpdateTitleBar()
 	const char *sceneCollection = config_get_string(App()->GlobalConfig(),
 			"Basic", "SceneCollection");
 
-	name << "OBS ";
+	name << "EBS ";
 	if (previewProgramMode)
 		name << "Studio ";
 
@@ -5800,7 +5800,7 @@ int OBSBasic::GetProfilePath(char *path, size_t size, const char *file) const
 	if (!file)
 		file = "";
 
-	ret = GetConfigPath(profiles_path, 512, "obs-studio/basic/profiles");
+	ret = GetConfigPath(profiles_path, 512, "ebs-studio/basic/profiles");
 	if (ret <= 0)
 		return ret;
 
@@ -6008,9 +6008,9 @@ void OBSBasic::ToggleShowHide()
 
 void OBSBasic::SystemTrayInit()
 {
-	trayIcon = new QSystemTrayIcon(QIcon(":/res/images/obs.png"),
+	trayIcon = new QSystemTrayIcon(QIcon(":/res/images/ebs.png"),
 			this);
-	trayIcon->setToolTip("OBS Studio");
+	trayIcon->setToolTip("EBS Studio");
 
 	showHide = new QAction(QTStr("Basic.SystemTray.Show"),
 			trayIcon);
@@ -6071,7 +6071,7 @@ void OBSBasic::SysTrayNotify(const QString &text,
 	if (QSystemTrayIcon::supportsMessages()) {
 		QSystemTrayIcon::MessageIcon icon =
 				QSystemTrayIcon::MessageIcon(n);
-		trayIcon->showMessage("OBS Studio", text, icon, 10000);
+		trayIcon->showMessage("EBS Studio", text, icon, 10000);
 	}
 }
 

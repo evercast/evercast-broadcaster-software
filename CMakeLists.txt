@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-project(obs-studio)
+project(ebs-studio)
 
 option(BUILD_CAPTIONS "Build captions" FALSE)
 
@@ -105,7 +105,7 @@ option(BUILD_TESTS "Build test directory (includes test sources and possibly a p
 mark_as_advanced(BUILD_TESTS)
 
 if(NOT INSTALLER_RUN)
-	option(ENABLE_UI "Enables the OBS user interfaces" ON)
+	option(ENABLE_UI "Enables the EBS user interfaces" ON)
 	if(DISABLE_UI OR NOT ENABLE_UI)
 		set(UI_ENABLED FALSE)
 	else()

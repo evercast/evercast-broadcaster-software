@@ -1035,7 +1035,7 @@ static bool Update(wchar_t *cmdLine)
 				GetLastError());
 		return false;
 	}
-	if (!GetTempFileNameW(tempDirName, L"obs-studio", 0, tempPath)) {
+	if (!GetTempFileNameW(tempDirName, L"ebs-studio", 0, tempPath)) {
 		Status(L"Update failed: Failed to create temp dir name: %ld",
 				GetLastError());
 		return false;

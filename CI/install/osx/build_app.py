@@ -3,7 +3,7 @@
 candidate_paths = "bin obs-plugins data".split()
 
 plist_path = "../cmake/osxbundle/Info.plist"
-icon_path = "../cmake/osxbundle/obs.icns"
+icon_path = "../cmake/osxbundle/ebs.icns"
 run_path = "../cmake/osxbundle/obslaunch.sh"
 
 #not copied
@@ -40,12 +40,12 @@ def add_boolean_argument(parser, name, default=False):
         '--' + name, nargs='?', default=default, const=True, type=_str_to_bool)
     group.add_argument('--no' + name, dest=name, action='store_false')
 
-parser = argparse.ArgumentParser(description='obs-studio package util')
+parser = argparse.ArgumentParser(description='ebs-studio package util')
 parser.add_argument('-d', '--base-dir', dest='dir', default='rundir/RelWithDebInfo')
 parser.add_argument('-n', '--build-number', dest='build_number', default='0')
 parser.add_argument('-k', '--public-key', dest='public_key', default='OBSPublicDSAKey.pem')
 parser.add_argument('-f', '--sparkle-framework', dest='sparkle', default=None)
-parser.add_argument('-b', '--base-url', dest='base_url', default='https://builds.catchexception.org/obs-studio')
+parser.add_argument('-b', '--base-url', dest='base_url', default='https://builds.catchexception.org/ebs-studio')
 parser.add_argument('-u', '--user', dest='user', default='jp9000')
 parser.add_argument('-c', '--channel', dest='channel', default='master')
 add_boolean_argument(parser, 'stable', default=False)
@@ -198,7 +198,7 @@ if args.sparkle is not None:
 prefix = "tmp/Contents/Resources/"
 sparkle_path = '@loader_path/{0}/Frameworks/Sparkle.framework/Versions/A/Sparkle'
 
-cmd('{0}install_name_tool -change {1} {2} {3}/bin/obs'.format(
+cmd('{0}install_name_tool -change {1} {2} {3}/bin/EBS'.format(
     args.prefix, actual_sparkle_path, sparkle_path.format('../..'), prefix))
 
 
