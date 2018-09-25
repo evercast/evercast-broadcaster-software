@@ -11,7 +11,7 @@ add_subdirectory(obs-frontend-api)
 
 # ----------------------------------------------------------------------------
 
-project(obs)
+project(EBS)
 
 set(ENABLE_WIN_UPDATER FALSE CACHE BOOL "Enable the windows updater")
 
@@ -252,7 +252,7 @@ set(obs_QRC
 qt5_wrap_ui(obs_UI_HEADERS ${obs_UI})
 qt5_add_resources(obs_QRC_SOURCES ${obs_QRC})
 
-add_executable(obs WIN32
+add_executable(EBS WIN32
 	${obs_SOURCES}
 	${obs_HEADERS}
 	${obs_UI_HEADERS}
@@ -267,10 +267,10 @@ if(WIN32)
 
 	set_target_properties(obs
 		PROPERTIES
-			OUTPUT_NAME "obs${_output_suffix}")
+			OUTPUT_NAME "EBS${_output_suffix}")
 endif()
 
-target_link_libraries(obs
+target_link_libraries(EBS
 	libobs
 	Qt5::Widgets
 	obs-frontend-api
@@ -279,11 +279,11 @@ target_link_libraries(obs
 	${obs_PLATFORM_LIBRARIES})
 
 if (APPLE)
-	target_link_libraries(obs
+	target_link_libraries(EBS
 			Qt5::MacExtras)
-	set_target_properties(obs PROPERTIES LINK_FLAGS "-pagezero_size 10000 -image_base 100000000")
+	set_target_properties(EBS PROPERTIES LINK_FLAGS "-pagezero_size 10000 -image_base 100000000")
 	set_property(
-		TARGET obs
+		TARGET EBS
 		APPEND
 		PROPERTY INSTALL_RPATH
 		"/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6/lib/"
@@ -292,14 +292,14 @@ if (APPLE)
 	)
 endif()
 
-define_graphic_modules(obs)
+define_graphic_modules(EBS)
 
-install_obs_core(obs)
-install_obs_data(obs data obs-studio)
+install_obs_core(EBS)
+install_obs_data(EBS data EBS-studio)
 
 if (UNIX AND UNIX_STRUCTURE AND NOT APPLE)
 	install(FILES dist/obs.desktop DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/applications)
-	install(FILES forms/images/obs.png
+	install(FILES forms/images/ebs.png
 		DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/icons/hicolor/256x256/apps)
 endif()
 
