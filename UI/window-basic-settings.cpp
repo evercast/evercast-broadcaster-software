@@ -763,6 +763,7 @@ void OBSBasicSettings::LoadServiceTypes()
 		QString qName = QT_UTF8(name);
 		QString qType = QT_UTF8(type);
 
+		if(qType=="webrtc_janus")
 		ui->streamType->addItem(qName, qType);
 	}
 

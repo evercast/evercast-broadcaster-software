@@ -106,7 +106,7 @@ bool JanusWebsocketClientImpl::connect(std::string url, std::string room, std::s
             { "body" ,
               {
                 {"room" , room},
-                {"display" , "OBS"},
+                {"display" , "EBS"},
                 {"ptype"  , "publisher"},
                 {"request" , "join"},
               }
