@@ -34,7 +34,7 @@ void EnumSceneCollections(std::function<bool (const char *, const char *)> &&cb)
 	os_glob_t *glob;
 
 	int ret = GetConfigPath(path, sizeof(path),
-			"obs-studio/basic/scenes/*.json");
+			"ebs-studio/basic/scenes/*.json");
 	if (ret <= 0) {
 		blog(LOG_WARNING, "Failed to get config path for scene "
 		                  "collections");
@@ -134,7 +134,7 @@ static bool GetSceneCollectionName(QWidget *parent, std::string &name,
 		return false;
 	}
 
-	ret = GetConfigPath(path, sizeof(path), "obs-studio/basic/scenes/");
+	ret = GetConfigPath(path, sizeof(path), "ebs-studio/basic/scenes/");
 	if (ret <= 0) {
 		blog(LOG_WARNING, "Failed to get scene collection config path");
 		return false;
@@ -154,13 +154,19 @@ static bool GetSceneCollectionName(QWidget *parent, std::string &name,
 	return true;
 }
 
-void OBSBasic::AddSceneCollection(bool create_new)
+bool OBSBasic::AddSceneCollection(bool create_new, const QString &qname)
 {
 	std::string name;
 	std::string file;
 
-	if (!GetSceneCollectionName(this, name, file))
-		return;
+	if (qname.isEmpty()) {
+		if (!GetSceneCollectionName(this, name, file))
+			return false;
+	} else {
+		name = QT_TO_UTF8(qname);
+		if (SceneCollectionExists(name.c_str()))
+			return false;
+	}
 
 	SaveProjectNow();
 
@@ -185,6 +191,8 @@ void OBSBasic::AddSceneCollection(bool create_new)
 		api->on_event(OBS_FRONTEND_EVENT_SCENE_COLLECTION_LIST_CHANGED);
 		api->on_event(OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED);
 	}
+
+	return true;
 }
 
 void OBSBasic::RefreshSceneCollections()
@@ -237,7 +245,6 @@ void OBSBasic::RefreshSceneCollections()
 
 	OBSBasic *main = reinterpret_cast<OBSBasic*>(App()->GetMainWindow());
 
-	main->OpenSavedProjectors();
 	main->ui->actionPasteFilters->setEnabled(false);
 	main->ui->actionPasteRef->setEnabled(false);
 	main->ui->actionPasteDup->setEnabled(false);
@@ -274,7 +281,7 @@ void OBSBasic::on_actionRenameSceneCollection_triggered()
 	SaveProjectNow();
 
 	char path[512];
-	int ret = GetConfigPath(path, 512, "obs-studio/basic/scenes/");
+	int ret = GetConfigPath(path, 512, "ebs-studio/basic/scenes/");
 	if (ret <= 0) {
 		blog(LOG_WARNING, "Failed to get scene collection config path");
 		return;
@@ -336,7 +343,7 @@ void OBSBasic::on_actionRemoveSceneCollection_triggered()
 		return;
 
 	char path[512];
-	int ret = GetConfigPath(path, 512, "obs-studio/basic/scenes/");
+	int ret = GetConfigPath(path, 512, "ebs-studio/basic/scenes/");
 	if (ret <= 0) {
 		blog(LOG_WARNING, "Failed to get scene collection config path");
 		return;
@@ -374,7 +381,7 @@ void OBSBasic::on_actionImportSceneCollection_triggered()
 
 	QString qhome = QDir::homePath();
 
-	int ret = GetConfigPath(path, 512, "obs-studio/basic/scenes/");
+	int ret = GetConfigPath(path, 512, "ebs-studio/basic/scenes/");
 	if (ret <= 0) {
 		blog(LOG_WARNING, "Failed to get scene collection config path");
 		return;
@@ -439,7 +446,7 @@ void OBSBasic::on_actionExportSceneCollection_triggered()
 	QString currentFile = QT_UTF8(config_get_string(App()->GlobalConfig(),
 				"Basic", "SceneCollectionFile"));
 
-	int ret = GetConfigPath(path, 512, "obs-studio/basic/scenes/");
+	int ret = GetConfigPath(path, 512, "ebs-studio/basic/scenes/");
 	if (ret <= 0) {
 		blog(LOG_WARNING, "Failed to get scene collection config path");
 		return;

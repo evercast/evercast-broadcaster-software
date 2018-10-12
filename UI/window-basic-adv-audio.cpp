@@ -6,6 +6,7 @@
 #include <QLabel>
 #include "window-basic-adv-audio.hpp"
 #include "window-basic-main.hpp"
+#include "item-widget-helpers.hpp"
 #include "adv-audio-control.hpp"
 #include "obs-app.hpp"
 #include "qt-wrappers.hpp"
@@ -36,7 +37,7 @@ OBSBasicAdvAudio::OBSBasicAdvAudio(QWidget *parent)
 	label = new QLabel(QTStr("Basic.AdvAudio.Mono"));
 	label->setAlignment(Qt::AlignHCenter);
 	mainLayout->addWidget(label, 0, idx++);
-	label = new QLabel(QTStr("Basic.AdvAudio.Panning"));
+	label = new QLabel(QTStr("Basic.AdvAudio.Balance"));
 	label->setAlignment(Qt::AlignHCenter);
 	mainLayout->addWidget(label, 0, idx++);
 	label = new QLabel(QTStr("Basic.AdvAudio.SyncOffset"));
@@ -133,7 +134,12 @@ void OBSBasicAdvAudio::OBSSourceRemoved(void *param, calldata_t *calldata)
 inline void OBSBasicAdvAudio::AddAudioSource(obs_source_t *source)
 {
 	OBSAdvAudioCtrl *control = new OBSAdvAudioCtrl(mainLayout, source);
-	controls.push_back(control);
+
+	InsertQObjectByName(controls, control);
+
+	for (auto control : controls) {
+		control->ShowAudioControl(mainLayout);
+	}
 }
 
 void OBSBasicAdvAudio::SourceAdded(OBSSource source)

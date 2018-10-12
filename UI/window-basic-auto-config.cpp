@@ -218,11 +218,11 @@ AutoConfigStreamPage::AutoConfigStreamPage(QWidget *parent)
 	ui->bitrateLabel->setVisible(false);
 	ui->bitrate->setVisible(false);
 
-	ui->streamType->addItem(obs_service_get_display_name("rtmp_common"));
-	ui->streamType->addItem(obs_service_get_display_name("rtmp_custom"));
+//	ui->streamType->addItem(obs_service_get_display_name("rtmp_common"));
+//	ui->streamType->addItem(obs_service_get_display_name("rtmp_custom"));
 	ui->streamType->addItem(obs_service_get_display_name("webrtc_janus"));
-	ui->streamType->addItem(obs_service_get_display_name("webrtc_spankchain"));
-	ui->streamType->addItem(obs_service_get_display_name("webrtc_millicast"));
+//	ui->streamType->addItem(obs_service_get_display_name("webrtc_spankchain"));
+//	ui->streamType->addItem(obs_service_get_display_name("webrtc_millicast"));
 
 	setTitle(QTStr("Basic.AutoConfig.StreamPage"));
 	setSubTitle(QTStr("Basic.AutoConfig.StreamPage.SubTitle"));

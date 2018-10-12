@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIconFile</key>
-	<string>OBS.icns</string>
+	<string>EBS.icns</string>
 	<key>CFBundleName</key>
-	<string>OBS</string>
+	<string>EBS</string>
 	<key>CFBundleGetInfoString</key>
-	<string>OBS - Free and Open Source Streaming/Recording Software</string>
+	<string>EBS - Studio</string>
 	<key>CFBundleExecutable</key>
-	<string>OBS</string>
+	<string>EBS</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.obsproject.obs-studio</string>
+	<string>com.evercast.ebs-studio</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
@@ -22,5 +22,9 @@
 	<true/>
 	<key>LSAppNapIsDisabled</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+ 	<string>OBS needs to access the camera to enable camera sources to work.</string>
+ 	<key>NSMicrophoneUsageDescription</key>
+ 	<string>OBS needs to access the microphone to enable audio input.</string>
 </dict>
 </plist>

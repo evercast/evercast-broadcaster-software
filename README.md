@@ -1,4 +1,6 @@
+# OBS-studio WebRTC - Fixed Mac CI Scripts
 
+<<<<<<< HEAD
 # OBS-studio WebRTC
 
 This project is a fork of OBS-studio with an implementation of WebRTC.
@@ -36,9 +38,13 @@ Binaries are available [here](https://github.com/CoSMoSoftware/OBS-studio-webrtc
 
 Get the Windows installer for libwebrtc version 65 provided by CoSMo:
 [Windows installer](https://drive.google.com/file/d/1EM0OXGS0Xm61m5Nhb-2nNNJo1JpbBZnB/view?usp=sharing)
+=======
+See the latest commit for CI script changes.
+>>>>>>> e8d484cb... fix CI scripts, fix Cosmo lib path, remove CEF, update readme
 
 #### Compiler
 
+<<<<<<< HEAD
 Make sure the correct tools / Windows 10 SDK are installed.
 
 - Windows 7 x64 or later
@@ -282,3 +288,28 @@ Configure a JANUS server using the video room plugin with websocket protocol act
 ### OBS settings
 
 Launch OBS, go to settings, select the stream tab and change the URL to your JANUS.
+=======
+ - [`install-dependencies-osx.sh`](./CI/install-dependencies-osx.sh) installs dependencies
+ - [`before-script-osx.sh`](./CI/before-script-osx.sh) creates a build dir and runs cmake
+ - [`before-deploy-osx.sh`](./CI/before-deploy-osx.sh)
+   - calls [`build_app.py`](./CI/install/osx/build_app.py) which fixes all lib paths
+   - packages app into a .pkg
+   - signs the app with developer certificate if available
+
+```bash
+mkdir obs-and-dependencies
+cd obs-and-dependencies
+git clone --recursive https://github.com/ruddell/OBS-studio-webrtc.git
+cd OBS-studio-webrtc
+git checkout mac-build
+
+# only run this the once to install dependencies
+./CI/install-dependencies-osx.sh
+
+# run this to rebuild the package, read the scripts to see what they do
+./CI/before-script-osx.sh
+cd build && make -j 8 && cd ..
+./CI/before-deploy-osx.sh
+open nightly
+```
+>>>>>>> e8d484cb... fix CI scripts, fix Cosmo lib path, remove CEF, update readme

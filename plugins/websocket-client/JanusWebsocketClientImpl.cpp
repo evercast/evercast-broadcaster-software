@@ -20,7 +20,7 @@ JanusWebsocketClientImpl::~JanusWebsocketClientImpl()
   disconnect(false);
 }
 
-bool JanusWebsocketClientImpl::connect(std::string url, long long room, std::string username, std::string token, WebsocketClient::Listener* listener)
+bool JanusWebsocketClientImpl::connect(std::string url, std::string room, std::string username, std::string token, WebsocketClient::Listener* listener)
 {
   websocketpp::lib::error_code ec;
   
@@ -83,7 +83,7 @@ bool JanusWebsocketClientImpl::connect(std::string url, long long room, std::str
             {"janus", "attach" },
             {"transaction", std::to_string(rand()) },
             {"session_id", session_id},
-            {"plugin", "janus.plugin.videoroom"},
+            {"plugin", "janus.plugin.lua"},
           };
           
           connection->send(attachPlugin.dump());
@@ -105,14 +105,15 @@ bool JanusWebsocketClientImpl::connect(std::string url, long long room, std::str
             {"handle_id", handle_id},
             { "body" ,
               {
-                { "room" , room },
-                {"display" , "OBS"},
+                {"room" , room},
+                {"display" , "EBS"},
                 {"ptype"  , "publisher"},
-                {"request" , "join"}
+                {"request" , "join"},
               }
             }
           };
           connection->send(joinRoom.dump());
+          // CULPRIPT
           listener->onLogged(session_id);
         }
       }
@@ -164,8 +165,11 @@ bool JanusWebsocketClientImpl::connect(std::string url, long long room, std::str
       }
       return ctx;
     });
+    //Create websocket connection and token
+//    std::string wss = url + "/?token=5f3293b2-7836-43f3-b4b4-598c68792be0&roomId=1c5c17ac-94ce-4e7e-83c7-e75f358016f9";
+    std::string wss = url + "/?token=" + token + "&roomId=" + room;
     //Get connection
-    connection = client.get_connection(url, ec);
+    connection = client.get_connection(wss, ec);
     
     if (ec) {
       std::cout << "could not create connection because: " << ec.message() << std::endl;

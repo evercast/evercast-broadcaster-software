@@ -906,6 +906,7 @@ bool SimpleOutput::ConfigureRecording(bool updateReplayBuffer)
 		obs_data_set_string(settings, "directory", path);
 		obs_data_set_string(settings, "format", f.c_str());
 		obs_data_set_string(settings, "extension", format);
+		obs_data_set_bool(settings, "allow_spaces", !noSpace);
 		obs_data_set_int(settings, "max_time_sec", rbTime);
 		obs_data_set_int(settings, "max_size_mb",
 				usingRecordingPreset ? rbSize : 0);
@@ -1043,19 +1044,32 @@ struct AdvancedOutput : BasicOutputHandler {
 static OBSData GetDataFromJsonFile(const char *jsonFile)
 {
 	char fullPath[512];
+	obs_data_t *data = nullptr;
 
 	int ret = GetProfilePath(fullPath, sizeof(fullPath), jsonFile);
 	if (ret > 0) {
 		BPtr<char> jsonData = os_quick_read_utf8_file(fullPath);
 		if (!!jsonData) {
-			obs_data_t *data = obs_data_create_from_json(jsonData);
-			OBSData dataRet(data);
-			obs_data_release(data);
-			return dataRet;
+			data = obs_data_create_from_json(jsonData);
 		}
 	}
 
-	return nullptr;
+	if (!data)
+		data = obs_data_create();
+	OBSData dataRet(data);
+	obs_data_release(data);
+	return dataRet;
+}
+
+static void ApplyEncoderDefaults(OBSData &settings,
+		const obs_encoder_t *encoder)
+{
+	OBSData dataRet = obs_encoder_get_defaults(encoder);
+	obs_data_release(dataRet);
+
+	if (!!settings)
+		obs_data_apply(dataRet, settings);
+	settings = std::move(dataRet);
 }
 
 AdvancedOutput::AdvancedOutput(OBSBasic *main_) : BasicOutputHandler(main_)
@@ -1168,6 +1182,7 @@ void AdvancedOutput::UpdateStreamSettings()
 			"ApplyServiceSettings");
 
 	OBSData settings = GetDataFromJsonFile("streamEncoder.json");
+	ApplyEncoderDefaults(settings, h264Streaming);
 
 	if (applyServiceSettings)
 		obs_service_apply_encoder_settings(main->GetService(),
@@ -1741,6 +1756,7 @@ bool AdvancedOutput::StartReplayBuffer()
 		obs_data_set_string(settings, "directory", path);
 		obs_data_set_string(settings, "format", f.c_str());
 		obs_data_set_string(settings, "extension", recFormat);
+        obs_data_set_bool(settings, "allow_spaces", !noSpace);
 		obs_data_set_int(settings, "max_time_sec", rbTime);
 		obs_data_set_int(settings, "max_size_mb",
 				usesBitrate ? 0 : rbSize);

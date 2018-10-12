@@ -3,7 +3,7 @@
 candidate_paths = "bin obs-plugins data".split()
 
 plist_path = "../cmake/osxbundle/Info.plist"
-icon_path = "../cmake/osxbundle/obs.icns"
+icon_path = "../cmake/osxbundle/ebs.icns"
 run_path = "../cmake/osxbundle/obslaunch.sh"
 
 #not copied
@@ -40,12 +40,12 @@ def add_boolean_argument(parser, name, default=False):
         '--' + name, nargs='?', default=default, const=True, type=_str_to_bool)
     group.add_argument('--no' + name, dest=name, action='store_false')
 
-parser = argparse.ArgumentParser(description='obs-studio package util')
+parser = argparse.ArgumentParser(description='ebs-studio package util')
 parser.add_argument('-d', '--base-dir', dest='dir', default='rundir/RelWithDebInfo')
 parser.add_argument('-n', '--build-number', dest='build_number', default='0')
 parser.add_argument('-k', '--public-key', dest='public_key', default='OBSPublicDSAKey.pem')
 parser.add_argument('-f', '--sparkle-framework', dest='sparkle', default=None)
-parser.add_argument('-b', '--base-url', dest='base_url', default='https://builds.catchexception.org/obs-studio')
+parser.add_argument('-b', '--base-url', dest='base_url', default='https://builds.catchexception.org/ebs-studio')
 parser.add_argument('-u', '--user', dest='user', default='jp9000')
 parser.add_argument('-c', '--channel', dest='channel', default='master')
 add_boolean_argument(parser, 'stable', default=False)
@@ -71,6 +71,10 @@ def add(name, external=False, copy_as=None):
 		copy_as = name.split("/")[-1]
 	if name[0] != "/":
 		name = build_path+"/"+name
+	if ("cosmo" in name):
+		name = "/usr/local/lib/" + name.split("/")[len(name.split("/")) - 1]
+		print "COSMO LIB FOUND - Replacing /Users/cosmo/ path with /usr/local/lib/"
+		print name
 	t = LibTarget(name, external, copy_as)
 	if t in inspected:
 		return
@@ -82,6 +86,16 @@ for i in candidate_paths:
 	print("Checking " + i)
 	for root, dirs, files in walk(build_path+"/"+i):
 		for file_ in files:
+			if ".ini" in file_:
+				continue
+			if ".png" in file_:
+				continue
+			if ".effect" in file_:
+				continue
+			if ".py" in file_:
+				continue
+			if ".json" in file_:
+				continue
 			path = root + "/" + file_
 			try:
 				out = check_output("{0}otool -L '{1}'".format(args.prefix, path), shell=True,
@@ -147,6 +161,12 @@ changes = list()
 for path, external, copy_as in inspected:
 	if not external:
 		continue #built with install_rpath hopefully
+	if ("libcrypto" in path):
+		libcrypto_path = "/Users/cosmo/DEV/libwebrtc-cmake/build_release/openssl_inst/lib/libcrypto.1.1.dylib"
+		changes.append("-change '%s' '@rpath/%s'"%(libcrypto_path, copy_as))
+	if ("libssl" in path):
+		libssl_path = "/Users/cosmo/DEV/libwebrtc-cmake/build_release/openssl_inst/lib/libssl.1.1.dylib"
+		changes.append("-change '%s' '@rpath/%s'"%(libssl_path, copy_as))
 	changes.append("-change '%s' '@rpath/%s'"%(path, copy_as))
 changes = " ".join(changes)
 
@@ -188,7 +208,7 @@ if args.sparkle is not None:
 prefix = "tmp/Contents/Resources/"
 sparkle_path = '@loader_path/{0}/Frameworks/Sparkle.framework/Versions/A/Sparkle'
 
-cmd('{0}install_name_tool -change {1} {2} {3}/bin/obs'.format(
+cmd('{0}install_name_tool -change {1} {2} {3}/bin/EBS'.format(
     args.prefix, actual_sparkle_path, sparkle_path.format('../..'), prefix))
 
 

@@ -31,7 +31,7 @@ using namespace std;
 bool GetDataFilePath(const char *data, string &output)
 {
 	stringstream str;
-	str << OBS_DATA_PATH "/obs-studio/" << data;
+	str << OBS_DATA_PATH "/ebs-studio/" << data;
 	output = str.str();
 	return !access(output.c_str(), R_OK);
 }
@@ -167,4 +167,12 @@ void EnableOSXVSync(bool enable)
 		set_debug_options(enable ? 0 : 0x08000000);
 		deferred_updates(enable ? 1 : 0);
 	}
+}
+
+void EnableOSXDockIcon(bool enable)
+{
+	if (enable)
+		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+	else
+		[NSApp setActivationPolicy:NSApplicationActivationPolicyProhibited];
 }

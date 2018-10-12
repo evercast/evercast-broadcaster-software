@@ -7,32 +7,20 @@ else()
 	set(FIND_MODE QUIET)
 endif()
 
+if(BROWSER_AVAILABLE_INTERNAL)
+	add_definitions(-DBROWSER_AVAILABLE)
+endif()
+
 add_subdirectory(obs-frontend-api)
 
 # ----------------------------------------------------------------------------
 
-project(obs)
+project(EBS)
 
-set(ENABLE_WIN_UPDATER FALSE CACHE BOOL "Enable the windows updater")
-
-if(DEFINED QTDIR${_lib_suffix})
-	list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
-elseif(DEFINED QTDIR)
-	list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
-elseif(DEFINED ENV{QTDIR${_lib_suffix}})
-	list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
-elseif(DEFINED ENV{QTDIR})
-	list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
-endif()
+set(DISABLE_UPDATE_MODULE TRUE CACHE BOOL "Disables building the update module")
 
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 set(CMAKE_AUTOMOC TRUE)
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(_lib_suffix 64)
-else()
-	set(_lib_suffix 32)
-endif()
 
 find_package(Qt5 COMPONENTS Core Widgets ${FIND_MODE})
 set(WEBRTC_USE_FILE_INCLUDED 1)
@@ -42,7 +30,7 @@ include ( "${libwebrtc_DIR}/libwebrtcConfigVersion.cmake" )
 find_package(FFmpeg REQUIRED COMPONENTS avcodec avutil avformat)
 
 if(APPLE)
-	find_package(Qt5 COMPONENTS MacExtras ${FIND_MODE})
+	find_package(Qt5MacExtras REQUIRED)
 endif(APPLE)
 
 if(NOT Qt5Widgets_FOUND)
@@ -59,6 +47,10 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 include_directories(SYSTEM "obs-frontend-api")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libobs")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/libff")
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json11")
+if(BROWSER_AVAILABLE_INTERNAL)
+	include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/plugins/obs-browser/panel")
+endif()
 
 find_package(Libcurl REQUIRED)
 include_directories(${LIBCURL_INCLUDE_DIRS})
@@ -82,10 +74,6 @@ if(WIN32)
 		crypt32
 		blake2
 		${OBS_JANSSON_IMPORT})
-
-	if(ENABLE_WIN_UPDATER)
-		add_definitions(-DENABLE_WIN_UPDATER)
-	endif()
 elseif(APPLE)
 	set(obs_PLATFORM_SOURCES
 		platform-osx.mm)
@@ -135,6 +123,7 @@ endif()
 set(obs_SOURCES
 	${obs_PLATFORM_SOURCES}
 	${obs_libffutil_SOURCES}
+	../deps/json11/json11.cpp
 	obs-app.cpp
 	api-interface.cpp
 	window-basic-main.cpp
@@ -151,15 +140,16 @@ set(obs_SOURCES
 	window-basic-main-transitions.cpp
 	window-basic-main-dropfiles.cpp
 	window-basic-main-profiles.cpp
-	window-license-agreement.cpp
 	window-basic-status-bar.cpp
 	window-basic-adv-audio.cpp
 	window-basic-transform.cpp
 	window-basic-preview.cpp
+	window-basic-about.cpp
 	window-namedialog.cpp
 	window-log-reply.cpp
 	window-projector.cpp
 	window-remux.cpp
+	source-tree.cpp
 	properties-view.cpp
 	focus-list.cpp
 	menu-button.cpp
@@ -169,6 +159,7 @@ set(obs_SOURCES
 	item-widget-helpers.cpp
 	visibility-checkbox.cpp
 	locked-checkbox.cpp
+	horizontal-scroll-area.cpp
 	vertical-scroll-area.cpp
 	visibility-item-widget.cpp
 	slider-absoluteset-style.cpp
@@ -184,6 +175,7 @@ set(obs_SOURCES
 set(obs_HEADERS
 	${obs_PLATFORM_HEADERS}
 	${obs_libffutil_HEADERS}
+	../deps/json11/json11.hpp
 	obs-app.hpp
 	platform.hpp
 	window-main.hpp
@@ -196,7 +188,7 @@ set(obs_HEADERS
 	window-basic-auto-config.hpp
 	window-basic-main-outputs.hpp
 	window-basic-source-select.hpp
-	window-license-agreement.hpp
+	window-basic-about.hpp
 	window-basic-status-bar.hpp
 	window-basic-adv-audio.hpp
 	window-basic-transform.hpp
@@ -205,9 +197,11 @@ set(obs_HEADERS
 	window-log-reply.hpp
 	window-projector.hpp
 	window-remux.hpp
+	source-tree.hpp
 	properties-view.hpp
 	properties-view.moc.hpp
 	display-helpers.hpp
+	balance-slider.hpp
 	double-slider.hpp
 	focus-list.hpp
 	menu-button.hpp
@@ -217,6 +211,8 @@ set(obs_HEADERS
 	item-widget-helpers.hpp
 	visibility-checkbox.hpp
 	locked-checkbox.hpp
+	horizontal-scroll-area.hpp
+	expand-checkbox.hpp
 	vertical-scroll-area.hpp
 	visibility-item-widget.hpp
 	slider-absoluteset-style.hpp
@@ -227,7 +223,8 @@ set(obs_HEADERS
 	source-label.hpp
 	remote-text.hpp
 	audio-encoders.hpp
-	qt-wrappers.hpp)
+	qt-wrappers.hpp
+	clickable-label.hpp)
 
 set(obs_UI
 	forms/NameDialog.ui
@@ -235,7 +232,7 @@ set(obs_UI
 	forms/AutoConfigVideoPage.ui
 	forms/AutoConfigStreamPage.ui
 	forms/AutoConfigTestPage.ui
-	forms/OBSLicenseAgreement.ui
+	forms/ColorSelect.ui
 	forms/OBSLogReply.ui
 	forms/OBSBasic.ui
 	forms/OBSBasicTransform.ui
@@ -244,7 +241,8 @@ set(obs_UI
 	forms/OBSBasicSourceSelect.ui
 	forms/OBSBasicInteraction.ui
 	forms/OBSUpdate.ui
-	forms/OBSRemux.ui)
+	forms/OBSRemux.ui
+	forms/OBSAbout.ui)
 
 set(obs_QRC
 	forms/obs.qrc)
@@ -252,7 +250,7 @@ set(obs_QRC
 qt5_wrap_ui(obs_UI_HEADERS ${obs_UI})
 qt5_add_resources(obs_QRC_SOURCES ${obs_QRC})
 
-add_executable(obs WIN32
+add_executable(EBS WIN32
 	${obs_SOURCES}
 	${obs_HEADERS}
 	${obs_UI_HEADERS}
@@ -265,12 +263,12 @@ if(WIN32)
 		set(_output_suffix "32")
 	endif()
 
-	set_target_properties(obs
+	set_target_properties(EBS
 		PROPERTIES
-			OUTPUT_NAME "obs${_output_suffix}")
+			OUTPUT_NAME "EBS${_output_suffix}")
 endif()
 
-target_link_libraries(obs
+target_link_libraries(EBS
 	libobs
 	Qt5::Widgets
 	obs-frontend-api
@@ -279,11 +277,11 @@ target_link_libraries(obs
 	${obs_PLATFORM_LIBRARIES})
 
 if (APPLE)
-	target_link_libraries(obs
+	target_link_libraries(EBS
 			Qt5::MacExtras)
-	set_target_properties(obs PROPERTIES LINK_FLAGS "-pagezero_size 10000 -image_base 100000000")
+	set_target_properties(EBS PROPERTIES LINK_FLAGS "-pagezero_size 10000 -image_base 100000000")
 	set_property(
-		TARGET obs
+		TARGET EBS
 		APPEND
 		PROPERTY INSTALL_RPATH
 		"/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6/lib/"
@@ -292,14 +290,15 @@ if (APPLE)
 	)
 endif()
 
-define_graphic_modules(obs)
+define_graphic_modules(EBS)
 
-install_obs_core(obs)
-install_obs_data(obs data obs-studio)
+install_obs_core(EBS)
+install_obs_data(EBS data ebs-studio)
+install_obs_data_file(EBS ../AUTHORS ebs-studio/authors)
 
 if (UNIX AND UNIX_STRUCTURE AND NOT APPLE)
 	install(FILES dist/obs.desktop DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/applications)
-	install(FILES forms/images/obs.png
+	install(FILES forms/images/ebs.png
 		DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/icons/hicolor/256x256/apps)
 endif()
 

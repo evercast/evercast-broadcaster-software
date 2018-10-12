@@ -28,6 +28,44 @@
 /* rgb(42,130,218); /* blue */
 
 
+/* Custom theme information.  This will set the application's QPalette, as
+ * well as pass to QML via the OBSTheme object.
+ * Can also use OBSTheme::disabled, OBSTheme::active, and OBSTheme::inactive.
+ * Using it without will set all three (making 'active' a bit redundant) */
+OBSTheme {
+    window: rgb(58,57,58); /* dark */
+    windowText: rgb(225,224,225); /* veryLight */
+    base: rgb(31,30,31); /* veryDark */
+    alternateBase: rgb(11,10,11); /* veryVeryDark */
+    text: rgb(225,224,225); /* veryLight */
+    button: rgb(88,87,88); /* kindaDark */
+    buttonText: rgb(225,224,225); /* veryLight */
+    brightText: rgb(200,199,200); /* lighter */
+
+    light: rgb(88,87,88); /* kindaDark */
+    mid: rgb(58,57,58); /* dark */
+    dark: rgb(31,30,31); /* veryDark */
+    shadow: rgb(11,10,11); /* veryVeryDark */
+
+    highlight: rgb(42,130,218); /* blue */
+    highlightText: rgb(0,0,0);
+
+    link: rgb(114, 162, 255); /* OBS blue */
+    linkVisited: rgb(114, 162, 255); /* OBS blue */
+}
+
+OBSTheme::disabled {
+    text: rgb(122,121,122); /* light */
+    buttonText: rgb(122,121,122); /* light */
+    brightText: rgb(122,121,122); /* light */
+}
+
+OBSTheme::inactive {
+    highlight: rgb(48,47,48);
+    highlightText: rgb(255, 255, 255);
+}
+
+
 /* General style, we override only what is needed. */
 QWidget {
     background-color: rgb(58,57,58); /* dark */
@@ -48,7 +86,7 @@ QWidget::disabled {
     color: 2px solid rgb(200,199,200); /* lighter */
 }
 
-QAbstractItemView {
+QAbstractItemView, QStackedWidget#stackedMixerArea QWidget {
     background-color: rgb(31,30,31); /* veryDark */
 }
 
@@ -110,11 +148,9 @@ QGroupBox {
 }
 
 QScrollBar:vertical {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0,
-        stop: 0 rgb(31,30,31), /* veryDark */
-        stop: 0.75 rgb(54, 53, 54),
-        stop: 1 rgb(58,57,58)); /* dark */
+    background-color: rgb(58,57,58); /* dark */
     width: 14px;
+    margin: 0px;
 }
 
 QScrollBar::handle:vertical {
@@ -141,11 +177,9 @@ QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical, QScrollBar::add-
 }
 
 QScrollBar:horizontal {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1,
-        stop: 0 rgb(31,30,31), /* veryDark */
-        stop: 0.75 rgb(54, 53, 54),
-        stop: 1 rgb(58,57,58)); /* dark */
+    background-color: rgb(58,57,58); /* dark */
     height: 14px;
+    margin: 0px;
 }
 
 QScrollBar::handle:horizontal {
@@ -281,6 +315,13 @@ QComboBox {
     padding-left: 10px;
 }
 
+QComboBox:hover {
+    background-color: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1,
+        stop: 0 rgb(111, 110, 101),
+        stop: 0.25 rgb(100, 99, 100),
+        stop: 1 rgb(88,87,88)); 
+}
+
 QComboBox::drop-down {
     border:none;
     border-left: 1px solid rgba(31,30,31,155); /* veryDark */
@@ -319,7 +360,12 @@ QComboBox::down-arrow:editable {
 QLineEdit, QTextEdit, QPlainTextEdit {
     background-color: rgb(31,30,31); /* veryDark */
     border: none;
-    padding-left: 2px;
+    border-radius: 3px;
+    padding: 2px 2px 3px 7px;
+}
+
+OBSHotkeyWidget QLineEdit {
+    margin: 0px 3px 0px 0px;
 }
 
 
@@ -328,9 +374,9 @@ QLineEdit, QTextEdit, QPlainTextEdit {
 QSpinBox, QDoubleSpinBox {
     background-color: rgb(31,30,31); /* veryDark */
     border: none;
-    padding-left: 2px;
-    padding-right: 15px;
-    margin-right: 10px;
+    border-radius: 3px;
+    margin: 0px 3px 0px 0px;
+    padding: 2px 2px 3px 7px;
 }
 
 QSpinBox::up-button, QDoubleSpinBox::up-button {
@@ -420,12 +466,16 @@ QPushButton::menu-indicator {
     width: 25px;
 }
 
+QPushButton[themeID="hotkeyButtons"] {
+    margin: 1px  2px;
+}
+
 /* Sliders */
 
 QSlider::groove:horizontal {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1,
-        stop: 0 rgb(31,30,31), /* veryDark */
-        stop: 0.75 rgb(50, 49, 50));
+    background-color: QLinearGradient(x1: 0, y1: 1, x2: 0, y2: 0,
+        stop: 0 rgb(50, 49, 50), /* dark */
+        stop: 0.75 rgb(88,87,88)); /* kindaDark */
     height: 4px;
     border: none;
     border-radius: 2px;
@@ -450,32 +500,37 @@ QSlider::handle:horizontal:pressed {
         stop: 1 rgb(162,161,162)); /* light */
 }
 
+QSlider::sub-page:horizontal {
+    background-color: rgb(42,130,218); /* blue */
+    border-radius: 2px;
+}
+
 QSlider::sub-page:horizontal:disabled {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 0, y2: 1,
+    background-color: QLinearGradient(x1: 0, y1: 1, x2: 0, y2: 0,
         stop: 0 rgb(31,30,31), /* veryDark */
-        stop: 0.75 rgb(50, 49, 50));
+        stop: 0.75 rgb(50, 49, 50)); /* dark */
     border-radius: 2px;
 }
 
 QSlider::groove:vertical {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0,
-        stop: 0 rgb(31,30,31), /* veryDark */
-        stop: 0.75 rgb(50, 49, 50));
+    background-color: QLinearGradient(x1: 1, y1: 0, x2: 0, y2: 0,
+        stop: 0 rgb(50, 49, 50), /* dark */
+        stop: 0.75 rgb(88,87,88)); /* kindaDark */
     width: 4px;
     border: none;
     border-radius: 2px;
 }
 
 QSlider::handle:vertical {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0,
+    background-color: QLinearGradient(x1: 1, y1: 0, x2: 0, y2: 0,
         stop: 0 rgb(240,239,240), /* lighter */
         stop: 0.25 rgb(200,199,200),
         stop: 1 rgb(162,161,162)); /* light */
     border: 1px solid rgb(58,57,58); /* dark */
-    border-radius: 4px;
+    border-radius: 3px;
     width: 10px;
     height: 18px;
-    margin: -3px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+    margin: 0 -3px; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
 }
 
 QSlider::handle:vertical:pressed {
@@ -485,10 +540,15 @@ QSlider::handle:vertical:pressed {
         stop: 1 rgb(162,161,162)); /* light */
 }
 
-QSlider::sub-page:vertical:disabled {
-    background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0,
+QSlider::add-page:vertical {
+    background-color: rgb(42,130,218); /* blue */
+    border-radius: 2px;
+}
+
+QSlider::add-page:vertical:disabled {
+    background-color: QLinearGradient(x1: 1, y1: 0, x2: 0, y2: 0,
         stop: 0 rgb(31,30,31), /* veryDark */
-        stop: 0.75 rgb(50, 49, 50));
+        stop: 0.75 rgb(50, 49, 50)); /* dark */
     border-radius: 2px;
 }
 
@@ -496,15 +556,9 @@ QSlider::handle:hover {
     background-color: rgb(200,199,200); /* veryLight */
 }
 
-QSlider::sub-page {
-    background-color: rgb(42,130,218); /* blue */
-    border-radius: 2px;
-}
-
 QSlider::handle:disabled {
     background-color: rgb(122,121,122); /* light */
 }
-
 
 /* Volume Control */
 
@@ -527,6 +581,18 @@ QStatusBar::item {
     border: none;
 }
 
+/* Table View */
+
+QTableView {
+    gridline-color: rgb(88,87,88); /* kindaDark */
+}
+
+QHeaderView::section {
+    background-color: rgb(58,57,58); /* dark */
+    color: rgb(225,224,225); /* veryLight */
+    border: 1px solid rgb(31,30,31); /* veryDark */;
+    border-radius: 5px;
+}
 
 /* Mute CheckBox */
 
@@ -544,6 +610,27 @@ MuteCheckBox::indicator:unchecked {
 
 OBSHotkeyLabel[hotkeyPairHover=true] {
     color: red;
+}
+
+
+/* Group Collapse Checkbox */
+
+SourceTreeSubItemCheckBox {
+    background: transparent;
+    outline: none;
+}
+
+SourceTreeSubItemCheckBox::indicator {
+    width: 10px;
+    height: 10px;
+}
+
+SourceTreeSubItemCheckBox::indicator:checked {
+    image: url(./Dark/expand.png);
+}
+
+SourceTreeSubItemCheckBox::indicator:unchecked {
+    image: url(./Dark/collapse.png);
 }
 
 
@@ -572,4 +659,30 @@ QLabel#errorLabel {
 * [themeID="good"] {
     color: rgb(0, 192, 0);
     font-weight: bold;
+}
+
+/* About dialog */
+
+* [themeID="aboutName"] {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+* [themeID="aboutVersion"] {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+* [themeID="aboutInfo"] {
+    margin-bottom: 20px;
+}
+
+* [themeID="aboutHLayout"] {
+    background-color: rgb(31, 30, 31); /* veryDark */
+}
+
+/* Preview background color */
+
+* [themeID="displayBackgroundColor"] {
+    qproperty-displayBackgroundColor: rgb(76, 76, 76);
 }

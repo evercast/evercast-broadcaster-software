@@ -21,7 +21,7 @@ public:
     ~SpankChainWebsocketClientImpl();
     virtual bool connect(
       std::string url,
-      long long room,
+      std::string room,
       std::string username,
       std::string token,
       WebsocketClient::Listener* listener

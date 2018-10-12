@@ -22,7 +22,7 @@
 									<key>GID</key>
 									<integer>80</integer>
 									<key>PATH</key>
-									<string>../../../build/OBS.app</string>
+									<string>../../../build/EBS.app</string>
 									<key>PATH_TYPE</key>
 									<integer>3</integer>
 									<key>PERMISSIONS</key>
@@ -80,13 +80,13 @@
 																<dict>
 																	<key>CHILDREN</key>
 																	<array>
-																		<dict>
+																		<!-- <dict>
 																			<key>CHILDREN</key>
 																			<array/>
 																			<key>GID</key>
 																			<integer>80</integer>
 																			<key>PATH</key>
-																			<string>../../../build/plugins/obs-browser/CEF.app</string>
+																			<string>../../../build/plugins/obs-browser/obs-browser-page</string>
 																			<key>PATH_TYPE</key>
 																			<integer>3</integer>
 																			<key>PERMISSIONS</key>
@@ -111,7 +111,7 @@
 																			<integer>3</integer>
 																			<key>UID</key>
 																			<integer>0</integer>
-																		</dict>
+																		</dict> -->
 																	</array>
 																	<key>GID</key>
 																	<integer>80</integer>
@@ -158,7 +158,7 @@
 											<key>GID</key>
 											<integer>80</integer>
 											<key>PATH</key>
-											<string>obs-studio</string>
+											<string>ebs-studio</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
 											<key>PERMISSIONS</key>
@@ -591,9 +591,9 @@
 				<key>CONCLUSION_ACTION</key>
 				<integer>0</integer>
 				<key>IDENTIFIER</key>
-				<string>org.obsproject.pkg.obs-studio</string>
+				<string>evercast.pkg.ebs-studio</string>
 				<key>NAME</key>
-				<string>OBS</string>
+				<string>EBS</string>
 				<key>OVERWRITE_PERMISSIONS</key>
 				<false/>
 				<key>VERSION</key>
@@ -651,7 +651,7 @@
 				<key>BACKGROUND_PATH</key>
 				<dict>
 					<key>PATH</key>
-					<string>obs.png</string>
+					<string>ebs.png</string>
 					<key>PATH_TYPE</key>
 					<integer>1</integer>
 				</dict>
@@ -815,7 +815,7 @@
 						<key>LANGUAGE</key>
 						<string>English</string>
 						<key>VALUE</key>
-						<string>OBS</string>
+						<string>EBS</string>
 					</dict>
 				</array>
 			</dict>
@@ -1015,7 +1015,7 @@
 				</dict>
 			</array>
 			<key>NAME</key>
-			<string>OBS</string>
+			<string>EBS</string>
 		</dict>
 	</dict>
 	<key>TYPE</key>

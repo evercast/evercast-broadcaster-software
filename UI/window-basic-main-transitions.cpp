@@ -26,6 +26,8 @@
 #include "menu-button.hpp"
 #include "qt-wrappers.hpp"
 
+#include "obs-hotkey.h"
+
 using namespace std;
 
 Q_DECLARE_METATYPE(OBSScene);
@@ -96,6 +98,18 @@ void OBSBasic::AddQuickTransitionHotkey(QuickTransition *qt)
 	qt->hotkey = obs_hotkey_register_frontend(hotkeyId->array,
 			QT_TO_UTF8(hotkeyName), quickTransition,
 			(void*)(uintptr_t)qt->id);
+}
+
+void QuickTransition::SourceRenamed(void *param, calldata_t *data)
+{
+	QuickTransition *qt = reinterpret_cast<QuickTransition*>(param);
+
+	QString hotkeyName = QTStr("QuickTransitions.HotkeyName")
+		.arg(MakeQuickTransitionText(qt));
+
+	obs_hotkey_set_description(qt->hotkey, QT_TO_UTF8(hotkeyName));
+
+	UNUSED_PARAMETER(data);
 }
 
 void OBSBasic::TriggerQuickTransition(int id)
@@ -545,6 +559,10 @@ void OBSBasic::RenameTransition()
 		int idx = ui->transitions->findData(variant);
 		if (idx != -1) {
 			ui->transitions->setItemText(idx, QT_UTF8(name.c_str()));
+
+			if (api)
+				api->on_event(OBS_FRONTEND_EVENT_TRANSITION_LIST_CHANGED);
+
 			ClearQuickTransitionWidgets();
 			RefreshQuickTransitions();
 		}
@@ -639,12 +657,11 @@ void OBSBasic::SetCurrentScene(OBSSource scene, bool force, bool direct)
 				ui->scenes->blockSignals(true);
 				ui->scenes->setCurrentItem(item);
 				ui->scenes->blockSignals(false);
+				if (api)
+					api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 				break;
 			}
 		}
-
-		if (api && IsPreviewProgramMode())
-			api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 	}
 
 	UpdateSceneSelection(scene);
@@ -733,7 +750,7 @@ void OBSBasic::CreateProgramOptions()
 	programOptions->setLayout(layout);
 
 	auto onAdd = [this] () {
-		QPointer<QMenu> menu = CreateTransitionMenu(this, nullptr);
+		QScopedPointer<QMenu> menu(CreateTransitionMenu(this, nullptr));
 		menu->exec(QCursor::pos());
 	};
 

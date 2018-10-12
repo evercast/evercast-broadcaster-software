@@ -119,17 +119,17 @@ bool WebRTCStream::start(Type type)
     
     //Get connection properties
     url = obs_service_get_url(service);
-    try {
-        room = std::stoll(obs_service_get_room(service));
-    }
-    catch (const std::invalid_argument& ia) {
-        error("Invalid room name (must be a positive integer number)");
-        return false;
-    }
-    catch (const std::out_of_range& oor) {
-        error("Room name out of range (number too big)");
-        return false;
-    }
+//    try {
+    room = obs_service_get_room(service);
+//    }
+//    catch (const std::invalid_argument& ia) {
+//        error("Invalid room name (must be a positive integer number)");
+//        return false;
+//    }
+//    catch (const std::out_of_range& oor) {
+//        error("Room name out of range (number too big)");
+//        return false;
+//    }
 
     const char *tmpString = obs_service_get_username(service);
     username = (NULL == tmpString ? "" : tmpString);
@@ -230,7 +230,7 @@ bool WebRTCStream::start(Type type)
       return false;
     }
     //Log them
-    info("-connecting to [url:%s,room:%ld,username:%s,password:%s]", url.c_str(), room, username.c_str(), password.c_str());
+    info("-connecting to [url:%s,room:%s,username:%s,password:%s]", url.c_str(), room.c_str(), username.c_str(), password.c_str());
     //Connect client
     if (!client->connect(url, room, username, password, this)){
         //Error
@@ -457,15 +457,16 @@ void WebRTCStream::onAudioFrame(audio_data *frame)
 
 //bitrate and dropped_frame
 uint64_t WebRTCStream::getBitrate() {
-    rtc::scoped_refptr<webrtc::MockStatsObserver> observerVideo (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
-	rtc::scoped_refptr<webrtc::MockStatsObserver> observerAudio (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
-
-    pc->GetStats (observerVideo, video_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
-	pc->GetStats (observerAudio, audio_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
-	
-	std::this_thread::sleep_for(std::chrono::milliseconds(2));
+//    rtc::scoped_refptr<webrtc::MockStatsObserver> observerVideo (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
+//	rtc::scoped_refptr<webrtc::MockStatsObserver> observerAudio (new rtc::RefCountedObject<webrtc::MockStatsObserver> ());
+//
+//    pc->GetStats (observerVideo, video_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
+//	pc->GetStats (observerAudio, audio_track, webrtc::PeerConnectionInterface::kStatsOutputLevelStandard);
+//
+//	std::this_thread::sleep_for(std::chrono::milliseconds(2));
+//
+//	bitrate = observerVideo->BytesSent() + observerAudio->BytesSent();
+//	info("BITRATE?%ld",bitrate);
     
-	bitrate = observerVideo->BytesSent() + observerAudio->BytesSent();
-    
-	return bitrate;
+	return 0;
 }
