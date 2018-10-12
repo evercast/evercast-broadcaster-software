@@ -143,7 +143,7 @@ static bool GetProfileName(QWidget *parent, std::string &name,
 static bool CopyProfile(const char *fromPartial, const char *to)
 {
 	os_glob_t *glob;
-	char path[512];
+	char path[514];
 	char dir[512];
 	int ret;
 
@@ -346,6 +346,19 @@ void OBSBasic::ResetProfileData()
 	ResetOutputs();
 	ClearHotkeys();
 	CreateHotkeys();
+
+	/* load audio monitoring */
+#if defined(_WIN32) || defined(__APPLE__) || HAVE_PULSEAUDIO
+	const char *device_name = config_get_string(basicConfig, "Audio",
+			"MonitoringDeviceName");
+	const char *device_id = config_get_string(basicConfig, "Audio",
+			"MonitoringDeviceId");
+
+	obs_set_audio_monitoring_device(device_name, device_id);
+
+	blog(LOG_INFO, "Audio monitoring device:\n\tname: %s\n\tid: %s",
+			device_name, device_id);
+#endif
 }
 
 void OBSBasic::on_actionNewProfile_triggered()

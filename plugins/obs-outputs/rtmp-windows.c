@@ -81,6 +81,7 @@ static bool socket_event(struct rtmp_stream *stream, bool *can_write,
 						"Socket error, recv() returned "
 						"%d, GetLastError() %d",
 						ret, err_code);
+				stream->rtmp.last_error_code = err_code;
 				fatal_sock_shutdown(stream);
 				return false;
 			}
@@ -168,13 +169,13 @@ static enum data_ret write_data(struct rtmp_stream *stream, bool *can_write,
 		size_t send_len =
 			min(latency_packet_size, stream->write_buf_len);
 
-		ret = send(stream->rtmp.m_sb.sb_socket,
+		ret = RTMPSockBuf_Send(&stream->rtmp.m_sb,
 				(const char *)stream->write_buf,
-				(int)send_len, 0);
+				(int)send_len);
 	} else {
-		ret = send(stream->rtmp.m_sb.sb_socket,
+		ret = RTMPSockBuf_Send(&stream->rtmp.m_sb,
 				(const char *)stream->write_buf,
-				(int)stream->write_buf_len, 0);
+				(int)stream->write_buf_len);
 	}
 
 	if (ret > 0) {
@@ -215,6 +216,7 @@ static enum data_ret write_data(struct rtmp_stream *stream, bool *can_write,
 					ret, err_code);
 
 			pthread_mutex_unlock(&stream->write_buf_mutex);
+			stream->rtmp.last_error_code = err_code;
 			fatal_sock_shutdown(stream);
 			return RET_FATAL;
 		}

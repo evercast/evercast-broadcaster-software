@@ -51,6 +51,24 @@ MuteCheckBox::indicator:unchecked {
     image: url(:/res/images/unmute.png);
 }
 
+SourceTreeSubItemCheckBox {
+    background: transparent;
+    outline: none;
+}
+
+SourceTreeSubItemCheckBox::indicator {
+    width: 10px;
+    height: 10px;
+}
+
+SourceTreeSubItemCheckBox::indicator:checked {
+    image: url(:/res/images/expand.png);
+}
+
+SourceTreeSubItemCheckBox::indicator:unchecked {
+    image: url(:/res/images/collapse.png);
+}
+
 OBSHotkeyLabel[hotkeyPairHover=true] {
     color: red;
 }
@@ -96,4 +114,30 @@ QLabel#errorLabel {
 * [themeID="good"] {
     color: rgb(0, 128, 0);
     font-weight: bold;
+}
+
+/* About dialog */
+
+* [themeID="aboutName"] {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+* [themeID="aboutVersion"] {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+* [themeID="aboutInfo"] {
+    margin-bottom: 20px;
+}
+
+* [themeID="aboutHLayout"] {
+	background-color: #DCD9D7;
+}
+
+/* Preview background color */
+
+* [themeID="displayBackgroundColor"] {
+    qproperty-displayBackgroundColor: rgb(76, 76, 76);
 }

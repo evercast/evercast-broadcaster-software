@@ -239,8 +239,40 @@ struct obs_source_frame {
 	bool                prev_frame;
 };
 
+/** Access to the argc/argv used to start OBS. What you see is what you get. */
+struct obs_cmdline_args {
+	int argc;
+	char **argv;
+};
+
 /* ------------------------------------------------------------------------- */
 /* OBS context */
+
+/**
+ * Find a core libobs data file
+ * @param path name of the base file
+ * @return A string containing the full path to the file.
+ *          Use bfree after use.
+ */
+EXPORT char *obs_find_data_file(const char *file);
+
+/**
+ * Add a path to search libobs data files in.
+ * @param path Full path to directory to look in.
+ *             The string is copied.
+ */
+EXPORT void obs_add_data_path(const char *path);
+
+/**
+ * Remove a path from libobs core data paths.
+ * @param path The path to compare to currently set paths.
+ *             It does not need to be the same pointer, but
+ *             the path string must match an entry fully.
+ * @return Whether or not the path was successfully removed.
+ *         If false, the path could not be found.
+ */
+EXPORT bool obs_remove_data_path(const char *path);
+
 
 /**
  * Initializes OBS
@@ -266,6 +298,24 @@ EXPORT uint32_t obs_get_version(void);
 EXPORT const char *obs_get_version_string(void);
 
 /**
+ * Sets things up for calls to obs_get_cmdline_args. Called onl yonce at startup
+ * and safely copies argv/argc from main(). Subsequent calls do nothing.
+ *
+ * @param  argc  The count of command line arguments, from main()
+ * @param  argv  An array of command line arguments, copied from main() and ends
+ *               with NULL.
+ */
+EXPORT void obs_set_cmdline_args(int argc, char **argv);
+
+/**
+ * Get the argc/argv used to start OBS
+ *
+ * @return  The command line arguments used for main(). Don't modify this or
+ *          you'll mess things up for other callers.
+ */
+EXPORT struct obs_cmdline_args obs_get_cmdline_args(void);
+
+/**
  * Sets a new locale to use for modules.  This will call obs_module_set_locale
  * for each module with the new locale.
  *
@@ -275,6 +325,12 @@ EXPORT void obs_set_locale(const char *locale);
 
 /** @return the current locale */
 EXPORT const char *obs_get_locale(void);
+
+/** Initialize the Windows-specific crash handler */
+
+#ifdef _WIN32
+EXPORT void obs_init_win32_crash_handler(void);
+#endif
 
 /**
  * Returns the profiler name store (see util/profiler.h) used by OBS, which is
@@ -500,6 +556,10 @@ EXPORT obs_source_t *obs_get_output_source(uint32_t channel);
 EXPORT void obs_enum_sources(bool (*enum_proc)(void*, obs_source_t*),
 		void *param);
 
+/** Enumerates scenes */
+EXPORT void obs_enum_scenes(bool (*enum_proc)(void*, obs_source_t*),
+	void *param);
+
 /** Enumerates outputs */
 EXPORT void obs_enum_outputs(bool (*enum_proc)(void*, obs_output_t*),
 		void *param);
@@ -564,6 +624,10 @@ EXPORT void obs_render_main_view(void);
 /** Renders the last main output texture */
 EXPORT void obs_render_main_texture(void);
 
+/** Returns the last main output texture.  This can return NULL if the texture
+ * is unavailable. */
+EXPORT gs_texture_t *obs_get_main_texture(void);
+
 /** Sets the master user volume */
 EXPORT void obs_set_master_volume(float volume);
 
@@ -575,6 +639,12 @@ EXPORT obs_data_t *obs_save_source(obs_source_t *source);
 
 /** Loads a source from settings data */
 EXPORT obs_source_t *obs_load_source(obs_data_t *data);
+
+/** Send a save signal to sources */
+EXPORT void obs_source_save(obs_source_t *source);
+
+/** Send a load signal to sources */
+EXPORT void obs_source_load(obs_source_t *source);
 
 typedef void (*obs_load_source_cb)(void *private_data, obs_source_t *source);
 
@@ -624,6 +694,26 @@ EXPORT void obs_remove_main_render_callback(
 		void (*draw)(void *param, uint32_t cx, uint32_t cy),
 		void *param);
 
+EXPORT void obs_add_raw_video_callback(
+		const struct video_scale_info *conversion,
+		void (*callback)(void *param, struct video_data *frame),
+		void *param);
+EXPORT void obs_remove_raw_video_callback(
+		void (*callback)(void *param, struct video_data *frame),
+		void *param);
+
+EXPORT uint64_t obs_get_video_frame_time(void);
+
+EXPORT double obs_get_active_fps(void);
+EXPORT uint64_t obs_get_average_frame_time_ns(void);
+
+EXPORT uint32_t obs_get_total_frames(void);
+EXPORT uint32_t obs_get_lagged_frames(void);
+
+EXPORT void obs_apply_private_data(obs_data_t *settings);
+EXPORT void obs_set_private_data(obs_data_t *settings);
+EXPORT obs_data_t *obs_get_private_data(void);
+
 
 /* ------------------------------------------------------------------------- */
 /* View context */
@@ -650,14 +740,6 @@ EXPORT obs_source_t *obs_view_get_source(obs_view_t *view,
 /** Renders the sources of this view context */
 EXPORT void obs_view_render(obs_view_t *view);
 
-EXPORT uint64_t obs_get_video_frame_time(void);
-
-EXPORT double obs_get_active_fps(void);
-EXPORT uint64_t obs_get_average_frame_time_ns(void);
-
-EXPORT uint32_t obs_get_total_frames(void);
-EXPORT uint32_t obs_get_lagged_frames(void);
-
 
 /* ------------------------------------------------------------------------- */
 /* Display context */
@@ -670,7 +752,8 @@ EXPORT uint32_t obs_get_lagged_frames(void);
  * @return                The new display context, or NULL if failed.
  */
 EXPORT obs_display_t *obs_display_create(
-		const struct gs_init_data *graphics_data);
+		const struct gs_init_data *graphics_data,
+		uint32_t backround_color);
 
 /** Destroys a display context */
 EXPORT void obs_display_destroy(obs_display_t *display);
@@ -838,6 +921,15 @@ EXPORT void obs_source_set_volume(obs_source_t *source, float volume);
 
 /** Gets the user volume for a source that has audio output */
 EXPORT float obs_source_get_volume(const obs_source_t *source);
+
+/* Gets speaker layout of a source */
+EXPORT enum speaker_layout obs_source_get_speaker_layout(obs_source_t *source);
+
+/** Sets the balance value for a stereo audio source */
+EXPORT void obs_source_set_balance_value(obs_source_t *source, float balance);
+
+/** Gets the balance value for a stereo audio source */
+EXPORT float obs_source_get_balance_value(const obs_source_t *source);
 
 /** Sets the audio sync offset (in nanoseconds) for a source */
 EXPORT void obs_source_set_sync_offset(obs_source_t *source, int64_t offset);
@@ -1275,6 +1367,15 @@ EXPORT void obs_scene_enum_items(obs_scene_t *scene,
 EXPORT bool obs_scene_reorder_items(obs_scene_t *scene,
 		obs_sceneitem_t * const *item_order, size_t item_order_size);
 
+struct obs_sceneitem_order_info {
+	obs_sceneitem_t *group;
+	obs_sceneitem_t *item;
+};
+
+EXPORT bool obs_scene_reorder_items2(obs_scene_t *scene,
+		struct obs_sceneitem_order_info *item_order,
+		size_t item_order_size);
+
 /** Adds/creates a new scene item for a source */
 EXPORT obs_sceneitem_t *obs_scene_add(obs_scene_t *scene, obs_source_t *source);
 
@@ -1364,12 +1465,47 @@ EXPORT void obs_sceneitem_set_scale_filter(obs_sceneitem_t *item,
 EXPORT enum obs_scale_type obs_sceneitem_get_scale_filter(
 		obs_sceneitem_t *item);
 
+EXPORT void obs_sceneitem_force_update_transform(obs_sceneitem_t *item);
+
 EXPORT void obs_sceneitem_defer_update_begin(obs_sceneitem_t *item);
 EXPORT void obs_sceneitem_defer_update_end(obs_sceneitem_t *item);
 
 /** Gets private front-end settings data.  This data is saved/loaded
  * automatically.  Returns an incremented reference. */
 EXPORT obs_data_t *obs_sceneitem_get_private_settings(obs_sceneitem_t *item);
+
+EXPORT obs_sceneitem_t *obs_scene_add_group(obs_scene_t *scene,
+		const char *name);
+EXPORT obs_sceneitem_t *obs_scene_insert_group(obs_scene_t *scene,
+		const char *name, obs_sceneitem_t **items, size_t count);
+
+EXPORT obs_sceneitem_t *obs_scene_get_group(obs_scene_t *scene,
+		const char *name);
+
+EXPORT bool obs_sceneitem_is_group(obs_sceneitem_t *item);
+
+EXPORT obs_scene_t *obs_sceneitem_group_get_scene(
+		const obs_sceneitem_t *group);
+
+EXPORT void obs_sceneitem_group_ungroup(obs_sceneitem_t *group);
+
+EXPORT void obs_sceneitem_group_add_item(obs_sceneitem_t *group,
+		obs_sceneitem_t *item);
+EXPORT void obs_sceneitem_group_remove_item(obs_sceneitem_t *group,
+		obs_sceneitem_t *item);
+
+EXPORT obs_sceneitem_t *obs_sceneitem_get_group(obs_scene_t *scene,
+		obs_sceneitem_t *item);
+
+EXPORT bool obs_source_is_group(const obs_source_t *source);
+EXPORT bool obs_scene_is_group(const obs_scene_t *scene);
+
+EXPORT void obs_sceneitem_group_enum_items(obs_sceneitem_t *group,
+		bool (*callback)(obs_scene_t*, obs_sceneitem_t*, void*),
+		void *param);
+
+EXPORT void obs_sceneitem_defer_group_resize_begin(obs_sceneitem_t *item);
+EXPORT void obs_sceneitem_defer_group_resize_end(obs_sceneitem_t *item);
 
 
 /* ------------------------------------------------------------------------- */
@@ -1439,6 +1575,12 @@ EXPORT void obs_output_force_stop(obs_output_t *output);
 
 /** Returns whether the output is active */
 EXPORT bool obs_output_active(const obs_output_t *output);
+
+/** Returns output capability flags */
+EXPORT uint32_t obs_output_get_flags(const obs_output_t *output);
+
+/** Returns output capability flags */
+EXPORT uint32_t obs_get_output_flags(const char *id);
 
 /** Gets the default settings for an output type */
 EXPORT obs_data_t *obs_output_defaults(const char *id);
@@ -1717,6 +1859,7 @@ EXPORT enum video_format obs_encoder_get_preferred_video_format(
 
 /** Gets the default settings for an encoder type */
 EXPORT obs_data_t *obs_encoder_defaults(const char *id);
+EXPORT obs_data_t *obs_encoder_get_defaults(const obs_encoder_t *encoder);
 
 /** Returns the property list, if any.  Free with obs_properties_destroy */
 EXPORT obs_properties_t *obs_get_encoder_properties(const char *id);
@@ -1898,6 +2041,8 @@ static inline void obs_source_frame_destroy(struct obs_source_frame *frame)
 	}
 }
 
+EXPORT void obs_source_frame_copy(struct obs_source_frame *dst,
+		const struct obs_source_frame *src);
 
 #ifdef __cplusplus
 }

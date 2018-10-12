@@ -2,7 +2,6 @@
 #include "frontend-tools-config.h"
 #include "../../properties-view.hpp"
 
-#include <QAction>
 #include <QFileDialog>
 #include <QPlainTextEdit>
 #include <QHBoxLayout>
@@ -13,6 +12,7 @@
 #include <QFont>
 #include <QDialogButtonBox>
 #include <QResizeEvent>
+#include <QAction>
 
 #include <obs.hpp>
 #include <obs-module.h>
