@@ -115,8 +115,6 @@ if(MSVC)
 		w32-pthreads)
 endif()
 
-if(APPLE)
-
 
 if(APPLE AND (WITH_RTMPS OR (WITH_RTMPS STREQUAL "AUTO")))
 	find_library(FOUNDATION_FRAMEWORK Foundation)

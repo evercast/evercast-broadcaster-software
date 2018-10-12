@@ -519,15 +519,6 @@ static obs_properties_t *compressor_properties(void *data)
 	struct sidechain_prop_info info = {sources, parent};
 	obs_enum_sources(add_sources, &info);
 
-	obs_property_t *sources = obs_properties_add_list(props,
-			S_SIDECHAIN_SOURCE, TEXT_SIDECHAIN_SOURCE,
-			OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-
-	obs_property_list_add_string(sources, obs_module_text("None"), "none");
-
-	struct sidechain_prop_info info = {sources, parent};
-	obs_enum_sources(add_sources, &info);
-
 	UNUSED_PARAMETER(data);
 	return props;
 }

@@ -263,7 +263,7 @@ if(WIN32)
 		set(_output_suffix "32")
 	endif()
 
-	set_target_properties(obs
+	set_target_properties(EBS
 		PROPERTIES
 			OUTPUT_NAME "EBS${_output_suffix}")
 endif()
@@ -293,8 +293,8 @@ endif()
 define_graphic_modules(EBS)
 
 install_obs_core(EBS)
-install_obs_data(EBS data EBS-studio)
-install_obs_data_file(obs ../AUTHORS obs-studio/authors)
+install_obs_data(EBS data ebs-studio)
+install_obs_data_file(EBS ../AUTHORS ebs-studio/authors)
 
 if (UNIX AND UNIX_STRUCTURE AND NOT APPLE)
 	install(FILES dist/obs.desktop DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/applications)

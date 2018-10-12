@@ -114,10 +114,10 @@ static void AddExtraModulePaths()
 	char base_module_dir[512];
 #if defined(_WIN32) || defined(__APPLE__)
 	int ret = GetProgramDataPath(base_module_dir, sizeof(base_module_dir),
-			"obs-studio/plugins/%module%");
+			"ebs-studio/plugins/%module%");
 #else
 	int ret = GetConfigPath(base_module_dir, sizeof(base_module_dir),
-			"obs-studio/plugins/%module%");
+			"ebs-studio/plugins/%module%");
 #endif
 
 	if (ret <= 0)
@@ -127,8 +127,8 @@ static void AddExtraModulePaths()
 #if defined(__APPLE__)
 	obs_add_module_path((path + "/bin").c_str(), (path + "/data").c_str());
 
-	BPtr<char> config_bin = os_get_config_path_ptr("obs-studio/plugins/%module%/bin");
-	BPtr<char> config_data = os_get_config_path_ptr("obs-studio/plugins/%module%/data");
+	BPtr<char> config_bin = os_get_config_path_ptr("ebs-studio/plugins/%module%/bin");
+	BPtr<char> config_data = os_get_config_path_ptr("ebs-studio/plugins/%module%/data");
 	obs_add_module_path(config_bin, config_data);
 
 #elif ARCH_BITS == 64
@@ -226,7 +226,7 @@ OBSBasic::OBSBasic(QWidget *parent)
 	installEventFilter(CreateShortcutFilter());
 
 	stringstream name;
-	name << "OBS " << App()->GetVersionString();
+	name << "EBS " << App()->GetVersionString();
 	blog(LOG_INFO, "%s", name.str().c_str());
 	blog(LOG_INFO, "---------------------------------");
 
@@ -978,12 +978,12 @@ retryScene:
 		opt_start_streaming = false;
 	}
 
-	if (opt_start_recording) {
-		blog(LOG_INFO, "Starting recording due to command line parameter");
-		QMetaObject::invokeMethod(this, "StartRecording",
-				Qt::QueuedConnection);
-		opt_start_recording = false;
-	}
+//	if (opt_start_recording) {
+//		blog(LOG_INFO, "Starting recording due to command line parameter");
+//		QMetaObject::invokeMethod(this, "StartRecording",
+//				Qt::QueuedConnection);
+//		opt_start_recording = false;
+//	}
 
 	if (opt_start_replaybuffer) {
 		QMetaObject::invokeMethod(this, "StartReplayBuffer",
@@ -1040,7 +1040,7 @@ bool OBSBasic::LoadService()
 	obs_data_t *data = obs_data_create_from_json_file_safe(serviceJsonPath,
 			"bak");
 
-	obs_data_set_default_string(data, "type", "rtmp_common");
+	obs_data_set_default_string(data, "type", "webrtc_janus");
 	type = obs_data_get_string(data, "type");
 
 	obs_data_t *settings = obs_data_get_obj(data, "settings");
@@ -1064,7 +1064,7 @@ bool OBSBasic::InitService()
 	if (LoadService())
 		return true;
 
-	service = obs_service_create("rtmp_common", "default_service", nullptr,
+	service = obs_service_create("webrtc_janus", "default_service", nullptr,
 			nullptr);
 	if (!service)
 		return false;
@@ -1452,7 +1452,7 @@ void OBSBasic::OBSInit()
 	if (!sceneCollection)
 		throw "Failed to get scene collection name";
 
-	ret = snprintf(fileName, 512, "obs-studio/basic/scenes/%s.json",
+	ret = snprintf(fileName, 512, "ebs-studio/basic/scenes/%s.json",
 			sceneCollection);
 	if (ret <= 0)
 		throw "Failed to create scene collection file name";
@@ -1655,22 +1655,22 @@ void OBSBasic::OBSInit()
 		config_save_safe(App()->GlobalConfig(), "tmp", nullptr);
 	}
 
-	if (!first_run && !has_last_version && !Active()) {
-		QString msg;
-		msg = QTStr("Basic.FirstStartup.RunWizard");
-
-		QMessageBox::StandardButton button =
-			OBSMessageBox::question(this, QTStr("Basic.AutoConfig"),
-					msg);
-
-		if (button == QMessageBox::Yes) {
-			on_autoConfigure_triggered();
-		} else {
-			msg = QTStr("Basic.FirstStartup.RunWizard.NoClicked");
-			OBSMessageBox::information(this,
-					QTStr("Basic.AutoConfig"), msg);
-		}
-	}
+//	if (!first_run && !has_last_version && !Active()) {
+//		QString msg;
+//		msg = QTStr("Basic.FirstStartup.RunWizard");
+//
+//		QMessageBox::StandardButton button =
+//			OBSMessageBox::question(this, QTStr("Basic.AutoConfig"),
+//					msg);
+//
+//		if (button == QMessageBox::Yes) {
+//			on_autoConfigure_triggered();
+//		} else {
+//			msg = QTStr("Basic.FirstStartup.RunWizard.NoClicked");
+//			OBSMessageBox::information(this,
+//					QTStr("Basic.AutoConfig"), msg);
+//		}
+//	}
 
 	ToggleMixerLayout(config_get_bool(App()->GlobalConfig(), "BasicWindow",
 			"VerticalVolControl"));
@@ -2036,20 +2036,20 @@ void OBSBasic::CreateHotkeys()
 	LoadHotkey(forceStreamingStopHotkey,
 			"OBSBasic.ForceStopStreaming");
 
-	recordingHotkeys = obs_hotkey_pair_register_frontend(
-			"OBSBasic.StartRecording",
-			Str("Basic.Main.StartRecording"),
-			"OBSBasic.StopRecording",
-			Str("Basic.Main.StopRecording"),
-			MAKE_CALLBACK(!basic.outputHandler->RecordingActive() &&
-				!basic.ui->recordButton->isChecked(),
-				basic.StartRecording, "Starting recording"),
-			MAKE_CALLBACK(basic.outputHandler->RecordingActive() &&
-				basic.ui->recordButton->isChecked(),
-				basic.StopRecording, "Stopping recording"),
-			this, this);
-	LoadHotkeyPair(recordingHotkeys,
-			"OBSBasic.StartRecording", "OBSBasic.StopRecording");
+//	recordingHotkeys = obs_hotkey_pair_register_frontend(
+//			"OBSBasic.StartRecording",
+//			Str("Basic.Main.StartRecording"),
+//			"OBSBasic.StopRecording",
+//			Str("Basic.Main.StopRecording"),
+//			MAKE_CALLBACK(!basic.outputHandler->RecordingActive() &&
+//				!basic.ui->recordButton->isChecked(),
+//				basic.StartRecording, "Starting recording"),
+//			MAKE_CALLBACK(basic.outputHandler->RecordingActive() &&
+//				basic.ui->recordButton->isChecked(),
+//				basic.StopRecording, "Stopping recording"),
+//			this, this);
+//	LoadHotkeyPair(recordingHotkeys,
+//			"OBSBasic.StartRecording", "OBSBasic.StopRecording");
 
 	replayBufHotkeys = obs_hotkey_pair_register_frontend(
 			"OBSBasic.StartReplayBuffer",
@@ -2098,7 +2098,7 @@ void OBSBasic::CreateHotkeys()
 void OBSBasic::ClearHotkeys()
 {
 	obs_hotkey_pair_unregister(streamingHotkeys);
-	obs_hotkey_pair_unregister(recordingHotkeys);
+//	obs_hotkey_pair_unregister(recordingHotkeys);
 	obs_hotkey_pair_unregister(replayBufHotkeys);
 	obs_hotkey_unregister(forceStreamingStopHotkey);
 	obs_hotkey_unregister(togglePreviewProgramHotkey);
@@ -2244,7 +2244,7 @@ void OBSBasic::SaveProjectDeferred()
 	if (!sceneCollection)
 		return;
 
-	ret = snprintf(fileName, 512, "obs-studio/basic/scenes/%s.json",
+	ret = snprintf(fileName, 512, "ebs-studio/basic/scenes/%s.json",
 			sceneCollection);
 	if (ret <= 0)
 		return;
@@ -3242,7 +3242,7 @@ void OBSBasic::RenderMain(void *data, uint32_t cx, uint32_t cy)
 obs_service_t *OBSBasic::GetService()
 {
 	if (!service) {
-		service = obs_service_create("rtmp_common", NULL, NULL,
+		service = obs_service_create("webrtc_janus", NULL, NULL,
 				nullptr);
 		obs_service_release(service);
 	}
@@ -3388,7 +3388,7 @@ int OBSBasic::ResetVideo()
 
 		/* Try OpenGL if DirectX fails on windows */
 		if (astrcmpi(ovi.graphics_module, DL_OPENGL) != 0) {
-			blog(LOG_WARNING, "Failed to initialize obs video (%d) "
+			blog(LOG_WARNING, "Failed to initialize ebs video (%d) "
 					  "with graphics_module='%s', retrying "
 					  "with graphics_module='%s'",
 					  ret, ovi.graphics_module,
@@ -3660,15 +3660,15 @@ void OBSBasic::changeEvent(QEvent *event)
 
 void OBSBasic::on_actionShow_Recordings_triggered()
 {
-	const char *mode = config_get_string(basicConfig, "Output", "Mode");
-	const char *type = config_get_string(basicConfig, "AdvOut", "RecType");
-	const char *adv_path = strcmp(type, "Standard") ?
-			config_get_string(basicConfig, "AdvOut", "FFFilePath") :
-			config_get_string(basicConfig, "AdvOut", "RecFilePath");
-	const char *path = strcmp(mode, "Advanced") ?
-			config_get_string(basicConfig, "SimpleOutput", "FilePath") :
-			adv_path;
-	QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+//	const char *mode = config_get_string(basicConfig, "Output", "Mode");
+//	const char *type = config_get_string(basicConfig, "AdvOut", "RecType");
+//	const char *adv_path = strcmp(type, "Standard") ?
+//			config_get_string(basicConfig, "AdvOut", "FFFilePath") :
+//			config_get_string(basicConfig, "AdvOut", "RecFilePath");
+//	const char *path = strcmp(mode, "Advanced") ?
+//			config_get_string(basicConfig, "SimpleOutput", "FilePath") :
+//			adv_path;
+//	QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }
 
 void OBSBasic::on_actionRemux_triggered()
@@ -4235,7 +4235,6 @@ void OBSBasic::CreateSourcePopupMenu(int idx, bool preview)
 		int height = obs_source_get_height(source);
 
 		resizeOutput->setEnabled(!(ui->streamButton->isChecked() ||
-				ui->recordButton->isChecked() ||
 				(replayBufferButton &&
 				replayBufferButton->isChecked())));
 
@@ -4548,7 +4547,7 @@ void OBSBasic::UploadLog(const char *subdir, const char *file)
 	ui->menuLogFiles->setEnabled(false);
 
 	stringstream ss;
-	ss << "OBS " << App()->GetVersionString()
+	ss << "EBS " << App()->GetVersionString()
 	   << " log file uploaded at " << CurrentDateTimeString()
 	   << "\n\n" << fileString;
 
@@ -4570,7 +4569,7 @@ void OBSBasic::UploadLog(const char *subdir, const char *file)
 void OBSBasic::on_actionShowLogs_triggered()
 {
 	char logDir[512];
-	if (GetConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
+	if (GetConfigPath(logDir, sizeof(logDir), "ebs-studio/logs") <= 0)
 		return;
 
 	QUrl url = QUrl::fromLocalFile(QT_UTF8(logDir));
@@ -4579,18 +4578,18 @@ void OBSBasic::on_actionShowLogs_triggered()
 
 void OBSBasic::on_actionUploadCurrentLog_triggered()
 {
-	UploadLog("obs-studio/logs", App()->GetCurrentLog());
+	UploadLog("ebs-studio/logs", App()->GetCurrentLog());
 }
 
 void OBSBasic::on_actionUploadLastLog_triggered()
 {
-	UploadLog("obs-studio/logs", App()->GetLastLog());
+	UploadLog("ebs-studio/logs", App()->GetLastLog());
 }
 
 void OBSBasic::on_actionViewCurrentLog_triggered()
 {
 	char logDir[512];
-	if (GetConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
+	if (GetConfigPath(logDir, sizeof(logDir), "ebs-studio/logs") <= 0)
 		return;
 
 	const char* log = App()->GetCurrentLog();
@@ -4606,7 +4605,7 @@ void OBSBasic::on_actionViewCurrentLog_triggered()
 void OBSBasic::on_actionShowCrashLogs_triggered()
 {
 	char logDir[512];
-	if (GetConfigPath(logDir, sizeof(logDir), "obs-studio/crashes") <= 0)
+	if (GetConfigPath(logDir, sizeof(logDir), "ebs-studio/crashes") <= 0)
 		return;
 
 	QUrl url = QUrl::fromLocalFile(QT_UTF8(logDir));
@@ -4615,7 +4614,7 @@ void OBSBasic::on_actionShowCrashLogs_triggered()
 
 void OBSBasic::on_actionUploadLastCrashLog_triggered()
 {
-	UploadLog("obs-studio/crashes", App()->GetLastCrashLog());
+	UploadLog("ebs-studio/crashes", App()->GetLastCrashLog());
 }
 
 void OBSBasic::on_actionCheckForUpdates_triggered()
@@ -4757,10 +4756,10 @@ void OBSBasic::StartStreaming()
 		return;
 	}
 
-	bool recordWhenStreaming = config_get_bool(GetGlobalConfig(),
-			"BasicWindow", "RecordWhenStreaming");
-	if (recordWhenStreaming)
-		StartRecording();
+//	bool recordWhenStreaming = config_get_bool(GetGlobalConfig(),
+//			"BasicWindow", "RecordWhenStreaming");
+//	if (recordWhenStreaming)
+//		StartRecording();
 
 	bool replayBufferWhileStreaming = config_get_bool(GetGlobalConfig(),
 		"BasicWindow", "ReplayBufferWhileStreaming");
@@ -4793,7 +4792,7 @@ inline void OBSBasic::OnActivate()
 {
 	if (ui->profileMenu->isEnabled()) {
 		ui->profileMenu->setEnabled(false);
-		ui->autoConfigure->setEnabled(false);
+//		ui->autoConfigure->setEnabled(false);
 		App()->IncrementSleepInhibition();
 		UpdateProcessPriority();
 
@@ -4806,12 +4805,12 @@ inline void OBSBasic::OnDeactivate()
 {
 	if (!outputHandler->Active() && !ui->profileMenu->isEnabled()) {
 		ui->profileMenu->setEnabled(true);
-		ui->autoConfigure->setEnabled(true);
+//		ui->autoConfigure->setEnabled(true);
 		App()->DecrementSleepInhibition();
 		ClearProcessPriority();
 
 		if (trayIcon)
-			trayIcon->setIcon(QIcon(":/res/images/obs.png"));
+			trayIcon->setIcon(QIcon(":/res/images/ebs.png"));
 	}
 }
 
@@ -5037,106 +5036,106 @@ void OBSBasic::AutoRemux()
 
 void OBSBasic::StartRecording()
 {
-	if (outputHandler->RecordingActive())
-		return;
-	if (disableOutputsRef)
-		return;
-
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STARTING);
-
-	SaveProject();
-
-	if (!outputHandler->StartRecording())
-		ui->recordButton->setChecked(false);
+//	if (outputHandler->RecordingActive())
+//		return;
+//	if (disableOutputsRef)
+//		return;
+//
+//	if (api)
+//		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STARTING);
+//
+//	SaveProject();
+//
+//	if (!outputHandler->StartRecording())
+//		ui->recordButton->setChecked(false);
 }
 
 void OBSBasic::RecordStopping()
 {
-	ui->recordButton->setText(QTStr("Basic.Main.StoppingRecording"));
-
-	if (sysTrayRecord)
-		sysTrayRecord->setText(ui->recordButton->text());
-
-	recordingStopping = true;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STOPPING);
+//	ui->recordButton->setText(QTStr("Basic.Main.StoppingRecording"));
+//
+//	if (sysTrayRecord)
+//		sysTrayRecord->setText(ui->recordButton->text());
+//
+//	recordingStopping = true;
+//	if (api)
+//		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STOPPING);
 }
 
 void OBSBasic::StopRecording()
 {
-	SaveProject();
-
-	if (outputHandler->RecordingActive())
-		outputHandler->StopRecording(recordingStopping);
-
-	OnDeactivate();
+//	SaveProject();
+//
+//	if (outputHandler->RecordingActive())
+//		outputHandler->StopRecording(recordingStopping);
+//
+//	OnDeactivate();
 }
 
 void OBSBasic::RecordingStart()
 {
-	ui->statusbar->RecordingStarted(outputHandler->fileOutput);
-	ui->recordButton->setText(QTStr("Basic.Main.StopRecording"));
-	ui->recordButton->setChecked(true);
-
-	if (sysTrayRecord)
-		sysTrayRecord->setText(ui->recordButton->text());
-
-	recordingStopping = false;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STARTED);
-
-	OnActivate();
-
-	blog(LOG_INFO, RECORDING_START);
+//	ui->statusbar->RecordingStarted(outputHandler->fileOutput);
+//	ui->recordButton->setText(QTStr("Basic.Main.StopRecording"));
+//	ui->recordButton->setChecked(true);
+//
+//	if (sysTrayRecord)
+//		sysTrayRecord->setText(ui->recordButton->text());
+//
+//	recordingStopping = false;
+//	if (api)
+//		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STARTED);
+//
+//	OnActivate();
+//
+//	blog(LOG_INFO, RECORDING_START);
 }
 
 void OBSBasic::RecordingStop(int code)
 {
-	ui->statusbar->RecordingStopped();
-	ui->recordButton->setText(QTStr("Basic.Main.StartRecording"));
-	ui->recordButton->setChecked(false);
-
-	if (sysTrayRecord)
-		sysTrayRecord->setText(ui->recordButton->text());
-
-	blog(LOG_INFO, RECORDING_STOP);
-
-	if (code == OBS_OUTPUT_UNSUPPORTED && isVisible()) {
-		OBSMessageBox::information(this,
-				QTStr("Output.RecordFail.Title"),
-				QTStr("Output.RecordFail.Unsupported"));
-
-	} else if (code == OBS_OUTPUT_NO_SPACE && isVisible()) {
-		OBSMessageBox::information(this,
-				QTStr("Output.RecordNoSpace.Title"),
-				QTStr("Output.RecordNoSpace.Msg"));
-
-	} else if (code != OBS_OUTPUT_SUCCESS && isVisible()) {
-		OBSMessageBox::information(this,
-				QTStr("Output.RecordError.Title"),
-				QTStr("Output.RecordError.Msg"));
-
-	} else if (code == OBS_OUTPUT_UNSUPPORTED && !isVisible()) {
-		SysTrayNotify(QTStr("Output.RecordFail.Unsupported"),
-			QSystemTrayIcon::Warning);
-
-	} else if (code == OBS_OUTPUT_NO_SPACE && !isVisible()) {
-		SysTrayNotify(QTStr("Output.RecordNoSpace.Msg"),
-			QSystemTrayIcon::Warning);
-
-	} else if (code != OBS_OUTPUT_SUCCESS && !isVisible()) {
-		SysTrayNotify(QTStr("Output.RecordError.Msg"),
-			QSystemTrayIcon::Warning);
-	}
-
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STOPPED);
-
-	if (remuxAfterRecord)
-		AutoRemux();
-
-	OnDeactivate();
+//	ui->statusbar->RecordingStopped();
+//	ui->recordButton->setText(QTStr("Basic.Main.StartRecording"));
+//	ui->recordButton->setChecked(false);
+//
+//	if (sysTrayRecord)
+//		sysTrayRecord->setText(ui->recordButton->text());
+//
+//	blog(LOG_INFO, RECORDING_STOP);
+//
+//	if (code == OBS_OUTPUT_UNSUPPORTED && isVisible()) {
+//		OBSMessageBox::information(this,
+//				QTStr("Output.RecordFail.Title"),
+//				QTStr("Output.RecordFail.Unsupported"));
+//
+//	} else if (code == OBS_OUTPUT_NO_SPACE && isVisible()) {
+//		OBSMessageBox::information(this,
+//				QTStr("Output.RecordNoSpace.Title"),
+//				QTStr("Output.RecordNoSpace.Msg"));
+//
+//	} else if (code != OBS_OUTPUT_SUCCESS && isVisible()) {
+//		OBSMessageBox::information(this,
+//				QTStr("Output.RecordError.Title"),
+//				QTStr("Output.RecordError.Msg"));
+//
+//	} else if (code == OBS_OUTPUT_UNSUPPORTED && !isVisible()) {
+//		SysTrayNotify(QTStr("Output.RecordFail.Unsupported"),
+//			QSystemTrayIcon::Warning);
+//
+//	} else if (code == OBS_OUTPUT_NO_SPACE && !isVisible()) {
+//		SysTrayNotify(QTStr("Output.RecordNoSpace.Msg"),
+//			QSystemTrayIcon::Warning);
+//
+//	} else if (code != OBS_OUTPUT_SUCCESS && !isVisible()) {
+//		SysTrayNotify(QTStr("Output.RecordError.Msg"),
+//			QSystemTrayIcon::Warning);
+//	}
+//
+//	if (api)
+//		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STOPPED);
+//
+//	if (remuxAfterRecord)
+//		AutoRemux();
+//
+//	OnDeactivate();
 }
 
 #define RP_NO_HOTKEY_TITLE QTStr("Output.ReplayBuffer.NoHotkey.Title")
@@ -5354,16 +5353,16 @@ void OBSBasic::on_streamButton_clicked()
 
 void OBSBasic::on_recordButton_clicked()
 {
-	if (outputHandler->RecordingActive()) {
-		StopRecording();
-	} else {
-		if (!NoSourcesConfirmation()) {
-			ui->recordButton->setChecked(false);
-			return;
-		}
-
-		StartRecording();
-	}
+//	if (outputHandler->RecordingActive()) {
+//		StopRecording();
+//	} else {
+//		if (!NoSourcesConfirmation()) {
+//			ui->recordButton->setChecked(false);
+//			return;
+//		}
+//
+//		StartRecording();
+//	}
 }
 
 void OBSBasic::on_settingsButton_clicked()
@@ -5392,7 +5391,7 @@ void OBSBasic::on_actionDiscord_triggered()
 void OBSBasic::on_actionShowSettingsFolder_triggered()
 {
 	char path[512];
-	int ret = GetConfigPath(path, 512, "obs-studio");
+	int ret = GetConfigPath(path, 512, "ebs-studio");
 	if (ret <= 0)
 		return;
 
@@ -6122,7 +6121,7 @@ void OBSBasic::UpdateTitleBar()
 	const char *sceneCollection = config_get_string(App()->GlobalConfig(),
 			"Basic", "SceneCollection");
 
-	name << "OBS ";
+	name << "EBS ";
 	if (previewProgramMode)
 		name << "Studio ";
 
@@ -6150,7 +6149,7 @@ int OBSBasic::GetProfilePath(char *path, size_t size, const char *file) const
 	if (!file)
 		file = "";
 
-	ret = GetConfigPath(profiles_path, 512, "obs-studio/basic/profiles");
+	ret = GetConfigPath(profiles_path, 512, "ebs-studio/basic/profiles");
 	if (ret <= 0)
 		return ret;
 
@@ -6373,16 +6372,16 @@ void OBSBasic::ToggleShowHide()
 
 void OBSBasic::SystemTrayInit()
 {
-	trayIcon.reset(new QSystemTrayIcon(QIcon(":/res/images/obs.png"),
+	trayIcon.reset(new QSystemTrayIcon(QIcon(":/res/images/ebs.png"),
 			this));
-	trayIcon->setToolTip("OBS Studio");
+	trayIcon->setToolTip("EBS Studio");
 
 	showHide = new QAction(QTStr("Basic.SystemTray.Show"),
 			trayIcon.data());
 	sysTrayStream = new QAction(QTStr("Basic.Main.StartStreaming"),
 			trayIcon.data());
-	sysTrayRecord = new QAction(QTStr("Basic.Main.StartRecording"),
-			trayIcon.data());
+//	sysTrayRecord = new QAction(QTStr("Basic.Main.StartRecording"),
+//			trayIcon.data());
 	sysTrayReplayBuffer = new QAction(QTStr("Basic.Main.StartReplayBuffer"),
 			trayIcon.data());
 	exit = new QAction(QTStr("Exit"),
@@ -6399,7 +6398,7 @@ void OBSBasic::SystemTrayInit()
 	trayMenu->addMenu(previewProjector);
 	trayMenu->addMenu(studioProgramProjector);
 	trayMenu->addAction(sysTrayStream);
-	trayMenu->addAction(sysTrayRecord);
+//	trayMenu->addAction(sysTrayRecord);
 	trayMenu->addAction(sysTrayReplayBuffer);
 	trayMenu->addAction(exit);
 	trayIcon->setContextMenu(trayMenu);
@@ -6415,8 +6414,8 @@ void OBSBasic::SystemTrayInit()
 			this, SLOT(ToggleShowHide()));
 	connect(sysTrayStream, SIGNAL(triggered()),
 			this, SLOT(on_streamButton_clicked()));
-	connect(sysTrayRecord, SIGNAL(triggered()),
-			this, SLOT(on_recordButton_clicked()));
+//	connect(sysTrayRecord, SIGNAL(triggered()),
+//			this, SLOT(on_recordButton_clicked()));
 	connect(sysTrayReplayBuffer.data(), &QAction::triggered,
 			this, &OBSBasic::ReplayBufferClicked);
 	connect(exit, SIGNAL(triggered()),
@@ -6443,7 +6442,7 @@ void OBSBasic::SysTrayNotify(const QString &text,
 	if (QSystemTrayIcon::supportsMessages()) {
 		QSystemTrayIcon::MessageIcon icon =
 				QSystemTrayIcon::MessageIcon(n);
-		trayIcon->showMessage("OBS Studio", text, icon, 10000);
+		trayIcon->showMessage("EBS Studio", text, icon, 10000);
 	}
 }
 
@@ -6770,7 +6769,7 @@ void OBSBasic::on_actionShowAbout_triggered()
 
 void OBSBasic::ResizeOutputSizeOfSource()
 {
-	if (ui->streamButton->isChecked() || ui->recordButton->isChecked() ||
+	if (ui->streamButton->isChecked() ||
 			(replayBufferButton && replayBufferButton->isChecked()))
 		return;
 

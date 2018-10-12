@@ -467,34 +467,34 @@ static bool MakeUserDirs()
 {
 	char path[512];
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/basic") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/basic") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/logs") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/logs") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/profiler_data") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/profiler_data") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
 
 #ifdef _WIN32
-	if (GetConfigPath(path, sizeof(path), "obs-studio/crashes") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/crashes") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/updates") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/updates") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
 #endif
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/plugin_config") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
@@ -506,12 +506,12 @@ static bool MakeUserProfileDirs()
 {
 	char path[512];
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/basic/profiles") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/basic/profiles") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/basic/scenes") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/basic/scenes") <= 0)
 		return false;
 	if (!do_mkdir(path))
 		return false;
@@ -525,7 +525,7 @@ static string GetProfileDirFromName(const char *name)
 	os_glob_t *glob;
 	char path[512];
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/basic/profiles") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/basic/profiles") <= 0)
 		return outputPath;
 
 	strcat(path, "/*");
@@ -571,7 +571,7 @@ static string GetSceneCollectionFileFromName(const char *name)
 	os_glob_t *glob;
 	char path[512];
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/basic/scenes") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/basic/scenes") <= 0)
 		return outputPath;
 
 	strcat(path, "/*.json");
@@ -652,7 +652,7 @@ bool OBSApp::InitGlobalConfig()
 	bool changed = false;
 
 	int len = GetConfigPath(path, sizeof(path),
-			"obs-studio/global.ini");
+			"ebs-studio/global.ini");
 	if (len <= 0) {
 		return false;
 	}
@@ -986,7 +986,7 @@ bool OBSApp::SetTheme(std::string name, std::string path)
 	if (path == "") {
 		char userDir[512];
 		name = "themes/" + name + ".qss";
-		string temp = "obs-studio/" + name;
+		string temp = "ebs-studio/" + name;
 		int ret = GetConfigPath(userDir, sizeof(userDir),
 				temp.c_str());
 
@@ -1063,13 +1063,13 @@ static void move_basic_to_profiles(void)
 	os_glob_t *glob;
 
 	/* if not first time use */
-	if (GetConfigPath(path, 512, "obs-studio/basic") <= 0)
+	if (GetConfigPath(path, 512, "ebs-studio/basic") <= 0)
 		return;
 	if (!os_file_exists(path))
 		return;
 
 	/* if the profiles directory doesn't already exist */
-	if (GetConfigPath(new_path, 512, "obs-studio/basic/profiles") <= 0)
+	if (GetConfigPath(new_path, 512, "ebs-studio/basic/profiles") <= 0)
 		return;
 	if (os_file_exists(new_path))
 		return;
@@ -1116,12 +1116,12 @@ static void move_basic_to_scene_collections(void)
 	char path[512];
 	char new_path[512];
 
-	if (GetConfigPath(path, 512, "obs-studio/basic") <= 0)
+	if (GetConfigPath(path, 512, "ebs-studio/basic") <= 0)
 		return;
 	if (!os_file_exists(path))
 		return;
 
-	if (GetConfigPath(new_path, 512, "obs-studio/basic/scenes") <= 0)
+	if (GetConfigPath(new_path, 512, "ebs-studio/basic/scenes") <= 0)
 		return;
 	if (os_file_exists(new_path))
 		return;
@@ -1196,7 +1196,7 @@ static bool StartupOBS(const char *locale, profiler_name_store_t *store)
 {
 	char path[512];
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0)
+	if (GetConfigPath(path, sizeof(path), "ebs-studio/plugin_config") <= 0)
 		return false;
 
 	return obs_startup(locale, path, store);
@@ -1538,13 +1538,13 @@ static void create_log_file(fstream &logFile)
 {
 	stringstream dst;
 
-	get_last_log(false, "obs-studio/logs", lastLogFile);
+	get_last_log(false, "ebs-studio/logs", lastLogFile);
 #ifdef _WIN32
-	get_last_log(true, "obs-studio/crashes", lastCrashLogFile);
+	get_last_log(true, "ebs-studio/crashes", lastCrashLogFile);
 #endif
 
 	currentLogFile = GenerateTimeDateFilename("txt");
-	dst << "obs-studio/logs/" << currentLogFile.c_str();
+	dst << "ebs-studio/logs/" << currentLogFile.c_str();
 
 	BPtr<char> path(GetConfigPathPtr(dst.str().c_str()));
 
@@ -1559,7 +1559,7 @@ static void create_log_file(fstream &logFile)
 #endif
 
 	if (logFile.is_open()) {
-		delete_oldest_file(false, "obs-studio/logs");
+		delete_oldest_file(false, "ebs-studio/logs");
 		base_set_log_handler(do_log, &logFile);
 	} else {
 		blog(LOG_ERROR, "Failed to open log file");
@@ -1605,7 +1605,7 @@ static void SaveProfilerData(const ProfilerSnapshot &snap)
 
 #define LITERAL_SIZE(x) x, (sizeof(x) - 1)
 	ostringstream dst;
-	dst.write(LITERAL_SIZE("obs-studio/profiler_data/"));
+	dst.write(LITERAL_SIZE("ebs-studio/profiler_data/"));
 	dst.write(currentLogFile.c_str(), pos);
 	dst.write(LITERAL_SIZE(".csv.gz"));
 #undef LITERAL_SIZE
@@ -1653,7 +1653,7 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 		bool created_log = false;
 
 		program.AppInit();
-		delete_oldest_file(false, "obs-studio/profiler_data");
+		delete_oldest_file(false, "ebs-studio/profiler_data");
 
 		OBSTranslator translator;
 		program.installTranslator(&translator);
@@ -1697,13 +1697,13 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 
 		if (multi) {
 			blog(LOG_INFO, "User enabled --multi flag and is now "
-					"running multiple instances of OBS.");
+					"running multiple instances of EBS.");
 		} else {
 			blog(LOG_WARNING, "================================");
-			blog(LOG_WARNING, "Warning: OBS is already running!");
+			blog(LOG_WARNING, "Warning: EBS is already running!");
 			blog(LOG_WARNING, "================================");
 			blog(LOG_WARNING, "User is now running multiple "
-					"instances of OBS!");
+					"instances of EBS!");
 		}
 
 		/* --------------------------------------- */
@@ -1744,7 +1744,7 @@ run:
 #ifdef _WIN32
 
 #define CRASH_MESSAGE \
-	"Woops, OBS has crashed!\n\nWould you like to copy the crash log " \
+	"Woops, EBS has crashed!\n\nWould you like to copy the crash log " \
 	"to the clipboard?  (Crash logs will still be saved to the " \
 	"%appdata%\\obs-studio\\crashes directory)"
 
@@ -1755,9 +1755,9 @@ static void main_crash_handler(const char *format, va_list args, void *param)
 	vsnprintf(text, MAX_CRASH_REPORT_SIZE, format, args);
 	text[MAX_CRASH_REPORT_SIZE - 1] = 0;
 
-	delete_oldest_file(true, "obs-studio/crashes");
+	delete_oldest_file(true, "ebs-studio/crashes");
 
-	string name = "obs-studio/crashes/Crash ";
+	string name = "ebs-studio/crashes/Crash ";
 	name += GenerateTimeDateFilename("txt");
 
 	BPtr<char> path(GetConfigPathPtr(name.c_str()));
@@ -1776,7 +1776,7 @@ static void main_crash_handler(const char *format, va_list args, void *param)
 	file << text;
 	file.close();
 
-	int ret = MessageBoxA(NULL, CRASH_MESSAGE, "OBS has crashed!",
+	int ret = MessageBoxA(NULL, CRASH_MESSAGE, "EBS has crashed!",
 			MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
 
 	if (ret == IDYES) {
@@ -1970,7 +1970,7 @@ static void move_to_xdg(void)
 	if (os_mkdirs(new_path) == MKDIR_ERROR)
 		return;
 
-	if (GetConfigPath(new_path, 512, "obs-studio") <= 0)
+	if (GetConfigPath(new_path, 512, "ebs-studio") <= 0)
 		return;
 
 	if (os_file_exists(old_path) && !os_file_exists(new_path)) {
@@ -2094,7 +2094,7 @@ static void convert_14_2_encoder_setting(const char *encoder, const char *file)
 		modified = true;
 	}
 
-	if (!rc_item && astrcmpi(encoder, "obs_x264") == 0) {
+	if (!rc_item && astrcmpi(encoder, "ebs_x264") == 0) {
 		if (!cbr_item)
 			obs_data_set_string(data, "rate_control", "CBR");
 		else if (!cbr)
@@ -2114,7 +2114,7 @@ static void convert_14_2_encoder_setting(const char *encoder, const char *file)
 static void upgrade_settings(void)
 {
 	char path[512];
-	int pathlen = GetConfigPath(path, 512, "obs-studio/basic/profiles");
+	int pathlen = GetConfigPath(path, 512, "ebs-studio/basic/profiles");
 
 	if (pathlen <= 0)
 		return;
@@ -2264,7 +2264,7 @@ int main(int argc, char *argv[])
 			exit(0);
 
 		} else if (arg_is(argv[i], "--version", "-V")) {
-			std::cout << "OBS Studio - " << 
+			std::cout << "EBS Studio - " <<
 				App()->GetVersionString() << "\n";
 			exit(0);
 		}
