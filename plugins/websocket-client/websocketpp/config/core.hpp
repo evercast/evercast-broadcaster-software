@@ -114,26 +114,26 @@ struct core {
         /**
          * Exactly what this includes depends on the socket policy in use
          */
-        static const long timeout_socket_pre_init = 5000;
+        static const long timeout_socket_pre_init = 15000;
 
         /// Length of time to wait before a proxy handshake is aborted
-        static const long timeout_proxy = 5000;
+        static const long timeout_proxy = 15000;
 
         /// Length of time to wait for socket post-initialization
         /**
          * Exactly what this includes depends on the socket policy in use.
          * Often this means the TLS handshake
          */
-        static const long timeout_socket_post_init = 5000;
+        static const long timeout_socket_post_init = 15000;
 
         /// Length of time to wait for dns resolution
-        static const long timeout_dns_resolve = 5000;
+        static const long timeout_dns_resolve = 15000;
 
         /// Length of time to wait for TCP connect
-        static const long timeout_connect = 5000;
+        static const long timeout_connect = 15000;
 
         /// Length of time to wait for socket shutdown
-        static const long timeout_socket_shutdown = 5000;
+        static const long timeout_socket_shutdown = 15000;
     };
 
     /// Transport Endpoint Component
@@ -148,11 +148,11 @@ struct core {
     /// Default timer values (in ms)
 
     /// Length of time before an opening handshake is aborted
-    static const long timeout_open_handshake = 5000;
+    static const long timeout_open_handshake = 15000;
     /// Length of time before a closing handshake is aborted
-    static const long timeout_close_handshake = 5000;
+    static const long timeout_close_handshake = 15000;
     /// Length of time to wait for a pong after a ping
-    static const long timeout_pong = 5000;
+    static const long timeout_pong = 15000;
 
     /// WebSocket Protocol version to use as a client
     /**
