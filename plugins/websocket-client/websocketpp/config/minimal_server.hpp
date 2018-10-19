@@ -175,7 +175,7 @@ struct minimal_server {
     /// Default timer values (in ms)
 
     /// Length of time before an opening handshake is aborted
-    static const long timeout_open_handshake = 5000;
+    static const long timeout_open_handshake = 15000;
     /// Length of time before a closing handshake is aborted
     static const long timeout_close_handshake = 5000;
     /// Length of time to wait for a pong after a ping
