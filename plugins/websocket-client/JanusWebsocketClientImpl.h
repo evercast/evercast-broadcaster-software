@@ -24,6 +24,7 @@ public:
     virtual bool trickle(const std::string &mid, int index, const std::string &candidate, bool last);
     virtual bool disconnect(bool wait);
     void keepConnectionAlive();
+    void destroy();
 
 private:
     bool logged;
