@@ -318,11 +318,33 @@ void JanusWebsocketClientImpl::keepConnectionAlive()
   }
 };
 
+void JanusWebsocketClientImpl::destroy()
+{
+    if (connection)
+    {
+      json destroyMsg = {
+        { "janus"    , "destroy" },
+        { "session_id" , session_id },
+        { "transaction" , std::to_string(rand()) },
+      };
+      try
+      {
+        connection->send(destroyMsg.dump());
+      }
+      catch (websocketpp::exception const & e)
+      {
+        std::cout << e.what() << std::endl;
+//        return;
+      }
+    }
+}
+
 bool JanusWebsocketClientImpl::disconnect(bool wait)
 {
   
   try
   {
+    destroy();
     // Stop keepAlive
     if (thread_keepAlive.joinable()){
       is_running.store(false);
