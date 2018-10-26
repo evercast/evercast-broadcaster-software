@@ -23,6 +23,14 @@ JanusWebsocketClientImpl::~JanusWebsocketClientImpl()
 bool JanusWebsocketClientImpl::connect(std::string url, std::string room, std::string username, std::string token, WebsocketClient::Listener* listener)
 {
   websocketpp::lib::error_code ec;
+
+  url.erase(0, url.find_first_not_of(" \n\r\t"));
+  token.erase(0, token.find_first_not_of(" \n\r\t"));
+  room.erase(0, room.find_first_not_of(" \n\r\t"));
+
+  url.erase(url.find_last_not_of(" \n\r\t")+1);
+  token.erase(token.find_last_not_of(" \n\r\t")+1);
+  room.erase(room.find_last_not_of(" \n\r\t")+1);
   
   //reset loggin flag
   logged = false;
@@ -166,7 +174,6 @@ bool JanusWebsocketClientImpl::connect(std::string url, std::string room, std::s
       return ctx;
     });
     //Create websocket connection and token
-//    std::string wss = url + "/?token=5f3293b2-7836-43f3-b4b4-598c68792be0&roomId=1c5c17ac-94ce-4e7e-83c7-e75f358016f9";
     std::string wss = url + "/?token=" + token + "&roomId=" + room;
     //Get connection
     connection = client.get_connection(wss, ec);
