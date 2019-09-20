@@ -72,6 +72,8 @@ static const char *source_signals[] = {
 	"void update_flags(ptr source, int flags)",
 	"void audio_sync(ptr source, int out int offset)",
 	"void audio_mixers(ptr source, in out int mixers)",
+	"void audio_activate(ptr source)",
+	"void audio_deactivate(ptr source)",
 	"void filter_add(ptr source, ptr filter)",
 	"void filter_remove(ptr source, ptr filter)",
 	"void reorder_filters(ptr source)",
@@ -150,6 +152,7 @@ bool obs_source_init(struct obs_source *source)
 	source->volume = 1.0f;
 	source->sync_offset = 0;
 	source->balance = 0.5f;
+	source->audio_active = true;
 	pthread_mutex_init_value(&source->filter_mutex);
 	pthread_mutex_init_value(&source->async_mutex);
 	pthread_mutex_init_value(&source->audio_mutex);
