@@ -165,17 +165,17 @@ set(obs-outputs_webrtc_HEADERS
 	SDPModif.h
 	VideoCapturer.h
 	WebRTCStream.h
-	janus-stream.h
-	wowza-stream.h
-	millicast-stream.h
+#	janus-stream.h
+#	wowza-stream.h
+#	millicast-stream.h
 	evercast-stream.h)
 set(obs-outputs_webrtc_SOURCES
 	AudioDeviceModuleWrapper.cpp
 	VideoCapturer.cpp
 	WebRTCStream.cpp
-	janus-stream.cpp
-	wowza-stream.cpp
-	millicast-stream.cpp
+#	janus-stream.cpp
+#	wowza-stream.cpp
+#	millicast-stream.cpp
 	evercast-stream.cpp)
 
 if(NOT WIN32)

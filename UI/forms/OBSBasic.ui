@@ -195,9 +195,6 @@
     <property name="title">
      <string>Basic.MainMenu.File</string>
     </property>
-    <addaction name="actionShow_Recordings"/>
-    <addaction name="actionRemux"/>
-    <addaction name="separator"/>
     <addaction name="action_Settings"/>
     <addaction name="actionShowSettingsFolder"/>
     <addaction name="actionShowProfileFolder"/>
@@ -245,6 +242,12 @@
      <property name="title">
       <string>Basic.MainMenu.Edit.Transform</string>
      </property>
+     <addaction name="actionFitToScreen"/>
+     <addaction name="actionStretchToScreen"/>
+     <addaction name="actionCenterToScreen"/>
+     <addaction name="actionVerticalCenter"/>
+     <addaction name="actionHorizontalCenter"/>
+     <addaction name="separator"/>
      <addaction name="actionEditTransform"/>
      <addaction name="actionCopyTransform"/>
      <addaction name="actionPasteTransform"/>
@@ -256,12 +259,6 @@
      <addaction name="separator"/>
      <addaction name="actionFlipHorizontal"/>
      <addaction name="actionFlipVertical"/>
-     <addaction name="separator"/>
-     <addaction name="actionFitToScreen"/>
-     <addaction name="actionStretchToScreen"/>
-     <addaction name="actionCenterToScreen"/>
-     <addaction name="actionVerticalCenter"/>
-     <addaction name="actionHorizontalCenter"/>
     </widget>
     <widget class="QMenu" name="orderMenu">
      <property name="title">
@@ -1103,62 +1100,12 @@
        <property name="text">
         <string>Basic.Main.StartStreaming</string>
        </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
       </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="recordingLayout">
-       <property name="spacing">
-        <number>2</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="RecordButton" name="recordButton">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>130</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Basic.Main.StartRecording</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
      </item>
      <item>
       <widget class="QPushButton" name="modeSwitch">
        <property name="text">
         <string>Basic.TogglePreviewProgramMode</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -1823,11 +1770,6 @@
    <extends>QDockWidget</extends>
    <header>window-dock.hpp</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>RecordButton</class>
-   <extends>QPushButton</extends>
-   <header>record-button.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -29,6 +29,5 @@ packagesbuild ../CI/install/osx/CMakeLists.pkgproj
 
 # Move to the folder that travis uses to upload artifacts from
 hr "Moving package to nightly folder for distribution"
-mkdir -p nightly
-sudo mv OBS.pkg ./nightly/$FILENAME
-cd ..
+mkdir -p ./nightly
+sudo mv EBS.pkg ./nightly/$FILENAME
