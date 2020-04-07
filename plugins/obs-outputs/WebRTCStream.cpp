@@ -526,6 +526,10 @@ void WebRTCStream::onVideoFrame(video_data *frame)
 uint64_t WebRTCStream::getBitrate()
 {
     rtc::scoped_refptr<const webrtc::RTCStatsReport> report = NewGetStats();
+    if (nullptr == report)
+    {
+      return;
+    }
 
     std::vector<const webrtc::RTCOutboundRTPStreamStats*> send_stream_stats =
             report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
@@ -550,6 +554,11 @@ int WebRTCStream::getDroppedFrames()
 rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 {
     rtc::CritScope lock(&crit_);
+
+    if (nullptr == pc)
+    {
+	return nullptr;
+    }
 
     rtc::scoped_refptr<StatsCallback> stats_callback =
             new rtc::RefCountedObject<StatsCallback>();
