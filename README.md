@@ -43,7 +43,24 @@ https://bugs.chromium.org/p/webrtc/issues/list
 
 ### Compilation, Installation and Packaging
 
-Follow the original compilation, Installation and packaging guide https://github.com/obsproject/obs-studio
+OSX:
+
+Make sure you have installed the appropriate version of libwebrtc, preferably in ~/.
+
+Run the following commands:
+
+```
+./CI/install-dependencies-osx.sh
+./CI/before-script-osx.sh
+cd build
+cmake --build . --config RELEASE
+cd ..
+./CI/before-deploy-osx.sh
+```
+
+This should produce a timestamped installer package in build/nightly.
+
+For other operating systems, follow the original compilation, Installation and packaging guide https://github.com/obsproject/obs-studio
 
 ## Usage with a Janus server
 

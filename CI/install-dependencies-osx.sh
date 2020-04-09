@@ -28,7 +28,7 @@ ccache -s || echo "CCache is not available."
 
 # Fetch and untar prebuilt OBS deps that are compatible with older versions of OSX
 wget --retry-connrefused --waitretry=1 https://s3-us-west-2.amazonaws.com/obs-nightly/osx-deps.tar.gz
-tar -xzf ./osx-deps.tar.gz -C /tmp
+tar -xzf ./osx-deps.tar.gz -C ~
 
 # if you have your own libwebrtc already installed, comment the following paragraph out.
 # Fetch libwebrtc 73 Community Edition
@@ -37,7 +37,7 @@ tar -xzf ./osx-deps.tar.gz -C /tmp
 
 # Fetch vlc codebase
 curl -L -O https://downloads.videolan.org/vlc/3.0.4/vlc-3.0.4.tar.xz
-tar -xf vlc-3.0.4.tar.xz
+tar -xf vlc-3.0.4.tar.xz -C ~
 
 # Get sparkle
 wget --retry-connrefused --waitretry=1 -O sparkle.tar.bz2 https://github.com/sparkle-project/Sparkle/releases/download/1.16.0/Sparkle-1.16.0.tar.bz2

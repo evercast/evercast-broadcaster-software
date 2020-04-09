@@ -36,7 +36,6 @@ cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 -x ./EBS.app/Contents/PlugIns/obs-x264.so \
 -x ./EBS.app/Contents/PlugIns/text-freetype2.so \
 -x ./EBS.app/Contents/PlugIns/obs-libfdk.so
-# -x ./EBS.app/Contents/PlugIns/obs-outputs.so \
 
 /usr/local/Cellar/qt/5.10.1/bin/macdeployqt ./EBS.app
 

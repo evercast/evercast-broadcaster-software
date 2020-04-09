@@ -41,25 +41,13 @@ hr "Copying Sparkle.framework"
 cp -r ../../sparkle/Sparkle.framework ./EBS.app/Contents/Frameworks/
 install_name_tool -change @rpath/Sparkle.framework/Versions/A/Sparkle @executable_path/../Frameworks/Sparkle.framework/Versions/A/Sparkle ./EBS.app/Contents/MacOS/ebs
 
-# Copy Chromium embedded framework to app Frameworks directory
-# hr "Copying Chromium Embedded Framework.framework"
-# sudo mkdir -p EBS.app/Contents/Frameworks
-# sudo cp -r ../../cef_binary_${CEF_BUILD_VERSION}_macosx64/Release/Chromium\ Embedded\ Framework.framework EBS.app/Contents/Frameworks/
-
-# install_name_tool -change /usr/local/opt/qt/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Plugins/obs-browser.so
-# install_name_tool -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Plugins/obs-browser.so
-# install_name_tool -change /usr/local/opt/qt/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Plugins/obs-browser.so
-
 cp ../CI/install/osx/EBSPublicDSAKey.pem EBS.app/Contents/Resources
 
 # edit plist
 plutil -insert CFBundleVersion -string $DEPLOY_VERSION ./EBS.app/Contents/Info.plist
 plutil -insert CFBundleShortVersionString -string $DEPLOY_VERSION ./EBS.app/Contents/Info.plist
-# plutil -insert EBSFeedsURL -string https://obsproject.com/osx_update/feeds.xml ./EBS.app/Contents/Info.plist
-# plutil -insert SUFeedURL -string https://obsproject.com/osx_update/stable/updates.xml ./EBS.app/Contents/Info.plist
 plutil -insert SUPublicDSAKeyFile -string EBSPublicDSAKey.pem ./EBS.app/Contents/Info.plist
 
-#dmgbuild -s ../CI/install/osx/settings.json "EBS" ebs.dmg
 dmgbuild "EBS" ebs.dmg
 
 if [ -v "$TRAVIS" ]; then
