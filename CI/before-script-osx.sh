@@ -9,7 +9,7 @@ cmake \
 -DCMAKE_INSTALL_PREFIX=/opt/ebs \
 -DVLCPath=~/vlc-3.0.4 \
 -DQTDIR=/usr/local/Cellar/qt/5.14.1 \
--DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 \
+-DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 \
 -Dlibwebrtc_DIR=~/libwebrtc/cmake \
 -DBUILD_BROWSER=false \
