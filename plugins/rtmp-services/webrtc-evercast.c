@@ -11,9 +11,7 @@ struct webrtc_evercast {
 static const char *webrtc_evercast_name(void *unused)
 {
   UNUSED_PARAMETER(unused);
-  // NOTE LUDO: #172 codecs list of radio buttons
-  // return "Evercast";
-  return obs_module_text("Evercast");
+  return "Evercast";
 }
 
 static void webrtc_evercast_update(void *data, obs_data_t *settings)

@@ -74,29 +74,28 @@ static void rtmp_common_update(void *data, obs_data_t *settings)
 	service->key = bstrdup(obs_data_get_string(settings, "key"));
 	service->output = NULL;
 
-  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
-	// json_t *root = open_services_file();
-	// if (root) {
-	// 	const char *new_name;
-	// 	json_t *serv = find_service(root, service->service, &new_name);
+	json_t *root = open_services_file();
+	if (root) {
+		const char *new_name;
+		json_t *serv = find_service(root, service->service, &new_name);
 
-	// 	if (new_name) {
-	// 		bfree(service->service);
-	// 		service->service = bstrdup(new_name);
-	// 	}
+		if (new_name) {
+			bfree(service->service);
+			service->service = bstrdup(new_name);
+		}
 
-	// 	if (serv) {
-	// 		json_t *rec = json_object_get(serv, "recommended");
-	// 		if (json_is_object(rec)) {
-	// 			const char *out = get_string_val(rec, "output");
-	// 			if (out)
-	// 				service->output = bstrdup(out);
-	// 		}
+		if (serv) {
+			json_t *rec = json_object_get(serv, "recommended");
+			if (json_is_object(rec)) {
+				const char *out = get_string_val(rec, "output");
+				if (out)
+					service->output = bstrdup(out);
+			}
 
-	// 		ensure_valid_url(service, serv, settings);
-	// 	}
-	// }
-	// json_decref(root);
+			ensure_valid_url(service, serv, settings);
+		}
+	}
+	json_decref(root);
 
 	if (!service->output)
 		service->output = bstrdup("rtmp_output");
@@ -182,6 +181,7 @@ static void add_service(obs_property_t *list, json_t *service, bool show_all,
 		     name);
 		return;
 	}
+
 	obs_property_list_add_string(list, name, name);
 }
 
@@ -448,12 +448,11 @@ static obs_properties_t *rtmp_common_properties(void *unused)
 
 	obs_properties_t *ppts = obs_properties_create();
 	obs_property_t *p;
-  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
-	// json_t *root;
+	json_t *root;
 
-	// root = open_services_file();
-	// if (root)
-	// 	obs_properties_set_param(ppts, root, properties_data_destroy);
+	root = open_services_file();
+	if (root)
+		obs_properties_set_param(ppts, root, properties_data_destroy);
 
 	p = obs_properties_add_list(ppts, "service", obs_module_text("Service"),
 				    OBS_COMBO_TYPE_LIST,
@@ -561,15 +560,14 @@ static void initialize_output(struct rtmp_common *service, json_t *root,
 static void rtmp_common_apply_settings(void *data, obs_data_t *video_settings,
 				       obs_data_t *audio_settings)
 {
-  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
-	// struct rtmp_common *service = data;
-	// json_t *root = open_services_file();
+	struct rtmp_common *service = data;
+	json_t *root = open_services_file();
 
-	// if (root) {
-	// 	initialize_output(service, root, video_settings,
-	// 			  audio_settings);
-	// 	json_decref(root);
-	// }
+	if (root) {
+		initialize_output(service, root, video_settings,
+				  audio_settings);
+		json_decref(root);
+	}
 }
 
 static const char *rtmp_common_get_output_type(void *data)

@@ -20,8 +20,6 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <algorithm>
-#include <locale>
 
 #define debug(format, ...) blog(LOG_DEBUG, format, ##__VA_ARGS__)
 #define info(format, ...) blog(LOG_INFO, format, ##__VA_ARGS__)
@@ -237,13 +235,6 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     video_codec = obs_service_get_codec(service) ? obs_service_get_codec(service) : "";
     protocol = obs_service_get_protocol(service) ? obs_service_get_protocol(service) : "";
 
-    // NOTE LUDO: #178 make sure video codec name is written with lower case characters
-/*    std::transform(video_codec.begin(), video_codec.end(), video_codec.begin(),
-		   [](unsigned char c) {
-			   std::locale loc;
-			   return std::tolower(c, loc);
-		   });
-*/
     info("Video codec:      %s", video_codec.empty() ? "Automatic" : video_codec.c_str());
     info("Protocol:         %s", protocol.empty() ? "Automatic" : protocol.c_str());
 
@@ -484,10 +475,6 @@ void WebRTCStream::onVideoFrame(video_data *frame)
     if (!videoCapturer)
         return;
 
-    if (std::chrono::system_clock::time_point(std::chrono::duration<int>(0)) == previous_time)
-      // First frame sent: Initialize previous_time
-      previous_time = std::chrono::system_clock::now();
-
     // Calculate size
     int outputWidth = obs_output_get_width(output);
     int outputHeight = obs_output_get_height(output);
@@ -536,158 +523,33 @@ void WebRTCStream::onVideoFrame(video_data *frame)
     videoCapturer->OnFrameCaptured(video_frame);
 }
 
-// NOTE LUDO: #80 add getStats
-void WebRTCStream::getStats()
+uint64_t WebRTCStream::getBitrate()
 {
-  rtc::scoped_refptr<const webrtc::RTCStatsReport> report = NewGetStats();
-  if (nullptr == report)
-  {
-    return;
-  }
+    rtc::scoped_refptr<const webrtc::RTCStatsReport> report = NewGetStats();
 
-  stats_list = "";
+    std::vector<const webrtc::RTCOutboundRTPStreamStats*> send_stream_stats =
+            report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
 
-  std::vector<const webrtc::RTCOutboundRTPStreamStats*> send_stream_stats =
-          report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
-  for (const auto& stat : send_stream_stats) {
-    if (stat->kind.ValueToString() == "audio") {
-      audio_bytes_sent = std::stoll(stat->bytes_sent.ValueToJson());
+    for (const auto& stat : send_stream_stats) {
+        if (stat->kind.ValueToString() == "audio")
+            audio_bytes_sent = std::stoll(stat->bytes_sent.ValueToJson());
+        if (stat->kind.ValueToString() == "video") {
+            video_bytes_sent = std::stoll(stat->bytes_sent.ValueToJson());
+            pli_received = std::stoi(stat->pli_count.ValueToJson());
+        }
     }
-    if (stat->kind.ValueToString() == "video") {
-      video_bytes_sent = std::stoll(stat->bytes_sent.ValueToJson());
-      pli_received = std::stoi(stat->pli_count.ValueToJson());
-    }
-  }
-  total_bytes_sent = audio_bytes_sent + video_bytes_sent;
+    total_bytes_sent = audio_bytes_sent + video_bytes_sent;
+    return total_bytes_sent;
+}
 
-  // RTCDataChannelStats
-  std::vector<const webrtc::RTCDataChannelStats*> data_channel_stats =
-          report->GetStatsOfType<webrtc::RTCDataChannelStats>();
-  for (const auto& stat : data_channel_stats) {
-    stats_list += "data_messages_sent:"     + stat->messages_sent.ValueToJson() + "\n";
-    stats_list += "data_bytes_sent:"        + stat->bytes_sent.ValueToJson() + "\n";
-    stats_list += "data_messages_received:" + stat->messages_received.ValueToJson() + "\n";
-    stats_list += "data_bytes_received:"    + stat->bytes_received.ValueToJson() + "\n";
-  }
-
-  // RTCMediaStreamTrackStats
-  // double audio_track_jitter_buffer_delay = 0.0;
-  // double video_track_jitter_buffer_delay = 0.0;
-  // uint64_t audio_track_jitter_buffer_emitted_count = 0;
-  // uint64_t video_track_jitter_buffer_emitted_count = 0;
-  std::vector<const webrtc::RTCMediaStreamTrackStats*> media_stream_track_stats =
-          report->GetStatsOfType<webrtc::RTCMediaStreamTrackStats>();
-  for (const auto& stat : media_stream_track_stats) {
-    if (stat->kind.ValueToString() == "audio") {
-      stats_list += "track_audio_level:"            + stat->audio_level.ValueToJson() + "\n";
-      stats_list += "track_total_audio_energy:"     + stat->total_audio_energy.ValueToJson() + "\n";
-      // stats_list += "track_echo_return_loss:"   + stat->echo_return_loss.ValueToJson() + "\n";
-      // stats_list += "track_echo_return_loss_enhancement:" + stat->echo_return_loss_enhancement.ValueToJson() + "\n";
-      // stats_list += "track_total_samples_received:" + stat->total_samples_received.ValueToJson() + "\n";
-      stats_list += "track_total_samples_duration:" + stat->total_samples_duration.ValueToJson() + "\n";
-      // stats_list += "track_concealed_samples:" + stat->concealed_samples.ValueToJson() + "\n";
-      // stats_list += "track_concealment_events:" + stat->concealment_events.ValueToJson() + "\n";
-    }
-    if (stat->kind.ValueToString() == "video") {
-      // stats_list += "track_jitter_buffer_delay:"    + stat->jitter_buffer_delay.ValueToJson() + "\n";
-      // stats_list += "track_jitter_buffer_emitted_count:" + stat->jitter_buffer_emitted_count.ValueToJson() + "\n";
-      stats_list += "track_frame_width:"            + stat->frame_width.ValueToJson() + "\n";
-      stats_list += "track_frame_height:"           + stat->frame_height.ValueToJson() + "\n";
-      stats_list += "track_frames_sent:"            + stat->frames_sent.ValueToJson() + "\n";
-      stats_list += "track_huge_frames_sent:"       + stat->huge_frames_sent.ValueToJson() + "\n";
- 
-      // FPS = frames_sent / (time_now - start_time)
-      std::chrono::system_clock::time_point time_now = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsed_seconds = time_now - previous_time;
-      previous_time = time_now;
-      uint32_t frames_sent = std::stol(stat->frames_sent.ValueToJson());
-      stats_list += "track_fps:" + std::to_string((frames_sent - previous_frames_sent) / elapsed_seconds.count()) + "\n";
-      previous_frames_sent = frames_sent;
-
-      // stats_list += "track_frames_received:"        + stat->frames_received.ValueToJson() + "\n";
-      // stats_list += "track_frames_decoded:"         + stat->frames_decoded.ValueToJson() + "\n";
-      // stats_list += "track_frames_dropped:"         + stat->frames_dropped.ValueToJson() + "\n";
-      // stats_list += "track_frames_corrupted:"       + stat->frames_corrupted.ValueToJson() + "\n";
-      // stats_list += "track_partial_frames_lost:"    + stat->partial_frames_lost.ValueToJson() + "\n";
-      // stats_list += "track_full_frames_lost:"       + stat->full_frames_lost.ValueToJson() + "\n";
-    }
-  }
-
-  // RTCPeerConnectionStats
-  // std::vector<const webrtc::RTCPeerConnectionStats*> pc_stats =
-  //         report->GetStatsOfType<webrtc::RTCPeerConnectionStats>();
-  // for (const auto& stat : pc_stats) {
-  //   stats_list += "data_channels_opened:" + stat->data_channels_opened.ValueToJson() + "\n";
-  //   stats_list += "data_channels_closed:" + stat->data_channels_closed.ValueToJson() + "\n";
-  // }
-
-  // RTCRTPStreamStats
-  // std::vector<const webrtc::RTCRTPStreamStats*> rtcrtp_stats =
-  //         report->GetStatsOfType<webrtc::RTCRTPStreamStats>();
-  // for (const auto& stat : rtcrtp_stats) {
-  //   if (stat->kind.ValueToString() == "video") {
-  //     stats_list += "rtcrtp_fir_count:" + stat->fir_count.ValueToJson() + "\n";
-  //     stats_list += "rtcrtp_pli_count:" + stat->pli_count.ValueToJson() + "\n";
-  //     stats_list += "rtcrtp_nack_count:" + stat->nack_count.ValueToJson() + "\n";
-  //     stats_list += "rtcrtp_sli_count:" + stat->sli_count.ValueToJson() + "\n";
-  //     stats_list += "rtcrtp_qp_sum:" + stat->qp_sum.ValueToJson() + "\n";
-  //   }
-  // }
-
-  // RTCInboundRTPStreamStats
-  // std::vector<const webrtc::RTCInboundRTPStreamStats*> inbound_stream_stats =
-  //         report->GetStatsOfType<webrtc::RTCInboundRTPStreamStats>();
-  // for (const auto& stat : inbound_stream_stats) {
-  //   stats_list += "inbound_stream_packets_received:"        + stat->packets_received.ValueToJson() + "\n";
-  //   stats_list += "inbound_stream_bytes_received:"          + stat->bytes_received.ValueToJson() + "\n";
-  //   stats_list += "inbound_stream_packets_lost:"            + stat->packets_lost.ValueToJson() + "\n";
-
-  //   if (stat->kind.ValueToString() == "audio") {
-  //     stats_list += "inbound_stream_jitter:" + stat->jitter.ValueToJson() + "\n";
-  //   }
-  // }
-
-  // RTCOutboundRTPStreamStats
-  std::vector<const webrtc::RTCOutboundRTPStreamStats*> outbound_stream_stats =
-          report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
-  for (const auto& stat : outbound_stream_stats) {
-    if (stat->kind.ValueToString() == "audio") {
-      stats_list += "outbound_audio_packets_sent:"   + stat->packets_sent.ValueToJson() + "\n";
-      stats_list += "outbound_audio_bytes_sent:"     + stat->bytes_sent.ValueToJson() + "\n";
-      // stats_list += "outbound_audio_target_bitrate:" + stat->target_bitrate.ValueToJson() + "\n";
-      // stats_list += "outbound_audio_frames_encoded:" + stat->frames_encoded.ValueToJson() + "\n";
-    }
-    if (stat->kind.ValueToString() == "video") {
-      stats_list += "outbound_video_packets_sent:"   + stat->packets_sent.ValueToJson() + "\n";
-      stats_list += "outbound_video_bytes_sent:"     + stat->bytes_sent.ValueToJson() + "\n";
-      // stats_list += "outbound_video_target_bitrate:" + stat->target_bitrate.ValueToJson() + "\n";
-      // stats_list += "outbound_video_frames_encoded:" + stat->frames_encoded.ValueToJson() + "\n";
-      stats_list += "outbound_video_fir_count:"      + stat->fir_count.ValueToJson() + "\n";
-      stats_list += "outbound_video_pli_count:"      + stat->pli_count.ValueToJson() + "\n";
-      stats_list += "outbound_video_nack_count:"     + stat->nack_count.ValueToJson() + "\n";
-      // stats_list += "outbound_video_sli_count:"      + stat->sli_count.ValueToJson() + "\n";
-      stats_list += "outbound_video_qp_sum:"         + stat->qp_sum.ValueToJson() + "\n";
-    }
-  }
-
-  // RTCTransportStats
-  std::vector<const webrtc::RTCTransportStats*> transport_stats =
-          report->GetStatsOfType<webrtc::RTCTransportStats>();
-  for (const auto& stat : transport_stats) {
-    stats_list += "transport_bytes_sent:"     + stat->bytes_sent.ValueToJson() + "\n";
-    stats_list += "transport_bytes_received:" + stat->bytes_received.ValueToJson() + "\n";
-  }
-
+int WebRTCStream::getDroppedFrames()
+{
+    return pli_received;
 }
 
 rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 {
     rtc::CritScope lock(&crit_);
-
-    if (nullptr == pc)
-    {
-	return nullptr;
-    }
 
     rtc::scoped_refptr<StatsCallback> stats_callback =
             new rtc::RefCountedObject<StatsCallback>();

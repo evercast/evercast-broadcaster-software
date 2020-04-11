@@ -118,21 +118,6 @@ extern "C" obs_properties_t *evercast_stream_properties(void *unused)
 	return props;
 }
 
-// NOTE LUDO: #80 add getStats
-extern "C" void evercast_stream_get_stats(void *data)
-{
-  // Get stream
-	WebRTCStream* stream = (WebRTCStream*) data;
-	stream->getStats();
-}
-
-extern "C" const char *evercast_stream_get_stats_list(void *data)
-{
-  // Get stream
-	WebRTCStream* stream = (WebRTCStream*) data;
-	return stream->get_stats_list();
-}
-
 extern "C" uint64_t evercast_stream_total_bytes_sent(void *data)
 {
 	//Get stream
@@ -155,63 +140,57 @@ extern "C" float evercast_stream_congestion(void *data)
 
 extern "C" {
 #ifdef _WIN32
-  struct obs_output_info evercast_output_info = {
-    "evercast_output", //id
-    OBS_OUTPUT_AV | OBS_OUTPUT_SERVICE, //flags
-    evercast_stream_getname, //get_name
-    evercast_stream_create, //create
-    evercast_stream_destroy, //destroy
-    evercast_stream_start, //start
-    evercast_stream_stop, //stop
-    evercast_receive_video, //raw_video
-    evercast_receive_audio, //raw_audio
-    nullptr, //encoded_packet
-    nullptr, //update
-    evercast_stream_defaults, //get_defaults
-    evercast_stream_properties, //get_properties
-    nullptr, //unused1 (formerly pause)
-    // NOTE LUDO: #80 add getStats
-    evercast_stream_get_stats,
-    evercast_stream_get_stats_list,
-    evercast_stream_total_bytes_sent, //get_total_bytes
-    evercast_stream_dropped_frames, //get_dropped_frames
-    nullptr, //type_data
-    nullptr, //free_type_data
-    evercast_stream_congestion, //get_congestion
-    nullptr, //get_connect_time_ms
-    "vp8", //encoded_video_codecs
-    "opus", //encoded_audio_codecs
-    nullptr //raw_audio2
-  };
+	struct obs_output_info evercast_output_info = {
+		"evercast_output", //id
+		OBS_OUTPUT_AV | OBS_OUTPUT_SERVICE, //flags
+		evercast_stream_getname, //get_name
+		evercast_stream_create, //create
+		evercast_stream_destroy, //destroy
+		evercast_stream_start, //start
+		evercast_stream_stop, //stop
+		evercast_receive_video, //raw_video
+		evercast_receive_audio, //raw_audio
+		nullptr, //encoded_packet
+		nullptr, //update
+		evercast_stream_defaults, //get_defaults
+		evercast_stream_properties, //get_properties
+		nullptr, //unused1 (formerly pause)
+		evercast_stream_total_bytes_sent, //get_total_bytes
+		evercast_stream_dropped_frames, //get_dropped_frames
+		nullptr, //type_data
+		nullptr, //free_type_data
+		evercast_stream_congestion, //get_congestion
+		nullptr, //get_connect_time_ms
+		"vp8", //encoded_video_codecs
+		"opus", //encoded_audio_codecs
+		nullptr //raw_audio2
+	};
 #else
-  struct obs_output_info evercast_output_info = {
-    .id                   = "evercast_output",
-    .flags                = OBS_OUTPUT_AV | OBS_OUTPUT_SERVICE,
-    .get_name             = evercast_stream_getname,
-    .create               = evercast_stream_create,
-    .destroy              = evercast_stream_destroy,
-    .start                = evercast_stream_start,
-    .stop                 = evercast_stream_stop,
-    .raw_video            = evercast_receive_video,
-    .raw_audio            = evercast_receive_audio, //for single-track
-    .encoded_packet       = nullptr,
-    .update               = nullptr,
-    .get_defaults         = evercast_stream_defaults,
-    .get_properties       = evercast_stream_properties,
-    .unused1              = nullptr,
-    // NOTE LUDO: #80 add getStats
-    .get_stats            = evercast_stream_get_stats,
-    .get_stats_list       = evercast_stream_get_stats_list,
-    .get_total_bytes      = evercast_stream_total_bytes_sent,
-    .get_dropped_frames   = evercast_stream_dropped_frames,
-    .type_data            = nullptr,
-    .free_type_data       = nullptr,
-    .get_congestion       = evercast_stream_congestion,
-    .get_connect_time_ms  = nullptr,
-    .encoded_video_codecs = "vp8",
-    .encoded_audio_codecs = "opus",
-    .raw_audio2           = nullptr
-    // .raw_audio2           = evercast_receive_multitrack_audio, //for multi-track
-  };
+	struct obs_output_info evercast_output_info = {
+		.id                   = "evercast_output",
+		.flags                = OBS_OUTPUT_AV | OBS_OUTPUT_SERVICE,
+		.get_name             = evercast_stream_getname,
+		.create               = evercast_stream_create,
+		.destroy              = evercast_stream_destroy,
+		.start                = evercast_stream_start,
+		.stop                 = evercast_stream_stop,
+		.raw_video            = evercast_receive_video,
+		.raw_audio            = evercast_receive_audio, //for single-track
+		.encoded_packet       = nullptr,
+		.update               = nullptr,
+		.get_defaults         = evercast_stream_defaults,
+		.get_properties       = evercast_stream_properties,
+		.unused1              = nullptr,
+		.get_total_bytes      = evercast_stream_total_bytes_sent,
+		.get_dropped_frames   = evercast_stream_dropped_frames,
+		.type_data            = nullptr,
+		.free_type_data       = nullptr,
+		.get_congestion       = evercast_stream_congestion,
+		.get_connect_time_ms  = nullptr,
+		.encoded_video_codecs = "vp8",
+		.encoded_audio_codecs = "opus",
+		.raw_audio2           = nullptr
+		// .raw_audio2           = evercast_receive_multitrack_audio, //for multi-track
+	};
 #endif
 }
