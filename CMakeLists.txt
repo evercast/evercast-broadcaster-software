@@ -49,6 +49,12 @@ if(WIN32)
 	endif()
 endif()
 
+# --- manage vendor look and feel	
+
+if( OBS_WEBRTC_VENDOR_NAME )	
+	add_subdirectory( vendor_skins )	
+endif()
+
 # --- extend cmake with our own scripts, macros and modules
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
