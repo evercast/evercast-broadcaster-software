@@ -22,7 +22,7 @@ if [ -n "${TRAVIS_TAG}" ]; then
   STABLE=true
 fi
 
-#sudo python ../CI/install/osx/build_app.py --public-key ../CI/install/osx/EBSPublicDSAKey.pem --sparkle-framework ../../sparkle/Sparkle.framework --stable=$STABLE
+sudo python ../CI/install/osx/build_app.py --public-key ../CI/install/osx/EBSPublicDSAKey.pem --sparkle-framework ../../sparkle/Sparkle.framework --stable=$STABLE
 
 ../CI/install/osx/packageApp.sh
 
