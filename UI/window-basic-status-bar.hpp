@@ -3,7 +3,6 @@
 #include <QStatusBar>
 #include <QPointer>
 #include <QTimer>
-#include <QPlainTextEdit>
 #include <util/platform.h>
 #include <obs.h>
 
@@ -16,13 +15,10 @@ private:
 	QLabel *delayInfo;
 	QLabel *droppedFrames;
 	QLabel *streamTime;
-  // NOTE LUDO: #193 remove recording time information from main window
-	// QLabel *recordTime;
+	QLabel *recordTime;
 	QLabel *cpuUsage;
 	QLabel *kbps;
 	QLabel *statusSquare;
-  // NOTE LUDO: #80 add getStats
-  QPlainTextEdit *getstatsTextBox;
 
 	obs_output_t *streamOutput = nullptr;
 	obs_output_t *recordOutput = nullptr;
@@ -43,7 +39,7 @@ private:
 	int startTotalFrameCount = 0;
 	int lastSkippedFrameCount = 0;
 
-	int statsUpdateSeconds = 0;
+	int bitrateUpdateSeconds = 0;
 	uint64_t lastBytesSent = 0;
 	uint64_t lastBytesSentTime = 0;
 
@@ -62,8 +58,6 @@ private:
 	void Deactivate();
 
 	void UpdateDelayMsg();
-  // NOTE LUDO: #80 add getStats
-  void UpdateStats();
 	void UpdateBandwidth();
 	void UpdateStreamTime();
 	void UpdateRecordTime();
