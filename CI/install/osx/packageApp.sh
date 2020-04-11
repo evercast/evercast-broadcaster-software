@@ -46,25 +46,31 @@ mv ./EBS.app/Contents/MacOS/libobs-opengl.so ./EBS.app/Contents/Frameworks
 cp -r /usr/local/opt/qt/lib/QtCore.framework ./EBS.app/Contents/Frameworks
 chmod +w ./EBS.app/Contents/Frameworks/QtCore.framework/Versions/5/QtCore
 
+cp -r /usr/local/opt/qt/lib/QtWidgets.framework ./EBS.app/Contents/Frameworks
+chmod +w ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
+
 cp -r /usr/local/opt/qt/lib/QtNetwork.framework ./EBS.app/Contents/Frameworks
 chmod +w ./EBS.app/Contents/Frameworks/QtNetwork.framework/Versions/5/QtNetwork
 install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtNetwork.framework/Versions/5/QtNetwork
 
-cp -r /usr/local/opt/qt/lib/QtSvg.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
-install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
-
 cp -r /usr/local/opt/qt/lib/QtMacExtras.framework ./EBS.app/Contents/Frameworks
 chmod +w ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
 install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
-
-cp -r /usr/local/opt/qt/lib/QtWidgets.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
-install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
 
 cp -r /usr/local/opt/qt/lib/QtGui.framework ./EBS.app/Contents/Frameworks
 chmod +w ./EBS.app/Contents/Frameworks/QtGui.framework/Versions/5/QtGui
 install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtGui.framework/Versions/5/QtGui
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Frameworks/QtGui.framework/Versions/5/QtGui
+
+cp -r /usr/local/opt/qt/lib/QtSvg.framework ./EBS.app/Contents/Frameworks
+chmod +w ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
+install_name_tool -change /usr/local/Cellar/qt/$QT_VERSION/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
 
 install_name_tool -change /usr/local/opt/qt/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/MacOs/ebs
 install_name_tool -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/MacOs/ebs
