@@ -948,23 +948,19 @@ gs_texture_t *device_cubetexture_create(gs_device_t *device, uint32_t size,
 gs_texture_t *device_voltexture_create(gs_device_t *device, uint32_t width,
 				       uint32_t height, uint32_t depth,
 				       enum gs_color_format color_format,
-				       uint32_t levels,
-				       const uint8_t *const *data,
+				       uint32_t levels, const uint8_t **data,
 				       uint32_t flags)
 {
-	gs_texture *texture = NULL;
-	try {
-		texture = new gs_texture_3d(device, width, height, depth,
-					    color_format, levels, data, flags);
-	} catch (const HRError &error) {
-		blog(LOG_ERROR, "device_voltexture_create (D3D11): %s (%08lX)",
-		     error.str, error.hr);
-		LogD3D11ErrorDetails(error, device);
-	} catch (const char *error) {
-		blog(LOG_ERROR, "device_voltexture_create (D3D11): %s", error);
-	}
-
-	return texture;
+	/* TODO */
+	UNUSED_PARAMETER(device);
+	UNUSED_PARAMETER(width);
+	UNUSED_PARAMETER(height);
+	UNUSED_PARAMETER(depth);
+	UNUSED_PARAMETER(color_format);
+	UNUSED_PARAMETER(levels);
+	UNUSED_PARAMETER(data);
+	UNUSED_PARAMETER(flags);
+	return NULL;
 }
 
 gs_zstencil_t *device_zstencil_create(gs_device_t *device, uint32_t width,
@@ -1553,16 +1549,6 @@ void device_stage_texture(gs_device_t *device, gs_stagesurf_t *dst,
 	}
 }
 
-extern "C" void reset_duplicators(void);
-
-void device_begin_frame(gs_device_t *device)
-{
-	/* does nothing in D3D11 */
-	UNUSED_PARAMETER(device);
-
-	reset_duplicators();
-}
-
 void device_begin_scene(gs_device_t *device)
 {
 	clear_textures(device);
@@ -1693,9 +1679,12 @@ void device_present(gs_device_t *device)
 	}
 }
 
+extern "C" void reset_duplicators(void);
+
 void device_flush(gs_device_t *device)
 {
 	device->context->Flush();
+	reset_duplicators();
 }
 
 void device_set_cull_mode(gs_device_t *device, enum gs_cull_mode mode)

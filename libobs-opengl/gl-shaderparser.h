@@ -48,7 +48,6 @@ struct gl_shader_parser {
 	const char *output_prefix;
 	struct shader_parser parser;
 	struct dstr gl_string;
-	int sincos_counter;
 
 	DARRAY(uint32_t) texture_samplers;
 	DARRAY(struct gl_parser_attrib) attribs;
@@ -71,7 +70,6 @@ static inline void gl_shader_parser_init(struct gl_shader_parser *glsp,
 	dstr_init(&glsp->gl_string);
 	da_init(glsp->texture_samplers);
 	da_init(glsp->attribs);
-	glsp->sincos_counter = 1;
 }
 
 static inline void gl_shader_parser_free(struct gl_shader_parser *glsp)

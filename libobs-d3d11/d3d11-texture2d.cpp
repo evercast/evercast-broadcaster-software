@@ -27,7 +27,7 @@ void gs_texture_2d::InitSRD(vector<D3D11_SUBRESOURCE_DATA> &srd)
 	size_t curTex = 0;
 
 	if (!actual_levels)
-		actual_levels = gs_get_total_levels(width, height, 1);
+		actual_levels = gs_get_total_levels(width, height);
 
 	rowSizeBytes /= 8;
 
@@ -48,7 +48,7 @@ void gs_texture_2d::InitSRD(vector<D3D11_SUBRESOURCE_DATA> &srd)
 	}
 }
 
-void gs_texture_2d::BackupTexture(const uint8_t *const *data)
+void gs_texture_2d::BackupTexture(const uint8_t **data)
 {
 	this->data.resize(levels);
 
@@ -66,10 +66,8 @@ void gs_texture_2d::BackupTexture(const uint8_t *const *data)
 		vector<uint8_t> &subData = this->data[i];
 		memcpy(&subData[0], data[i], texSize);
 
-		if (w > 1)
-			w /= 2;
-		if (h > 1)
-			h /= 2;
+		w /= 2;
+		h /= 2;
 	}
 }
 
@@ -89,7 +87,7 @@ void gs_texture_2d::GetSharedHandle(IDXGIResource *dxgi_res)
 	}
 }
 
-void gs_texture_2d::InitTexture(const uint8_t *const *data)
+void gs_texture_2d::InitTexture(const uint8_t **data)
 {
 	HRESULT hr;
 
@@ -228,7 +226,7 @@ void gs_texture_2d::InitRenderTargets()
 
 gs_texture_2d::gs_texture_2d(gs_device_t *device, uint32_t width,
 			     uint32_t height, gs_color_format colorFormat,
-			     uint32_t levels, const uint8_t *const *data,
+			     uint32_t levels, const uint8_t **data,
 			     uint32_t flags_, gs_texture_type type,
 			     bool gdiCompatible, bool nv12_)
 	: gs_texture(device, gs_type::gs_texture_2d, type, levels, colorFormat),

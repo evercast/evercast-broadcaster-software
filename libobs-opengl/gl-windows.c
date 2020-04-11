@@ -41,7 +41,6 @@ static inline int get_color_format_bits(enum gs_color_format format)
 {
 	switch ((uint32_t)format) {
 	case GS_RGBA:
-	case GS_BGRA:
 		return 32;
 	default:
 		return 0;
@@ -155,37 +154,35 @@ static inline HGLRC gl_init_basic_context(HDC hdc)
 	return hglrc;
 }
 
+static const int attribs[] = {
+#ifdef _DEBUG
+	WGL_CONTEXT_FLAGS_ARB,        WGL_CONTEXT_DEBUG_BIT_ARB,
+#endif
+	WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB, 0, 0};
+
 static inline HGLRC gl_init_context(HDC hdc)
 {
-	static const int attribs[] = {
 #ifdef _DEBUG
-		WGL_CONTEXT_FLAGS_ARB,
-		WGL_CONTEXT_DEBUG_BIT_ARB,
+	if (GLAD_WGL_ARB_create_context) {
+		HGLRC hglrc = wglCreateContextAttribsARB(hdc, 0, attribs);
+		if (!hglrc) {
+			blog(LOG_ERROR,
+			     "wglCreateContextAttribsARB failed, "
+			     "%lu",
+			     GetLastError());
+			return NULL;
+		}
+
+		if (!wgl_make_current(hdc, hglrc)) {
+			wglDeleteContext(hglrc);
+			return NULL;
+		}
+
+		return hglrc;
+	}
 #endif
-		WGL_CONTEXT_PROFILE_MASK_ARB,
-		WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-		WGL_CONTEXT_MAJOR_VERSION_ARB,
-		3,
-		WGL_CONTEXT_MINOR_VERSION_ARB,
-		3,
-		0,
-		0};
 
-	HGLRC hglrc = wglCreateContextAttribsARB(hdc, 0, attribs);
-	if (!hglrc) {
-		blog(LOG_ERROR,
-		     "wglCreateContextAttribsARB failed, "
-		     "%lu",
-		     GetLastError());
-		return NULL;
-	}
-
-	if (!wgl_make_current(hdc, hglrc)) {
-		wglDeleteContext(hglrc);
-		return NULL;
-	}
-
-	return hglrc;
+	return gl_init_basic_context(hdc);
 }
 
 static bool gl_dummy_context_init(struct dummy_context *dummy)
@@ -415,12 +412,6 @@ void gl_update(gs_device_t *device)
 	UNUSED_PARAMETER(device);
 }
 
-void gl_clear_context(gs_device_t *device)
-{
-	UNUSED_PARAMETER(device);
-	wglMakeCurrent(NULL, NULL);
-}
-
 static void init_dummy_swap_info(struct gs_init_data *info)
 {
 	info->format = GS_RGBA;
@@ -547,13 +538,8 @@ void device_enter_context(gs_device_t *device)
 
 void device_leave_context(gs_device_t *device)
 {
-	UNUSED_PARAMETER(device);
 	wglMakeCurrent(NULL, NULL);
-}
-
-void *device_get_device_obj(gs_device_t *device)
-{
-	return device->plat->hrc;
+	UNUSED_PARAMETER(device);
 }
 
 void device_load_swapchain(gs_device_t *device, gs_swapchain_t *swap)

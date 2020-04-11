@@ -17,12 +17,9 @@
 
 #pragma once
 
-static const char *gl_error_to_str(GLenum errorcode)
+static char *gl_error_to_str(GLenum errorcode)
 {
-	static const struct {
-		GLenum error;
-		const char *str;
-	} err_to_str[] = {
+	static void *err_to_str[][2] = {
 		{
 			GL_INVALID_ENUM,
 			"GL_INVALID_ENUM",
@@ -51,12 +48,17 @@ static const char *gl_error_to_str(GLenum errorcode)
 			GL_STACK_OVERFLOW,
 			"GL_STACK_OVERFLOW",
 		},
+		{
+			NULL,
+			"Unknown",
+		},
 	};
-	for (size_t i = 0; i < sizeof(err_to_str) / sizeof(*err_to_str); i++) {
-		if (err_to_str[i].error == errorcode)
-			return err_to_str[i].str;
+	int i = 0;
+	while ((GLenum)err_to_str[i][0] != errorcode ||
+	       err_to_str[i][0] == NULL) {
+		i += 2;
 	}
-	return "Unknown";
+	return err_to_str[i][1];
 }
 
 /*
@@ -78,8 +80,8 @@ static inline bool gl_success(const char *funcname)
 
 			--attempts;
 			if (attempts == 0) {
-				blog(LOG_ERROR,
-				     "Too many GL errors, moving on");
+				blog(LOG_ERROR, "Too many GL errors, moving on",
+				     funcname, errorcode);
 				break;
 			}
 		} while (errorcode != GL_NO_ERROR);
@@ -149,22 +151,10 @@ static inline bool gl_bind_renderbuffer(GLenum target, GLuint buffer)
 	return gl_success("glBindRendebuffer");
 }
 
-static inline bool gl_gen_framebuffers(GLsizei num_arrays, GLuint *arrays)
-{
-	glGenFramebuffers(num_arrays, arrays);
-	return gl_success("glGenFramebuffers");
-}
-
 static inline bool gl_bind_framebuffer(GLenum target, GLuint buffer)
 {
 	glBindFramebuffer(target, buffer);
 	return gl_success("glBindFramebuffer");
-}
-
-static inline void gl_delete_framebuffers(GLsizei num_arrays, GLuint *arrays)
-{
-	glDeleteFramebuffers(num_arrays, arrays);
-	gl_success("glDeleteFramebuffers");
 }
 
 static inline bool gl_tex_param_f(GLenum target, GLenum param, GLfloat val)
