@@ -1,12 +1,5 @@
 #!/bin/sh
-# use argument 1 as the version or get it from sw_vers
-os_ver=$(sw_vers -productVersion)
+cd "$(dirname "$0")"
+cd ../Resources/bin
+exec ./obs "$@"
 
-if [[ "$os_ver" == 10.15.* ]]; then
-	echo "macOS Catalina"
-	osascript -e "tell app \"Terminal\" to do script \"cd /Applications/EBS.app/Contents/Resources/bin && ./ebs\""
-else
-	cd "$(dirname "$0")"
-  cd ../Resources/bin
-  exec ./ebs "$@"
-fi
