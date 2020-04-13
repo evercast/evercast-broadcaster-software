@@ -36,7 +36,7 @@
           <string>Basic.Settings.General</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/general.svg</normaloff>:/settings/images/settings/general.svg</iconset>
          </property>
          <property name="iconSize">
@@ -56,7 +56,7 @@
           <string>Basic.Settings.Stream</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/stream.svg</normaloff>:/settings/images/settings/stream.svg</iconset>
          </property>
          <property name="iconSize">
@@ -76,7 +76,7 @@
           <string>Basic.Settings.Output</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/output.svg</normaloff>:/settings/images/settings/output.svg</iconset>
          </property>
          <property name="iconSize">
@@ -96,7 +96,7 @@
           <string>Basic.Settings.Audio</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/audio.svg</normaloff>:/settings/images/settings/audio.svg</iconset>
          </property>
          <property name="iconSize">
@@ -116,7 +116,7 @@
           <string>Basic.Settings.Video</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/video.svg</normaloff>:/settings/images/settings/video.svg</iconset>
          </property>
          <property name="iconSize">
@@ -136,7 +136,7 @@
           <string>Basic.Settings.Hotkeys</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/hotkeys.svg</normaloff>:/settings/images/settings/hotkeys.svg</iconset>
          </property>
          <property name="iconSize">
@@ -156,7 +156,7 @@
           <string>Basic.Settings.Advanced</string>
          </property>
          <property name="icon">
-          <iconset resource="obs.qrc">
+          <iconset>
            <normaloff>:/settings/images/settings/advanced.svg</normaloff>:/settings/images/settings/advanced.svg</iconset>
          </property>
          <property name="iconSize">
@@ -223,8 +223,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>729</width>
-              <height>1109</height>
+              <width>753</width>
+              <height>920</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -1149,14 +1149,14 @@
              <item row="9" column="1">
               <widget class="QGroupBox" name="codecGroupBox">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="MinimumExpanding">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
                <property name="minimumSize">
                 <size>
-                 <width>90</width>
+                 <width>225</width>
                  <height>100</height>
                 </size>
                </property>
@@ -1168,11 +1168,14 @@
                  <rect>
                   <x>10</x>
                   <y>10</y>
-                  <width>71</width>
-                  <height>83</height>
+                  <width>206</width>
+                  <height>81</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
+                 <property name="sizeConstraint">
+                  <enum>QLayout::SetFixedSize</enum>
+                 </property>
                  <property name="leftMargin">
                   <number>1</number>
                  </property>
@@ -1216,6 +1219,16 @@
                    <attribute name="buttonGroup">
                     <string notr="true">codecButtonGroup</string>
                    </attribute>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="vp9WarnLabel">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="text">
+                    <string>Note: VP9 is not iPad-compatible.</string>
+                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -1300,8 +1313,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>813</width>
-              <height>743</height>
+              <width>740</width>
+              <height>717</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -1420,7 +1433,7 @@
                     <item row="0" column="1">
                      <widget class="QLineEdit" name="simpleOutputVBitrate">
                       <property name="enabled">
-                        <bool>true</bool>
+                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
@@ -3484,8 +3497,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>767</width>
-              <height>582</height>
+              <width>691</width>
+              <height>601</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -4300,8 +4313,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>791</width>
-              <height>774</height>
+              <width>755</width>
+              <height>745</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -5129,9 +5142,7 @@
   <tabstop>browserHWAccel</tabstop>
   <tabstop>disableFocusHotkeys</tabstop>
  </tabstops>
- <resources>
-  <include location="obs.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>fpsType</sender>
@@ -5535,9 +5546,9 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="outputModeButtonGroup"/>
-  <buttongroup name="serviceButtonGroup"/>
   <buttongroup name="codecButtonGroup"/>
+  <buttongroup name="basicSettingsButtonGroup"/>
+  <buttongroup name="serviceButtonGroup"/>
  </buttongroups>
 </ui>
