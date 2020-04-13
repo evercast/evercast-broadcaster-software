@@ -22,7 +22,7 @@ if [ -n "${TRAVIS_TAG}" ]; then
   STABLE=true
 fi
 
-# sudo python ../CI/install/osx/build_app.py --public-key ../CI/install/osx/EBSPublicDSAKey.pem --sparkle-framework ../../sparkle/Sparkle.framework --stable=$STABLE
+# sudo python ../CI/install/osx/build_app.py --public-key ../CI/install/osx/OBSPublicDSAKey.pem --sparkle-framework ../../sparkle/Sparkle.framework --stable=$STABLE
 
 ../CI/install/osx/packageApp.sh
 
@@ -50,12 +50,12 @@ hr "Copying Sparkle.framework"
 cp -r ../../sparkle/Sparkle.framework ./EBS.app/Contents/Frameworks/
 install_name_tool -change @rpath/Sparkle.framework/Versions/A/Sparkle @executable_path/../Frameworks/Sparkle.framework/Versions/A/Sparkle ./EBS.app/Contents/MacOS/ebs
 
-cp ../CI/install/osx/EBSPublicDSAKey.pem EBS.app/Contents/Resources
+cp ../CI/install/osx/OBSPublicDSAKey.pem EBS.app/Contents/Resources
 
 # edit plist
 plutil -insert CFBundleVersion -string $DEPLOY_VERSION ./EBS.app/Contents/Info.plist
 plutil -insert CFBundleShortVersionString -string $DEPLOY_VERSION ./EBS.app/Contents/Info.plist
-plutil -insert SUPublicDSAKeyFile -string EBSPublicDSAKey.pem ./EBS.app/Contents/Info.plist
+plutil -insert SUPublicDSAKeyFile -string OBSPublicDSAKey.pem ./EBS.app/Contents/Info.plist
 
 dmgbuild "EBS" ebs.dmg
 
