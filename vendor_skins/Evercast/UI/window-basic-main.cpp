@@ -6593,6 +6593,8 @@ void OBSBasic::UpdateTitleBar()
 	if (App()->IsPortableMode())
 		name << " - Portable Mode";
 
+	name << " OBS " << OBS_BASE_VERSION;
+    name << " webRTC " << WEBRTC_VERSION;
 	name << " - " << Str("TitleBar.Profile") << ": " << profile;
 	name << " - " << Str("TitleBar.Scenes") << ": " << sceneCollection;
 
