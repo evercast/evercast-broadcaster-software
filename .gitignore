@@ -94,6 +94,6 @@ dependencies2015/
 UI/webrtcVersion.h
 /.vs
 /.idea
-/out/install/x64-Release
+/out
 CMakeSettings.json
 
