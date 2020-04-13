@@ -1,3 +1,3 @@
-robocopy C:\projects\ebs-studio\build32\rundir\%build_config% C:\projects\ebs-studio\build\ /E /XF .gitignore
-robocopy C:\projects\ebs-studio\build64\rundir\%build_config% C:\projects\ebs-studio\build\ /E /XC /XN /XO /XF .gitignore
-7z a build.zip C:\projects\ebs-studio\build\*
+robocopy .\build32\rundir\%build_config% .\build\ /E /XF .gitignore
+robocopy .\build64\rundir\%build_config% .\build\ /E /XC /XN /XO /XF .gitignore
+7z a build.zip .\build\*
