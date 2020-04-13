@@ -49,10 +49,10 @@ if(WIN32)
 	endif()
 endif()
 
-# --- manage vendor look and feel
+# --- manage vendor look and feel	
 
-if( OBS_WEBRTC_VENDOR_NAME )
-	add_subdirectory( vendor_skins )
+if( OBS_WEBRTC_VENDOR_NAME )	
+	add_subdirectory( vendor_skins )	
 endif()
 
 # --- extend cmake with our own scripts, macros and modules
