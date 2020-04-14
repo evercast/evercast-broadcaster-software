@@ -138,12 +138,48 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     this->type = type;
 
     obs_service_t *service = obs_output_get_service(output);
-    if (!service)
+    if (!service) {
+        obs_output_set_last_error(output, "An unexpected error occurred during stream startup.  Please ensure you have selected an Evercast stream.");
+        obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
+    }
 
-    // WebSocket URL sanity check
-    if (type != WebRTCStream::Type::Millicast && !obs_service_get_url(service)) {
-        warn("Invalid url");
+    url = obs_service_get_url(service) ? obs_service_get_url(service) : "";
+    room = obs_service_get_room(service) ? obs_service_get_room(service) : "";
+    username = obs_service_get_username(service) ? obs_service_get_username(service) : "";
+    password = obs_service_get_password(service) ? obs_service_get_password(service) : "";
+    video_codec = obs_service_get_codec(service) ? obs_service_get_codec(service) : "";
+    protocol = obs_service_get_protocol(service) ? obs_service_get_protocol(service) : "";
+
+    // Stream settings sanity check
+    // NOTE: Username checks out of scope for Evercast and not implemented here
+    bool isServiceValid = true;
+    if (type != WebRTCStream::Type::Millicast) {
+        if (url.empty()) {
+            warn("Invalid url");
+            isServiceValid = false;
+        }
+
+        if (room.empty()) {
+            warn("Missing room ID");
+            isServiceValid = false;
+        }
+    }
+
+    if (type != WebRTCStream::Type::Wowza) {
+        if (password.empty()) {
+            warn("Missing room key");
+            isServiceValid = false;
+        }
+    }
+
+    if (!isServiceValid) {
+        obs_output_set_last_error(
+            output,
+            "It looks like you haven't configured a room for your stream.  Please"
+            " open the Settings window and enter your room's information in the"
+            " Stream tab.\n\nThis information can be found in Evercast by pressing"
+            " the \"EBS Settings\" button available inside each room.");
         obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     }
@@ -181,6 +217,9 @@ bool WebRTCStream::start(WebRTCStream::Type type)
 
     if (!pc.get()) {
         error("Error creating Peer Connection");
+        // NOTE: Placeholder message
+        obs_output_set_last_error(output, "There was an error connecting to the server.  Are you connected to the internet?");
+        obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     } else {
         info("PEER CONNECTION CREATED\n");
@@ -216,6 +255,7 @@ bool WebRTCStream::start(WebRTCStream::Type type)
         // Close Peer Connection
         close(false);
         // Disconnect, this will call stop on main thread
+        obs_output_set_last_error(output, "There was a problem connecting your output to the stream.  Do your sources appear to be working correctly?");
         obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     }
@@ -225,17 +265,12 @@ bool WebRTCStream::start(WebRTCStream::Type type)
         warn("Error creating Websocket client");
         // Close Peer Connection
         close(false);
+        // NOTE: Placeholder message
+        obs_output_set_last_error(output, "There was a problem connecting to Evercast.  Are you behind a firewall?");
         // Disconnect, this will call stop on main thread
         obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     }
-
-    url = obs_service_get_url(service) ? obs_service_get_url(service) : "";
-    room = obs_service_get_room(service) ? obs_service_get_room(service) : "";
-    username = obs_service_get_username(service) ? obs_service_get_username(service) : "";
-    password = obs_service_get_password(service) ? obs_service_get_password(service) : "";
-    video_codec = obs_service_get_codec(service) ? obs_service_get_codec(service) : "";
-    protocol = obs_service_get_protocol(service) ? obs_service_get_protocol(service) : "";
 
     // NOTE LUDO: #178 make sure video codec name is written with lower case characters
 /*    std::transform(video_codec.begin(), video_codec.end(), video_codec.begin(),
@@ -268,10 +303,12 @@ bool WebRTCStream::start(WebRTCStream::Type type)
         warn("Error connecting to server");
         // Shutdown websocket connection and close Peer Connection
         close(false);
+        obs_output_set_last_error(output, "There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
         // Disconnect, this will call stop on main thread
         obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     }
+
     return true;
 }
 
