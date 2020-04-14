@@ -39,9 +39,3 @@ tar -xzf ./osx-deps.tar.gz -C ~
 curl -L -O https://downloads.videolan.org/vlc/3.0.4/vlc-3.0.4.tar.xz
 tar -xf vlc-3.0.4.tar.xz -C ~
 
-# Get sparkle
-wget --retry-connrefused --waitretry=1 -O sparkle.tar.bz2 https://github.com/sparkle-project/Sparkle/releases/download/1.16.0/Sparkle-1.16.0.tar.bz2
-mkdir ./sparkle
-tar -xf ./sparkle.tar.bz2 -C ./sparkle
-sudo cp -R ./sparkle/Sparkle.framework /Library/Frameworks/Sparkle.framework
-

@@ -45,11 +45,6 @@ install_name_tool -change /usr/local/opt/qt/lib/QtWidgets.framework/Versions/5/Q
 install_name_tool -change /usr/local/opt/qt/lib/QtMacExtras.framework/Versions/5/QtMacExtras @executable_path/../Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/local/opt/qt/lib/QtSvg.framework/Versions/5/QtSvg @executable_path/../Frameworks/QtSvg.framework/Versions/5/QtSvg ./EBS.app/Contents/Plugins/obs-outputs.so
 
-# copy sparkle into the app
-hr "Copying Sparkle.framework"
-cp -r ../../sparkle/Sparkle.framework ./EBS.app/Contents/Frameworks/
-install_name_tool -change @rpath/Sparkle.framework/Versions/A/Sparkle @executable_path/../Frameworks/Sparkle.framework/Versions/A/Sparkle ./EBS.app/Contents/MacOS/ebs
-
 cp ../CI/install/osx/OBSPublicDSAKey.pem EBS.app/Contents/Resources
 
 # edit plist
