@@ -448,7 +448,7 @@ void WebRTCStream::onDisconnected()
     // Shutdown websocket connection and close Peer Connection
     close(false);
     // Disconnect, this will call stop on main thread
-    obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
+    obs_output_signal_stop(output, OBS_OUTPUT_DISCONNECTED);
 }
 
 void WebRTCStream::onLoggedError(int code)
@@ -540,6 +540,11 @@ void WebRTCStream::onVideoFrame(video_data *frame)
 void WebRTCStream::getStats()
 {
   rtc::scoped_refptr<const webrtc::RTCStatsReport> report = NewGetStats();
+  if (nullptr == report)
+  {
+    return;
+  }
+
   stats_list = "";
 
   std::vector<const webrtc::RTCOutboundRTPStreamStats*> send_stream_stats =
@@ -678,6 +683,11 @@ void WebRTCStream::getStats()
 rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 {
     rtc::CritScope lock(&crit_);
+
+    if (nullptr == pc)
+    {
+	return nullptr;
+    }
 
     rtc::scoped_refptr<StatsCallback> stats_callback =
             new rtc::RefCountedObject<StatsCallback>();

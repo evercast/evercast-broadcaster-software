@@ -92,3 +92,8 @@ tags
 dependencies2015/
 *BUILD*
 UI/webrtcVersion.h
+/.vs
+/.idea
+/out
+CMakeSettings.json
+
