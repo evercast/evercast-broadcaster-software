@@ -31,6 +31,8 @@ enum class Section : int {
 	StreamKey,
 };
 
+#define CODEC_NAME_VP9 "vp9"
+
 // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
 std::vector<std::string> webrtc_services = {
 	// "webrtc_janus",
@@ -142,7 +144,7 @@ void OBSBasicSettings::LoadStream1Settings()
 		const char *codec =
                 // NOTE LUDO: #172 codecs list of radio buttons
 		// 	strcmp("", tmpString) == 0 ? "Automatic" : tmpString;
-			strcmp("", tmpString) == 0 ? "vp9" : tmpString;
+			strcmp("", tmpString) == 0 ? CODEC_NAME_VP9 : tmpString;
 
 		tmpString = obs_data_get_string(settings, "protocol");
 		const char *protocol =
@@ -175,6 +177,9 @@ void OBSBasicSettings::LoadStream1Settings()
                   QRadioButton *radiobutton = reinterpret_cast<QRadioButton *>(*iter);
                   if (strcmp(codec, radiobutton->text().toStdString().c_str()) == 0) {
                     radiobutton->setChecked(true);
+                    if (strcmp(codec, CODEC_NAME_VP9) == 0) {
+                      ui->vp9WarnLabel->setVisible(true);
+                    }
                     break;
                   }
                 }

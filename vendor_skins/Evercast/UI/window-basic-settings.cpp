@@ -267,6 +267,8 @@ void OBSBasicSettings::HookWidget(QWidget *widget, const char *signal,
 
 #define GENERAL_CHANGED SLOT(GeneralChanged())
 #define STREAM1_CHANGED SLOT(Stream1Changed())
+#define PROTOCOL_CHANGED SLOT(ProtocolChanged())
+#define VP9_CHANGED SLOT(Vp9Changed())
 #define OUTPUTS_CHANGED SLOT(OutputsChanged())
 #define AUDIO_RESTART   SLOT(AudioChangedRestart())
 #define AUDIO_CHANGED   SLOT(AudioChanged())
@@ -354,6 +356,9 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	HookWidget(ui->h264RadioButton,      CHECK_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->vp8RadioButton,       CHECK_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->vp9RadioButton,       CHECK_CHANGED,  STREAM1_CHANGED);
+	HookWidget(ui->h264RadioButton,      CHECK_CHANGED,  PROTOCOL_CHANGED);
+	HookWidget(ui->vp8RadioButton,       CHECK_CHANGED,  PROTOCOL_CHANGED);
+	HookWidget(ui->vp9RadioButton,       CHECK_CHANGED,  VP9_CHANGED);
 	HookWidget(ui->streamProtocol,       COMBO_CHANGED,  STREAM1_CHANGED);
   // NOTE LUDO: #181 replace Settings/Output output mode Simple combo box by a radio button
 	// HookWidget(ui->outputMode,           COMBO_CHANGED,  OUTPUTS_CHANGED);
@@ -748,6 +753,7 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
   ui->codecButtonGroup->setId(ui->h264RadioButton, 0);
   ui->codecButtonGroup->setId(ui->vp8RadioButton,  1);
   ui->codecButtonGroup->setId(ui->vp9RadioButton,  2);
+  ui->vp9WarnLabel->setVisible(false);
 
   // NOTE LUDO: #173 replace Settings/Stream service Evercast combo box by a radio button
   ui->serviceButtonGroup->setId(ui->evercastRadioButton, 1);
@@ -3992,6 +3998,16 @@ void OBSBasicSettings::AdvancedChangedRestart()
 		sender()->setProperty("changed", QVariant(true));
 		EnableApplyButton(true);
 	}
+}
+
+void OBSBasicSettings::ProtocolChanged()
+{
+    ui->vp9WarnLabel->setVisible(false);
+}
+
+void OBSBasicSettings::Vp9Changed()
+{
+    ui->vp9WarnLabel->setVisible(true);
 }
 
 void OBSBasicSettings::VideoChangedResolution()

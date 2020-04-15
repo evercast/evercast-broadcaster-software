@@ -323,6 +323,9 @@ private slots:
 	void AdvancedChanged();
 	void AdvancedChangedRestart();
 
+	void ProtocolChanged();
+	void Vp9Changed();
+
 	void UpdateStreamDelayEstimate();
 
 	void UpdateAutomaticReplayBufferCheckboxes();
