@@ -14,5 +14,5 @@ cmake \
 -Dlibwebrtc_DIR=~/libwebrtc/cmake \
 -DBUILD_BROWSER=false \
 -DOBS_WEBRTC_VENDOR_NAME=Evercast \
--DOBS_VERSION_OVERRIDE=2.5.0 \
+-DOBS_VERSION_OVERRIDE=$EBS_VERSION \
 ..

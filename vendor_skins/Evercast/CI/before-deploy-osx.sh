@@ -11,7 +11,6 @@ set -e
 export GIT_HASH=$(git rev-parse --short HEAD)
 export FILE_DATE=$(date +%Y-%m-%d.%H:%M:%S)
 export FILENAME=$FILE_DATE-$GIT_HASH-$TRAVIS_BRANCH-osx.pkg
-export DEPLOY_VERSION=2.5
 
 cd ./build
 
@@ -48,8 +47,8 @@ install_name_tool -change /usr/local/opt/qt/lib/QtSvg.framework/Versions/5/QtSvg
 cp ../CI/install/osx/OBSPublicDSAKey.pem EBS.app/Contents/Resources
 
 # edit plist
-plutil -insert CFBundleVersion -string $DEPLOY_VERSION ./EBS.app/Contents/Info.plist
-plutil -insert CFBundleShortVersionString -string $DEPLOY_VERSION ./EBS.app/Contents/Info.plist
+plutil -insert CFBundleVersion -string $EBS_VERSION ./EBS.app/Contents/Info.plist
+plutil -insert CFBundleShortVersionString -string $EBS_VERSION ./EBS.app/Contents/Info.plist
 plutil -insert SUPublicDSAKeyFile -string OBSPublicDSAKey.pem ./EBS.app/Contents/Info.plist
 
 dmgbuild "EBS" ebs.dmg
