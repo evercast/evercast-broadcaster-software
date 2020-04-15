@@ -485,7 +485,7 @@ void WebRTCStream::onDisconnected()
     // Shutdown websocket connection and close Peer Connection
     close(false);
     // Disconnect, this will call stop on main thread
-    obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
+    obs_output_signal_stop(output, OBS_OUTPUT_DISCONNECTED);
 }
 
 void WebRTCStream::onLoggedError(int code)
