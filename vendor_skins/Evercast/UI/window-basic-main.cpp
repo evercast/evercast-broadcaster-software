@@ -688,21 +688,9 @@ static inline bool HasAudioDevices(const char *source_id)
 	return count != 0;
 }
 
-void OBSBasic::CreateFirstRunSources()
-{
-	bool hasDesktopAudio = HasAudioDevices(App()->OutputAudioSource());
-	bool hasInputAudio = HasAudioDevices(App()->InputAudioSource());
-
-	if (hasDesktopAudio)
-		ResetAudioDevice(App()->OutputAudioSource(), "default",
-				 Str("Basic.DesktopDevice1"), 1);
-	if (hasInputAudio)
-		ResetAudioDevice(App()->InputAudioSource(), "default",
-				 Str("Basic.AuxDevice1"), 3);
-}
-
 void OBSBasic::CreateDefaultScene(bool firstStart)
 {
+	UNUSED_PARAMETER(firstStart);
 	disableSaving++;
 
 	ClearSceneData();
@@ -712,9 +700,6 @@ void OBSBasic::CreateDefaultScene(bool firstStart)
 	SetTransition(fadeTransition);
 
 	obs_scene_t *scene = obs_scene_create(Str("Basic.Scene"));
-
-	if (firstStart)
-		CreateFirstRunSources();
 
 	SetCurrentScene(scene, true);
 	obs_scene_release(scene);
@@ -1822,6 +1807,10 @@ void OBSBasic::OBSInit()
 	delete ui->actionCheckForUpdates;
 	ui->actionCheckForUpdates = nullptr;
 
+	// Don't show studio mode unless advanced options are on.
+	bool showAdvancedOptions = config_get_bool(this->Config(), "General", "ShowAdvancedOptions");
+	ui->modeSwitch->setHidden(!showAdvancedOptions);
+
 	OnFirstLoad();
 
 #ifdef __APPLE__
@@ -2598,12 +2587,34 @@ static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 	return true;
 }
 
+static void CenterAlignSceneItem(obs_sceneitem_t *item, obs_bounds_type boundsType)
+{
+    obs_video_info ovi;
+    obs_get_video_info(&ovi);
+
+    obs_transform_info itemInfo;
+    vec2_set(&itemInfo.pos, 0.0f, 0.0f);
+    vec2_set(&itemInfo.scale, 1.0f, 1.0f);
+    itemInfo.alignment = OBS_ALIGN_LEFT | OBS_ALIGN_TOP;
+    itemInfo.rot = 0.0f;
+
+    vec2_set(&itemInfo.bounds, float(ovi.base_width),
+             float(ovi.base_height));
+    itemInfo.bounds_type = boundsType;
+    itemInfo.bounds_alignment = OBS_ALIGN_CENTER;
+
+    obs_sceneitem_set_info(item, &itemInfo);
+}
+
 void OBSBasic::AddSceneItem(OBSSceneItem item)
 {
 	obs_scene_t *scene = obs_sceneitem_get_scene(item);
 
 	if (GetCurrentScene() == scene)
-		ui->sources->Add(item);
+	{
+    		ui->sources->Add(item);
+    		CenterAlignSceneItem((obs_sceneitem_t *)item, OBS_BOUNDS_SCALE_INNER);
+	}
 
 	SaveProject();
 
@@ -3463,12 +3474,12 @@ static inline enum obs_scale_type GetScaleType(ConfigFile &basicConfig)
 	const char *scaleTypeStr =
 		config_get_string(basicConfig, "Video", "ScaleType");
 
-	if (astrcmpi(scaleTypeStr, "bilinear") == 0)
-		return OBS_SCALE_BILINEAR;
+	if (astrcmpi(scaleTypeStr, "bicubic") == 0)
+		return OBS_SCALE_BICUBIC;
 	else if (astrcmpi(scaleTypeStr, "lanczos") == 0)
 		return OBS_SCALE_LANCZOS;
 	else
-		return OBS_SCALE_BICUBIC;
+		return OBS_SCALE_BILINEAR;
 }
 
 static inline enum video_format GetVideoFormatFromName(const char *name)
@@ -3922,6 +3933,10 @@ void OBSBasic::on_action_Settings_triggered()
 
 	OBSBasicSettings settings(this);
 	settings.exec();
+
+	bool showAdvancedOptions = config_get_bool(this->Config(), "General", "ShowAdvancedOptions");
+	ui->modeSwitch->setHidden(!showAdvancedOptions);
+
 	SystemTray(false);
 
 	settings_already_executing = false;
@@ -6175,21 +6190,7 @@ static bool CenterAlignSelectedItems(obs_scene_t *scene, obs_sceneitem_t *item,
 	if (!obs_sceneitem_selected(item))
 		return true;
 
-	obs_video_info ovi;
-	obs_get_video_info(&ovi);
-
-	obs_transform_info itemInfo;
-	vec2_set(&itemInfo.pos, 0.0f, 0.0f);
-	vec2_set(&itemInfo.scale, 1.0f, 1.0f);
-	itemInfo.alignment = OBS_ALIGN_LEFT | OBS_ALIGN_TOP;
-	itemInfo.rot = 0.0f;
-
-	vec2_set(&itemInfo.bounds, float(ovi.base_width),
-		 float(ovi.base_height));
-	itemInfo.bounds_type = boundsType;
-	itemInfo.bounds_alignment = OBS_ALIGN_CENTER;
-
-	obs_sceneitem_set_info(item, &itemInfo);
+	CenterAlignSceneItem(item, boundsType);
 
 	UNUSED_PARAMETER(scene);
 	return true;

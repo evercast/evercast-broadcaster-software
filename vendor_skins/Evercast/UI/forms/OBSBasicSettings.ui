@@ -224,7 +224,7 @@
               <x>0</x>
               <y>0</y>
               <width>753</width>
-              <height>920</height>
+              <height>943</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -314,6 +314,13 @@
                     <widget class="QCheckBox" name="openStatsOnStartup">
                      <property name="text">
                       <string>Basic.Settings.General.OpenStatsOnStartup</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QCheckBox" name="showAdvancedOptionsCheckBox">
+                     <property name="text">
+                      <string>Basic.Settings.General.ShowAdvancedOptions</string>
                      </property>
                     </widget>
                    </item>
@@ -1313,7 +1320,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>740</width>
+              <width>753</width>
               <height>717</height>
              </rect>
             </property>
@@ -3497,8 +3504,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>691</width>
-              <height>601</height>
+              <width>753</width>
+              <height>632</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -4034,37 +4041,6 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QComboBox" name="fpsType">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="currentText">
-            <string>Basic.Settings.Video.FPSCommon</string>
-           </property>
-           <property name="sizeAdjustPolicy">
-            <enum>QComboBox::AdjustToContents</enum>
-           </property>
-           <item>
-            <property name="text">
-             <string>Basic.Settings.Video.FPSCommon</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Basic.Settings.Video.FPSInteger</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Basic.Settings.Video.FPSFraction</string>
-            </property>
-           </item>
-          </widget>
-         </item>
          <item row="3" column="1">
           <widget class="QStackedWidget" name="fpsTypes">
            <property name="currentIndex">
@@ -4104,7 +4080,7 @@
                </item>
                <item>
                 <property name="text">
-                 <string>24 NTSC</string>
+                 <string>Low (Max CPU Savings) (24 NTSC)</string>
                 </property>
                </item>
                <item>
@@ -4119,7 +4095,7 @@
                </item>
                <item>
                 <property name="text">
-                 <string notr="true">30</string>
+                 <string notr="true">Medium (CPU Saver) (30 FPS)</string>
                 </property>
                </item>
                <item>
@@ -4139,7 +4115,7 @@
                </item>
                <item>
                 <property name="text">
-                 <string notr="true">60</string>
+                 <string notr="true">Maximum (Recommended) (60 FPS)</string>
                 </property>
                </item>
               </widget>
@@ -4255,6 +4231,22 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="fpsCommonLabel">
+           <property name="minimumSize">
+            <size>
+             <width>170</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Basic.Settings.Video.FPSCommon</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
        <widget class="QScrollArea" name="hotkeyPage">
@@ -4299,6 +4291,12 @@
          </property>
          <item>
           <widget class="QScrollArea" name="scrollArea">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
@@ -4314,7 +4312,7 @@
               <x>0</x>
               <y>0</y>
               <width>755</width>
-              <height>745</height>
+              <height>755</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -4333,6 +4331,9 @@
              <item>
               <widget class="QWidget" name="widget_11" native="true">
                <layout class="QVBoxLayout" name="verticalLayout_24">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetNoConstraint</enum>
+                </property>
                 <item>
                  <widget class="QGroupBox" name="advancedGeneralGroupBox">
                   <property name="title">
@@ -4348,7 +4349,7 @@
                    <property name="topMargin">
                     <number>2</number>
                    </property>
-                   <item row="0" column="0">
+                   <item row="1" column="0">
                     <widget class="QLabel" name="processPriorityLabel">
                      <property name="text">
                       <string>Basic.Settings.Advanced.General.ProcessPriority</string>
@@ -4358,10 +4359,10 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="1">
+                   <item row="1" column="1">
                     <widget class="QComboBox" name="processPriority"/>
                    </item>
-                   <item row="1" column="0">
+                   <item row="2" column="0">
                     <spacer name="horizontalSpacer_13">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
@@ -4934,6 +4935,9 @@
          </item>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_17">
+           <property name="sizeConstraint">
+            <enum>QLayout::SetDefaultConstraint</enum>
+           </property>
            <property name="leftMargin">
             <number>10</number>
            </property>
@@ -5116,7 +5120,6 @@
   <tabstop>baseResolution</tabstop>
   <tabstop>outputResolution</tabstop>
   <tabstop>downscaleFilter</tabstop>
-  <tabstop>fpsType</tabstop>
   <tabstop>fpsCommon</tabstop>
   <tabstop>fpsInteger</tabstop>
   <tabstop>fpsNumerator</tabstop>
@@ -5144,22 +5147,6 @@
  </tabstops>
  <resources/>
  <connections>
-  <connection>
-   <sender>fpsType</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>fpsTypes</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>310</x>
-     <y>29</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>241</x>
-     <y>30</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>simpleOutAdvanced</sender>
    <signal>toggled(bool)</signal>
@@ -5546,9 +5533,9 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="outputModeButtonGroup"/>
-  <buttongroup name="codecButtonGroup"/>
   <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="serviceButtonGroup"/>
+  <buttongroup name="outputModeButtonGroup"/>
+  <buttongroup name="codecButtonGroup"/>
  </buttongroups>
 </ui>

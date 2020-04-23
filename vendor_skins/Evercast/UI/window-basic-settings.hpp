@@ -147,6 +147,7 @@ private:
 	uint32_t outputCX = 0;
 	uint32_t outputCY = 0;
 
+    void SaveFPSCommon();
 	void SaveCombo(QComboBox *widget, const char *section,
 		       const char *value);
 	void SaveComboData(QComboBox *widget, const char *section,
@@ -238,6 +239,7 @@ private slots:
 
 private:
 	/* output */
+	void CheckAdvancedOptions();
 	void LoadSimpleOutputSettings();
 	void LoadAdvOutputStreamingSettings();
 	void LoadAdvOutputStreamingEncoderProperties();

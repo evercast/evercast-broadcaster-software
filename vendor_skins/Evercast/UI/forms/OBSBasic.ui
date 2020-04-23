@@ -27,7 +27,7 @@
    <string>.MainWindow</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="obs.qrc">
+   <iconset>
     <normaloff>:/res/images/obs.png</normaloff>:/res/images/obs.png</iconset>
   </property>
   <property name="styleSheet">
@@ -725,7 +725,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>64</width>
+           <width>87</width>
            <height>16</height>
           </rect>
          </property>
@@ -1460,6 +1460,9 @@
    <property name="text">
     <string>Basic.MainMenu.Help.CheckForUpdates</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionInteract">
    <property name="text">
@@ -1474,6 +1477,9 @@
   <action name="actionWebsite">
    <property name="text">
     <string>Basic.MainMenu.Help.Website</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionNewSceneCollection">
@@ -1622,6 +1628,9 @@
    <property name="text">
     <string>Basic.AutoConfig</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="stats">
    <property name="text">
@@ -1703,6 +1712,9 @@
    <property name="text">
     <string>Basic.MainMenu.Help.HelpPortal</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionShowCrashLogs">
    <property name="text">
@@ -1717,6 +1729,9 @@
   <action name="actionDiscord">
    <property name="text">
     <string>Basic.MainMenu.Help.Discord</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="toggleStats">
@@ -1733,6 +1748,9 @@
   <action name="actionShowAbout">
    <property name="text">
     <string>Basic.MainMenu.Help.About</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
  </widget>
