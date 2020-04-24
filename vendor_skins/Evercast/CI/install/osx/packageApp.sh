@@ -10,7 +10,7 @@ BUILD_CONFIG=RELEASE
 QT_VERSION=5.14.1
 cp -r rundir/$BUILD_CONFIG/bin/ ./EBS.app/Contents/MacOS
 cp -r rundir/$BUILD_CONFIG/data ./EBS.app/Contents/Resources
-cp ../CI/install/osx/obs.icns ./EBS.app/Contents/Resources
+cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources
 cp -r rundir/$BUILD_CONFIG/obs-plugins/ ./EBS.app/Contents/PlugIns
 cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 
