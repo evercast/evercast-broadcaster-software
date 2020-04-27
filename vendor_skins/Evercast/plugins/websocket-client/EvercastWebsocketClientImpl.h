@@ -54,7 +54,8 @@ private:
 
     std::string sanitizeString(const std::string & s);
     void handleDisconnect(websocketpp::connection_hdl connectionHdl,
-                          WebsocketClient::Listener * listener,
-                          const char * callback_name);
+                          WebsocketClient::Listener * listener);
+    void handleFail(websocketpp::connection_hdl connectionHdl,
+                          WebsocketClient::Listener * listener);
 };
 

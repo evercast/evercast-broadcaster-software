@@ -57,8 +57,6 @@ bool EvercastWebsocketClientImpl::connect(
 
             if (msg.find("janus") == msg.end())
                 return;
-            if (msg.find("ack") != msg.end())
-                return;
 
             // Check if it is an event
             if (msg.find("jsep") != msg.end()) {
@@ -70,6 +68,10 @@ bool EvercastWebsocketClientImpl::connect(
 
             // Check type
             std::string event = msg["janus"];
+
+            if (event == "ack")
+                return;
+
             if (event.compare("success") == 0) {
                 if (msg.find("transaction") == msg.end())
                     return;
@@ -141,10 +143,10 @@ bool EvercastWebsocketClientImpl::connect(
         });
 
         // --- Close handler
-        client.set_close_handler(std::bind(&EvercastWebsocketClientImpl::handleDisconnect, this, _1, listener, "set_close_handler"));
+        client.set_close_handler(std::bind(&EvercastWebsocketClientImpl::handleDisconnect, this, _1, listener));
 
         // --- Failure handler
-        client.set_fail_handler(std::bind(&EvercastWebsocketClientImpl::handleDisconnect, this, _1, listener, "set_fail_handler"));
+        client.set_fail_handler(std::bind(&EvercastWebsocketClientImpl::handleFail, this, _1, listener));
 
         // --- TLS handler
         client.set_tls_init_handler([&](websocketpp::connection_hdl /* con */) {
@@ -375,12 +377,26 @@ std::string EvercastWebsocketClientImpl::sanitizeString(const std::string & s)
 
 void EvercastWebsocketClientImpl::handleDisconnect(
         websocketpp::connection_hdl connectionHdl,
-        WebsocketClient::Listener * listener,
-        const char * callback_name)
+        WebsocketClient::Listener * listener)
 {
-    info("> %s called", callback_name);
+    UNUSED_PARAMETER(connectionHdl);
+
+    info("> set_close_handler called");
     if (listener)
     {
         listener->onDisconnected();
+    }
+}
+
+void EvercastWebsocketClientImpl::handleFail(
+        websocketpp::connection_hdl connectionHdl,
+        WebsocketClient::Listener * listener)
+{
+    UNUSED_PARAMETER(connectionHdl);
+
+    info("> set_fail_handler called");
+    if (listener)
+    {
+        listener->onLoggedError(-1);
     }
 }

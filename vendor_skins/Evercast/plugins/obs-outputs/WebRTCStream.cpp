@@ -385,6 +385,31 @@ void WebRTCStream::OnIceCandidate(const webrtc::IceCandidateInterface *candidate
     client->trickle(candidate->sdp_mid(), candidate->sdp_mline_index(), str, false);
 }
 
+void WebRTCStream::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState state /* new_state */)
+{
+    using namespace webrtc;
+    info("WebRTCStream::OnIceConnectionChange [%u]", state);
+
+    switch (state) {
+        case PeerConnectionInterface::IceConnectionState::kIceConnectionFailed:
+            // Close must be carried out on a separate thread in order to avoid deadlock
+            thread_closeAsync = std::thread([&] () {
+                close(false);
+
+                obs_output_set_last_error(
+                        output,
+                        "Evercast found your room, but streaming failed.  Are you behind a firewall?\n\n"
+                        "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.");
+
+                // Disconnect, this will call stop on main thread
+                obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
+            });
+            break;
+        default:
+            break;
+    }
+}
+
 void WebRTCStream::onRemoteIceCandidate(const std::string &sdpData)
 {
     if (sdpData.empty()) {
@@ -493,6 +518,12 @@ void WebRTCStream::onLoggedError(int code)
     info("WebRTCStream::onLoggedError [code: %d]", code);
     // Shutdown websocket connection and close Peer Connection
     close(false);
+
+    obs_output_set_last_error(
+        output,
+        "Evercast is having trouble connecting to your room.  Are you behind a firewall?\n\n"
+        "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.");
+
     // Disconnect, this will call stop on main thread
     obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
 }
