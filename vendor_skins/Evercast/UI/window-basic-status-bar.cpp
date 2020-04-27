@@ -307,11 +307,16 @@ void OBSBasicStatusBar::UpdateDroppedFrames()
 	if (!totalFrames)
 		return;
 
-	QString text = QTStr("DroppedFrames");
-	text = text.arg(QString::number(totalDropped),
-			QString::number(percent, 'f', 1));
-	droppedFrames->setText(text);
-	droppedFrames->setMinimumWidth(droppedFrames->width());
+    OBSBasic *main = reinterpret_cast<OBSBasic *>(App()->GetMainWindow());
+    if (config_get_bool(main->Config(), "General", "ShowAdvancedOptions")) {
+        QString text = QTStr("DroppedFrames");
+        text = text.arg(QString::number(totalDropped),
+                        QString::number(percent, 'f', 1));
+        droppedFrames->setText(text);
+        droppedFrames->setMinimumWidth(droppedFrames->width());
+    } else {
+        droppedFrames->setText("");
+    }
 
 	/* ----------------------------------- *
 	 * calculate congestion color          */
