@@ -1,0 +1,11 @@
+//
+// Created by Steven Westbrook on 2020-04-29.
+//
+
+#ifndef OBS_STUDIO_EVERCAST_H
+#define OBS_STUDIO_EVERCAST_H
+
+#define EVERCAST_SUCCESS 0
+#define EVERCAST_ERR_DUPLICATE_USER 436
+
+#endif //OBS_STUDIO_EVERCAST_H
