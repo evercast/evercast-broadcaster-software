@@ -1,6 +1,7 @@
 rm CI/install/osx/Info.plist
 rm CI/install/osx/dylibBundler
 rm CI/install/osx/packageApp.sh
+rm -rf CI/install/osx/obs-ndi
 git checkout -- CI/*
 rm UI/webrtcVersion.h
 git checkout -- UI/*

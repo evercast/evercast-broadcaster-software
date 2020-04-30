@@ -14,6 +14,16 @@ cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources
 cp -r rundir/$BUILD_CONFIG/obs-plugins/ ./EBS.app/Contents/PlugIns
 cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 
+#NDI Plugin
+NDI_PATH=../CI/install/osx/obs-ndi
+cp $NDI_PATH/bin/obs-ndi.so ./EBS.app/Contents/PlugIns
+mkdir -p ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
+cp -r $NDI_PATH/data/locale ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
+install_name_tool -change @rpath/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-ndi.so
+install_name_tool -change @rpath/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/PlugIns/obs-ndi.so
+install_name_tool -change @rpath/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/PlugIns/obs-ndi.so
+
+echo "Bundling app..."
 ../CI/install/osx/dylibBundler -b -cd -d ./EBS.app/Contents/Frameworks -p @executable_path/../Frameworks/ \
 -s ./EBS.app/Contents/MacOS \
 -s /usr/local/opt/mbedtls/lib/ \
@@ -29,6 +39,7 @@ cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 -x ./EBS.app/Contents/PlugIns/mac-vth264.so \
 -x ./EBS.app/Contents/PlugIns/obs-ffmpeg.so \
 -x ./EBS.app/Contents/PlugIns/obs-filters.so \
+-x ./EBS.app/Contents/PlugIns/obs-ndi.so \
 -x ./EBS.app/Contents/PlugIns/obs-transitions.so \
 -x ./EBS.app/Contents/PlugIns/obs-vst.so \
 -x ./EBS.app/Contents/PlugIns/rtmp-services.so \
@@ -38,6 +49,7 @@ cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 -x ./EBS.app/Contents/PlugIns/text-freetype2.so \
 -x ./EBS.app/Contents/PlugIns/obs-libfdk.so
 
+echo "Deploying QT..."
 /usr/local/Cellar/qt/$QT_VERSION/bin/macdeployqt ./EBS.app
 
 mv ./EBS.app/Contents/MacOS/libobs-opengl.so ./EBS.app/Contents/Frameworks
