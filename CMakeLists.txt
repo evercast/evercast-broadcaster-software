@@ -174,6 +174,14 @@ elseif(UNIX)
 	endif()
 endif()
 
+if(WIN32 AND INCLUDE_NDI)
+	install(DIRECTORY ./CI/install/win/ndi-plugin/data
+		DESTINATION ".")
+
+	install(DIRECTORY ./CI/install/win/ndi-plugin/obs-plugins
+		DESTINATION ".")
+endif()
+
 option( BUILD_TESTS "Build test directory (includes test sources and possibly a platform test executable)" FALSE)
 mark_as_advanced(BUILD_TESTS)
 
