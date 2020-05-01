@@ -15,7 +15,6 @@ cp -r rundir/$BUILD_CONFIG/obs-plugins/ ./EBS.app/Contents/PlugIns
 cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 
 #NDI Plugin
-NDI_PATH=../CI/install/osx/obs-ndi
 cp $NDI_PATH/bin/obs-ndi.so ./EBS.app/Contents/PlugIns
 mkdir -p ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
 cp -r $NDI_PATH/data/locale ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
