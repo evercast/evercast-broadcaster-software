@@ -174,11 +174,11 @@ elseif(UNIX)
 	endif()
 endif()
 
-if(WIN32 AND DEFINED INCLUDE_NDI AND "${INCLUDE_NDI}" STREQUAL "T")
-	install(DIRECTORY ./CI/install/win/ndi-plugin/data
+if(WIN32 AND DEFINED NDI_PATH AND NOT "${NDI_PATH}" STREQUAL "")
+	install(DIRECTORY ${NDI_PATH}/data
 		DESTINATION ".")
 
-	install(DIRECTORY ./CI/install/win/ndi-plugin/obs-plugins
+	install(DIRECTORY ${NDI_PATH}/obs-plugins
 		DESTINATION ".")
 endif()
 
