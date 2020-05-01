@@ -174,7 +174,7 @@ elseif(UNIX)
 	endif()
 endif()
 
-if(WIN32 AND INCLUDE_NDI)
+if(WIN32 AND DEFINED INCLUDE_NDI AND "${INCLUDE_NDI}" STREQUAL "T")
 	install(DIRECTORY ./CI/install/win/ndi-plugin/data
 		DESTINATION ".")
 
