@@ -18,5 +18,5 @@ cmake ^
   -DFFMPEG_AVCODEC_INCLUDE_DIRS=%ffmpegPath%\include ^
   -DFFMPEG_AVCODEC_LIBRARIES=%ffmpegPath%\lib ^
   -DDepsPath64=%DepsPath64% ^
-  -DINCLUDE_NDI=T ^
+  -DNDI_PATH=%NDIPath% ^
   ..
