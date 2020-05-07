@@ -89,6 +89,7 @@ configure_file(
 
 include_directories("${CMAKE_BINARY_DIR}/plugins/obs-outputs/config")
 include_directories(${CMAKE_SOURCE_DIR}/libobs)
+# include_directories(${CMAKE_SOURCE_DIR}/plugins/websocket-client)
 
 #------------------------------------------------------------------------
 # WebRTC
@@ -221,6 +222,8 @@ target_link_libraries(obs-outputs
 	${ZLIB_LIBRARIES}
 	${ftl_IMPORTS}
 	${obs-outputs_PLATFORM_DEPS})
+
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -rpath websocketclient.so")
 
 if(WIN32 AND MSVC)
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")

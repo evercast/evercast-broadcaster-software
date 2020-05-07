@@ -1,0 +1,20 @@
+#!/bin/sh
+set -ex
+
+ccache -s || echo "CCache is not available."
+mkdir build && cd build
+cmake \
+-DENABLE_SCRIPTING=OFF \
+-DCMAKE_BUILD_TYPE=Debug \
+-DCMAKE_INSTALL_PREFIX=/usr \
+-Dlibwebrtc_DIR=$WEBRTC_DIR \
+-DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR \
+-DBUILD_BROWSER=false \
+-DOBS_WEBRTC_VENDOR_NAME=Evercast \
+-DOBS_VERSION_OVERRIDE=$EBS_VERSION \
+-DOBS_BASE_VERSION=23.2.0 \
+-DWEBRTC_VERSION=73.0.0 \
+-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+-DCMAKE_C_COMPILER=/usr/bin/clang \
+-DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+..

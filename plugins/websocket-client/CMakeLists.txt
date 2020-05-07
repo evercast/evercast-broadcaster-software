@@ -11,8 +11,8 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/restclient-cpp/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/websocketpp)
 include_directories(${CMAKE_SOURCE_DIR}/libobs)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/websocketpp)
 
 #------------------------------------------------------------------------
 # JSON
@@ -78,4 +78,4 @@ target_link_libraries(websocketclient
 	PUBLIC ${OPENSSL_LIBRARIES}
 	PRIVATE nlohmann_json::nlohmann_json)
 
-install_obs_plugin(websocketclient)
+install_obs_core(websocketclient)
