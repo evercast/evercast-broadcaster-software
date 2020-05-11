@@ -21,7 +21,6 @@ cp -r $NDI_PATH/data/locale ./EBS.app/Contents/Resources/data/obs-plugins/obs-nd
 install_name_tool -change @rpath/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-ndi.so
 install_name_tool -change @rpath/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/PlugIns/obs-ndi.so
 install_name_tool -change @rpath/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/PlugIns/obs-ndi.so
-cp $NDI_SDK ./EBS.app/Contents/PlugIns
 
 echo "Bundling app..."
 ../CI/install/osx/dylibBundler -b -cd -d ./EBS.app/Contents/Frameworks -p @executable_path/../Frameworks/ \
