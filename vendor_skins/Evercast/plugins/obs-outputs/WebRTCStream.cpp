@@ -3,16 +3,19 @@
 
 #include "media-io/video-io.h"
 
+#include "opus_audio_encoder_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 #include "api/video/i420_buffer.h"
+#include "api/peer_connection_interface.h"
 #include "common_video/libyuv/include/webrtc_libyuv.h"
 #include "pc/rtc_stats_collector.h"
 #include "rtc_base/checks.h"
 #include "rtc_base/critical_section.h"
 #include <libyuv.h>
+#include "Evercast.h"
 
 #include <algorithm>
 #include <chrono>
@@ -95,7 +98,7 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
             worker.get(),
             signaling.get(),
             adm,
-            webrtc::CreateBuiltinAudioEncoderFactory(),
+            webrtc::CreateOpusAudioEncoderFactory(),
             webrtc::CreateBuiltinAudioDecoderFactory(),
             webrtc::CreateBuiltinVideoEncoderFactory(),
             webrtc::CreateBuiltinVideoDecoderFactory(),
@@ -194,6 +197,15 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     video_bitrate = (int)obs_data_get_int(vsettings, "bitrate");
     obs_data_release(vsettings);
 
+    struct obs_audio_info audio_info;
+    if (!obs_get_audio_info(&audio_info)) {
+	warn("Failed to load audio settings.  Defaulting to opus.");
+        audio_codec = "opus";
+    } else {
+        channel_count = (int)(audio_info.speakers);
+        audio_codec = channel_count <= 2 ? "opus" : "multiopus";
+    }
+
     // Shutdown websocket connection and close Peer Connection (just in case)
     if (close(false))
         obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
@@ -231,15 +243,14 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     options.stereo_swapping.emplace(false);
     options.typing_detection.emplace(false); // default: true
     options.experimental_agc.emplace(false);
-    options.extended_filter_aec.emplace(false);
-    options.delay_agnostic_aec.emplace(false);
     options.experimental_ns.emplace(false);
     options.residual_echo_detector.emplace(false); // default: true
     // options.tx_agc_limiter.emplace(false);
 
     stream = factory->CreateLocalMediaStream("obs");
 
-    audio_track = factory->CreateAudioTrack("audio", factory->CreateAudioSource(options));
+    audio_source = EvercastAudioSource::Create(&options);
+    audio_track = factory->CreateAudioTrack("audio", audio_source);
     // pc->AddTrack(audio_track, {"obs"});
     stream->AddTrack(audio_track);
     
@@ -328,7 +339,6 @@ void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
     info("WebRTCStream::OnSuccess\n");
     std::string sdp;
     desc->ToString(&sdp);
-    audio_codec = "opus";
 
     info("Audio codec:      %s", audio_codec.c_str());
     info("Audio bitrate:    %d\n", audio_bitrate);
@@ -352,13 +362,18 @@ void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
         SDPModif::bitrateMaxMinSDP(sdpCopy, video_bitrate, video_payloads);
         // Enable stereo & constrain audio bitrate
         SDPModif::stereoSDP(sdpCopy, audio_bitrate);
+    } else if (type == WebRTCStream::Type::Evercast) {
+        if (audio_codec == "multiopus") {
+	    // Modify offer to accept multiopus
+	    SDPModif::surroundSDP(sdpCopy, channel_count);
+        }
     }
 
     info("SETTING LOCAL DESCRIPTION\n\n");
     pc->SetLocalDescription(this, desc);
 
     info("Sending OFFER (SDP) to remote peer:\n\n%s", sdpCopy.c_str());
-    client->open(sdpCopy, video_codec, username);
+    client->open(sdpCopy, video_codec, audio_codec, username);
 }
 
 void WebRTCStream::OnSuccess()
@@ -460,7 +475,7 @@ void WebRTCStream::onOpened(const std::string &sdp)
     audio_convert_info conversion;
     conversion.format = AUDIO_FORMAT_16BIT;
     conversion.samples_per_sec = 48000;
-    conversion.speakers = SPEAKERS_STEREO;
+    conversion.speakers = (speaker_layout)channel_count;
     obs_output_set_audio_conversion(output, &conversion);
 
     info("Begin data capture...");
@@ -525,10 +540,17 @@ void WebRTCStream::onLoggedError(int code)
     // Shutdown websocket connection and close Peer Connection
     close(false);
 
-    obs_output_set_last_error(
-        output,
-        "Evercast is having trouble connecting to your room.  Are you behind a firewall?\n\n"
-        "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.");
+    const char *error;
+    switch (code)
+    {
+    case -EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC:
+	error = "Your Evercast room does not support surround sound.  Try setting output to stereo, then reconnect.";
+        break;
+    default:
+        error = "Evercast is having trouble connecting to your room.  Are you behind a firewall?\n\n"
+        "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.";
+    }
+    obs_output_set_last_error(output, error);
 
     // Disconnect, this will call stop on main thread
     obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
@@ -548,7 +570,7 @@ void WebRTCStream::onAudioFrame(audio_data *frame)
     if (!frame)
         return;
     // Push it to the device
-    adm->onIncomingData(frame->data[0], frame->frames);
+    audio_source->OnAudioData(frame);
 }
 
 void WebRTCStream::onVideoFrame(video_data *frame)
@@ -653,12 +675,12 @@ void WebRTCStream::getStats()
           report->GetStatsOfType<webrtc::RTCMediaStreamTrackStats>();
   for (const auto& stat : media_stream_track_stats) {
     if (stat->kind.ValueToString() == "audio") {
-      stats_list += "track_audio_level:"            + stat->audio_level.ValueToJson() + "\n";
-      stats_list += "track_total_audio_energy:"     + stat->total_audio_energy.ValueToJson() + "\n";
+      // stats_list += "track_audio_level:"            + stat->audio_level.ValueToJson() + "\n";
+      // stats_list += "track_total_audio_energy:"     + stat->total_audio_energy.ValueToJson() + "\n";
       // stats_list += "track_echo_return_loss:"   + stat->echo_return_loss.ValueToJson() + "\n";
       // stats_list += "track_echo_return_loss_enhancement:" + stat->echo_return_loss_enhancement.ValueToJson() + "\n";
       // stats_list += "track_total_samples_received:" + stat->total_samples_received.ValueToJson() + "\n";
-      stats_list += "track_total_samples_duration:" + stat->total_samples_duration.ValueToJson() + "\n";
+      // stats_list += "track_total_samples_duration:" + stat->total_samples_duration.ValueToJson() + "\n";
       // stats_list += "track_concealed_samples:" + stat->concealed_samples.ValueToJson() + "\n";
       // stats_list += "track_concealment_events:" + stat->concealment_events.ValueToJson() + "\n";
     }
@@ -726,12 +748,15 @@ void WebRTCStream::getStats()
           report->GetStatsOfType<webrtc::RTCOutboundRTPStreamStats>();
   for (const auto& stat : outbound_stream_stats) {
     if (stat->kind.ValueToString() == "audio") {
+      /*
       stats_list += "outbound_audio_packets_sent:"   + stat->packets_sent.ValueToJson() + "\n";
       stats_list += "outbound_audio_bytes_sent:"     + stat->bytes_sent.ValueToJson() + "\n";
       // stats_list += "outbound_audio_target_bitrate:" + stat->target_bitrate.ValueToJson() + "\n";
       // stats_list += "outbound_audio_frames_encoded:" + stat->frames_encoded.ValueToJson() + "\n";
+      */
     }
     if (stat->kind.ValueToString() == "video") {
+      /*
       stats_list += "outbound_video_packets_sent:"   + stat->packets_sent.ValueToJson() + "\n";
       stats_list += "outbound_video_bytes_sent:"     + stat->bytes_sent.ValueToJson() + "\n";
       // stats_list += "outbound_video_target_bitrate:" + stat->target_bitrate.ValueToJson() + "\n";
@@ -741,6 +766,7 @@ void WebRTCStream::getStats()
       stats_list += "outbound_video_nack_count:"     + stat->nack_count.ValueToJson() + "\n";
       // stats_list += "outbound_video_sli_count:"      + stat->sli_count.ValueToJson() + "\n";
       stats_list += "outbound_video_qp_sum:"         + stat->qp_sum.ValueToJson() + "\n";
+      */
     }
   }
 

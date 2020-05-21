@@ -314,7 +314,7 @@ void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
     pc->SetLocalDescription(this, desc);
 
     info("Sending OFFER (SDP) to remote peer:\n\n%s", sdpCopy.c_str());
-    client->open(sdpCopy, video_codec, username);
+    client->open(sdpCopy, video_codec, audio_codec, username);
 }
 
 void WebRTCStream::OnSuccess()

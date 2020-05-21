@@ -193,7 +193,8 @@ bool JanusWebsocketClientImpl::connect(
 
 bool JanusWebsocketClientImpl::open(
         const std::string & sdp,
-        const std::string & codec,
+        const std::string & video_codec,
+        const std::string & audio_codec,
         const std::string & /* username */)
 {
     try {
@@ -205,7 +206,7 @@ bool JanusWebsocketClientImpl::open(
         };
         json body_with_codec = {
             { "request", "configure" },
-            { "videocodec", codec },
+            { "videocodec", video_codec },
             { "muted", false },
             { "video", true },
             { "audio", true }
@@ -216,7 +217,7 @@ bool JanusWebsocketClientImpl::open(
             { "session_id", session_id },
             { "handle_id", handle_id },
             { "transaction", std::to_string(rand()) },
-            { "body", codec.empty() ? body_no_codec : body_with_codec },
+            { "body", video_codec.empty() ? body_no_codec : body_with_codec },
             { "jsep",
                 {
                     { "type", "offer" },
