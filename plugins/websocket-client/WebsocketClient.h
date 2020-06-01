@@ -21,7 +21,8 @@ enum Type {
     Janus     = 0,
     Wowza     = 1,
     Millicast = 2,
-    Evercast  = 3
+    Evercast  = 3,
+    VideoRoom  = 4
 };
 
 class WEBSOCKETCLIENT_API WebsocketClient {
