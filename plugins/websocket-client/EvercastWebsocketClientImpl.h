@@ -1,3 +1,6 @@
+#ifndef __EVERCAST_WEBSOCKET_CLIENT_IMPL_H__
+#define __EVERCAST_WEBSOCKET_CLIENT_IMPL_H__
+
 #include "WebsocketClient.h"
 
 //Use http://think-async.com/ instead of boost
@@ -44,10 +47,21 @@ public:
     void keepConnectionAlive(WebsocketClient::Listener * listener);
     void destroy();
 
-private:
-    bool logged;
+protected:
     long long session_id;
     long long handle_id;
+
+    virtual void sendKeepAliveMessage();
+    virtual bool sendTrickleMessage(const std::string &mid, int index, const std::string &candidate, bool last);
+    virtual bool sendOpenMessage(const std::string &sdp, const std::string &video_codec, const std::string &audio_codec);
+    virtual void sendLoginMessage(std::string username, std::string token, std::string room);
+    virtual void sendAttachMessage();
+    virtual void sendJoinMessage(std::string room);
+    virtual void sendDestroyMessage();
+    virtual bool sendMessage(nlohmann::json msg, const char *name);
+
+ private:
+    bool logged;
 
     Client client;
     Client::connection_ptr connection;
@@ -61,15 +75,8 @@ private:
                           WebsocketClient::Listener * listener);
     void handleFail(websocketpp::connection_hdl connectionHdl,
                           WebsocketClient::Listener * listener);
-    void sendKeepAliveMessage();
-    bool sendTrickleMessage(const std::string &mid, int index, const std::string &candidate, bool last);
-    bool sendOpenMessage(const std::string &sdp, const std::string &video_codec, const std::string &audio_codec);
-    void sendLoginMessage(std::string username, std::string token, std::string room);
-    void sendAttachMessage();
-    void sendJoinMessage(std::string room);
-    void sendDestroyMessage();
-    bool sendMessage(nlohmann::json msg, const char *name);
     int parsePluginErrorCode(nlohmann::json &msg);
     bool hasTimedOut();
 };
 
+#endif // __EVERCAST_WEBSOCKET_CLIENT_IMPL_H__
