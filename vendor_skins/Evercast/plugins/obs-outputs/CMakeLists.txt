@@ -189,6 +189,8 @@ set(obs-outputs_HEADERS
 	rtmp-helpers.h
 	rtmp-stream.h
 	net-if.h
+	opus_audio_encoder_factory.h
+	EvercastAudioSource.h
 	flv-mux.h)
 set(obs-outputs_SOURCES
 	obs-outputs.c
@@ -197,6 +199,8 @@ set(obs-outputs_SOURCES
 	rtmp-windows.c
 	flv-output.c
 	flv-mux.c
+	opus_audio_encoder_factory.cpp
+	EvercastAudioSource.cpp
 	net-if.c)
 
 add_library(obs-outputs MODULE

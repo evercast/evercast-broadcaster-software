@@ -14,6 +14,7 @@
 #include "WebsocketClient.h"
 #include "VideoCapturer.h"
 #include "AudioDeviceModuleWrapper.h"
+#include "EvercastAudioSource.h"
 
 #include "api/create_peerconnection_factory.h"
 #include "api/media_stream_interface.h"
@@ -22,7 +23,7 @@
 #include "api/set_remote_description_observer_interface.h"
 #include "modules/audio_processing/include/audio_processing.h"
 #include "rtc_base/critical_section.h"
-#include "rtc_base/platform_file.h"
+// #include "rtc_base/platform_file.h"
 #include "rtc_base/ref_counted_object.h"
 #include "rtc_base/thread.h"
 #include "rtc_base/timestamp_aligner.h"
@@ -125,6 +126,7 @@ private:
   std::string protocol;
   std::string audio_codec;
   std::string video_codec;
+  int channel_count;
 
   // NOTE LUDO: #80 add getStats
   std::string stats_list;
@@ -156,6 +158,9 @@ private:
 
   // Media stream
   rtc::scoped_refptr<webrtc::MediaStreamInterface> stream;
+
+  // Audio converter - takes from OBS, gives to webrtc via an internal sink
+  rtc::scoped_refptr<EvercastAudioSource> audio_source;
 
   // Tracks
   rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track;

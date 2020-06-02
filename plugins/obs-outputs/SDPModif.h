@@ -64,6 +64,27 @@ public:
         sdp = join(sdpLines, "\r\n");
     }
 
+    // Sets up the SDP to support surround sound.
+    // This makes the assumption that the OPUS codec (two-channel) is already
+    // supported in the current SDP, a reasonable assumption also made elsewhere.
+    static void surroundSDP(std::string& sdp, int num_channels)
+    {
+       // These are the only channel counts supported by the codec
+       if (num_channels != 6 && num_channels != 8) {
+         return;
+       }
+
+       const char *codec_data = "opus/48000/2";
+       const std::string new_codec = "multiopus/48000/" + std::to_string(num_channels);
+       const char *codec_config = "useinbandfec=1";
+       const std::string new_config = num_channels == 6
+	       ? "useinbandfec=1;channel_mapping=0,4,1,2,3,5;num_streams=4;coupled_streams=2" // 6ch
+	       : "useinbandfec=1;channel_mapping=0,6,1,2,3,4,5,7;num_streams=5;coupled_streams=3"; // 8ch
+
+       sdp.replace(sdp.find(codec_data), strlen(codec_data), new_codec);
+       sdp.replace(sdp.find(codec_config), strlen(codec_config), new_config);
+    }
+
     // Set video bitrate constraint (b=AS)
     static void bitrateSDP(std::string &sdp, int newBitrate)
     {
