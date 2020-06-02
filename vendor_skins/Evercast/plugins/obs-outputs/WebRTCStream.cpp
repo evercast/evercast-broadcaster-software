@@ -176,10 +176,8 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     if (!isServiceValid) {
         obs_output_set_last_error(
             output,
-            "It looks like you haven't configured a room for your stream.  Please"
-            " open the Settings window and enter your room's information in the"
-            " Stream tab.\n\nThis information can be found in Evercast by pressing"
-            " the \"EBS Settings\" button available inside each room.");
+            "You have not added any EBS keys. For more information please visit "
+            "<a href=\"https://support.evercast.us/adding/updating-ebs-stream-settings\">this link</a>.");
         obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     }
@@ -507,10 +505,18 @@ bool WebRTCStream::stop()
 void WebRTCStream::onDisconnected()
 {
     info("WebRTCStream::onDisconnected");
-    // Shutdown websocket connection and close Peer Connection
-    close(false);
-    // Disconnect, this will call stop on main thread
-    obs_output_signal_stop(output, OBS_OUTPUT_DISCONNECTED);
+    // Make sure any other disconnect attempts have finished before proceeding
+    if (thread_closeAsync.joinable()) {
+        thread_closeAsync.join();
+    }
+
+    // Execute asynchronously so that calls from within the socket client itself don't run into reclaimed memory.
+    thread_closeAsync = std::thread([&]() {
+        // Shutdown websocket connection and close Peer Connection
+        close(false);
+        // Disconnect, this will call stop on main thread
+        obs_output_signal_stop(output, OBS_OUTPUT_DISCONNECTED);
+    });
 }
 
 void WebRTCStream::onLoggedError(int code)

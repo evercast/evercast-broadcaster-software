@@ -14,6 +14,15 @@ cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources
 cp -r rundir/$BUILD_CONFIG/obs-plugins/ ./EBS.app/Contents/PlugIns
 cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 
+#NDI Plugin
+cp $NDI_PATH/build/obs-ndi.so ./EBS.app/Contents/PlugIns
+mkdir -p ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
+cp -r $NDI_PATH/data/locale ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
+install_name_tool -change @rpath/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-ndi.so
+install_name_tool -change @rpath/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/PlugIns/obs-ndi.so
+install_name_tool -change @rpath/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/PlugIns/obs-ndi.so
+
+echo "Bundling app..."
 ../CI/install/osx/dylibBundler -b -cd -d ./EBS.app/Contents/Frameworks -p @executable_path/../Frameworks/ \
 -s ./EBS.app/Contents/MacOS \
 -s /usr/local/opt/mbedtls/lib/ \
@@ -29,6 +38,7 @@ cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 -x ./EBS.app/Contents/PlugIns/mac-vth264.so \
 -x ./EBS.app/Contents/PlugIns/obs-ffmpeg.so \
 -x ./EBS.app/Contents/PlugIns/obs-filters.so \
+-x ./EBS.app/Contents/PlugIns/obs-ndi.so \
 -x ./EBS.app/Contents/PlugIns/obs-transitions.so \
 -x ./EBS.app/Contents/PlugIns/obs-vst.so \
 -x ./EBS.app/Contents/PlugIns/rtmp-services.so \
@@ -37,7 +47,9 @@ cp ../CI/install/osx/Info.plist ./EBS.app/Contents
 -x ./EBS.app/Contents/PlugIns/obs-x264.so \
 -x ./EBS.app/Contents/PlugIns/text-freetype2.so \
 -x ./EBS.app/Contents/PlugIns/obs-libfdk.so
+# -x ./EBS.app/Resources/data/obs-plugins/obs-ndi/bin/obs-ndi.so \
 
+echo "Deploying QT..."
 /usr/local/Cellar/qt/$QT_VERSION/bin/macdeployqt ./EBS.app
 
 mv ./EBS.app/Contents/MacOS/libobs-opengl.so ./EBS.app/Contents/Frameworks
@@ -96,3 +108,8 @@ install_name_tool -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCo
 install_name_tool -change /usr/local/opt/qt/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-vst.so
 install_name_tool -change /usr/local/opt/qt/lib/QtMacExtras.framework/Versions/5/QtMacExtras @executable_path/../Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras ./EBS.app/Contents/PlugIns/obs-vst.so
 install_name_tool -change /usr/local/opt/qt/lib/QtSvg.framework/Versions/5/QtSvg @executable_path/../Frameworks/QtSvg.framework/Versions/5/QtSvg ./EBS.app/Contents/PlugIns/obs-vst.so
+
+#obs ndi plugin
+install_name_tool -change /usr/local/opt/qt/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/PlugIns/obs-ndi.so
+install_name_tool -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/PlugIns/obs-ndi.so
+install_name_tool -change /usr/local/opt/qt/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-ndi.so

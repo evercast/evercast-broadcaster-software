@@ -174,6 +174,14 @@ elseif(UNIX)
 	endif()
 endif()
 
+if(WIN32 AND DEFINED NDI_PATH AND NOT "${NDI_PATH}" STREQUAL "")
+	install(DIRECTORY ${NDI_PATH}/data
+		DESTINATION ".")
+
+	install(DIRECTORY ${NDI_PATH}/obs-plugins
+		DESTINATION ".")
+endif()
+
 option( BUILD_TESTS "Build test directory (includes test sources and possibly a platform test executable)" FALSE)
 mark_as_advanced(BUILD_TESTS)
 

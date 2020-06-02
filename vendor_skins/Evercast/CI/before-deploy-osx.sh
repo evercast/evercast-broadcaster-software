@@ -26,6 +26,7 @@ fi
 ../CI/install/osx/packageApp.sh
 
 # fix obs outputs
+hr "Fixing OBS outputs"
 cp /usr/local/opt/mbedtls/lib/libmbedtls.12.dylib ./EBS.app/Contents/Frameworks/
 cp /usr/local/opt/mbedtls/lib/libmbedcrypto.3.dylib ./EBS.app/Contents/Frameworks/
 cp /usr/local/opt/mbedtls/lib/libmbedx509.0.dylib ./EBS.app/Contents/Frameworks/

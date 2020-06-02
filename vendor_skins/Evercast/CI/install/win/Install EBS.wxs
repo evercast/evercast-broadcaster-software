@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+	xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
+	xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+	<Bundle
+	      Version="2.5.3"
+	      UpgradeCode="01234567-89AB-CDEF-0123-456789ABCDEF"
+	      Manufacturer="Evercast"
+	      IconSourceFile=".\ebs.ico"
+	      Name="EBS"
+	>
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense">
+			<bal:WixStandardBootstrapperApplication
+				LicenseFile=".\_CPack_Packages\win64\WIX\License.rtf"
+				ShowVersion="yes"
+				SuppressOptionsUI="yes" />
+		</BootstrapperApplicationRef>
+
+		<util:FileSearch
+		  Id="HasNDIRuntime"
+		  Path="[ProgramFiles64Folder]\NewTek\NDI 4 Runtime\v4\Processing.NDI.Lib.x64.dll"
+		  Result="exists"
+		  Variable="HasNDIRuntime" />
+		
+		<!-- Visual C++ 2015-2019 Redistributable (x64) minimum runtime msi package version -->
+		<util:ProductSearch
+		  Id="VCRedist2015x64"
+		  Result="version"
+		  Variable="VCRedist2015x64"
+		  UpgradeCode="36F68A90-239C-34DF-B58C-64B30153CE35" />
+
+		<Chain>
+			<ExePackage
+				DetectCondition="HasNDIRuntime"
+				InstallCondition="NOT NDIPresent"
+				SourceFile=".\NDI 4 Runtime.exe"
+				Permanent="yes" />
+			<ExePackage
+				InstallCondition="VCRedist2015x64 = v0.0.0.0"
+				SourceFile=".\VC_redist.x64.exe"
+				InstallCommand="/q /ACTION=Install"
+				RepairCommand="/q ACTION=Repair /hideconsole"
+				Permanent="yes" />
+			<MsiPackage SourceFile=".\ebs-x64-2.5.3.msi" />
+		</Chain>
+	</Bundle>
+</Wix>
