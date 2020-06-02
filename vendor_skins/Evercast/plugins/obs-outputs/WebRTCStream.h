@@ -48,7 +48,8 @@ public:
     Janus     = 0,
     Wowza     = 1,
     Millicast = 2,
-    Evercast  = 3
+    Evercast  = 3,
+    VideoRoom = 4
   };
 
   WebRTCStream(obs_output_t *output);

@@ -165,6 +165,7 @@ set(obs-outputs_webrtc_HEADERS
 	SDPModif.h
 	VideoCapturer.h
 	WebRTCStream.h
+	EvercastOutputs.h
 #	janus-stream.h
 #	wowza-stream.h
 #	millicast-stream.h

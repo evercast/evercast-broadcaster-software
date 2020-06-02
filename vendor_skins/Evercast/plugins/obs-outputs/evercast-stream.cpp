@@ -7,6 +7,7 @@
 #include <inttypes.h>
 // #include <rtc_base/platform_file.h>
 #include <modules/audio_processing/include/audio_processing.h>
+#include "EvercastOutputs.h"
 
 #define warn(format, ...)  blog(LOG_WARNING, format, ##__VA_ARGS__)
 #define info(format, ...)  blog(LOG_INFO,    format, ##__VA_ARGS__)
@@ -69,8 +70,13 @@ extern "C" bool evercast_stream_start(void *data)
 	WebRTCStream* stream = (WebRTCStream*)data;
 	//Don't allow it to be deleted
 	stream->AddRef();
+
+	WebRTCStream::Type stream_type = TESTING_OUTPUT_ENABLED
+		? WebRTCStream::Type::VideoRoom
+		: WebRTCStream::Type::Evercast;
+
 	//Start it
-	return stream->start(WebRTCStream::Type::Evercast);
+	return stream->start(stream_type);
 }
 
 extern "C" void evercast_receive_video(void *data, struct video_data *frame)

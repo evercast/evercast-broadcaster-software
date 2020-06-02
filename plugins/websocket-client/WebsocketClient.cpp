@@ -4,6 +4,7 @@
 #include "WowzaWebsocketClientImpl.h"
 #include "MillicastWebsocketClientImpl.h"
 #include "EvercastWebsocketClientImpl.h"
+#include "VideoRoomWebsocketClientImpl.h"
 
 OBS_DECLARE_MODULE()
 
@@ -23,5 +24,7 @@ WEBSOCKETCLIENT_API WebsocketClient * createWebsocketClient(int type)
         return new MillicastWebsocketClientImpl();
     if (type == Type::Evercast)
         return new EvercastWebsocketClientImpl();
+    if (type == Type::VideoRoom)
+        return new VideoRoomWebsocketClientImpl();
     return nullptr;
 }

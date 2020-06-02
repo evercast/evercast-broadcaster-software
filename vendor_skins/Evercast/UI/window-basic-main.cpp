@@ -55,6 +55,7 @@
 #include "remote-text.hpp"
 #include <fstream>
 #include <sstream>
+#include "../plugins/obs-outputs/EvercastOutputs.h"
 
 #ifdef _WIN32
 #include "win-update/win-update.hpp"
@@ -6596,6 +6597,11 @@ void OBSBasic::UpdateTitleBar()
 
 	name << " OBS " << OBS_BASE_VERSION;
     name << " webRTC " << WEBRTC_VERSION;
+
+	if (TESTING_OUTPUT_ENABLED) {
+		name << " - TEST BUILD - NOT FOR GENERAL USE";
+	}
+
 	name << " - " << Str("TitleBar.Profile") << ": " << profile;
 	name << " - " << Str("TitleBar.Scenes") << ": " << sceneCollection;
 
