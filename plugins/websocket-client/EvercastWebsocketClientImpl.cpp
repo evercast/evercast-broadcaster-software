@@ -27,6 +27,8 @@ EvercastWebsocketClientImpl::EvercastWebsocketClientImpl()
 
 EvercastWebsocketClientImpl::~EvercastWebsocketClientImpl()
 {
+    EvercastSessionData::terminateSession((long long)this);
+
     // Disconnect just in case
     disconnect(false);
 }
@@ -100,8 +102,6 @@ bool EvercastWebsocketClientImpl::connect(
                 } else { // logged
                     handle_id = data["id"];
                     sendJoinMessage(room);
-                    // Launch logged event
-                    listener->onLogged(session_id);
                 }
             }
 
@@ -129,15 +129,21 @@ bool EvercastWebsocketClientImpl::connect(
                     listener->onLogged(session_id);
                     return;
                 }
-		else if (error_code == EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC)
-		{
-		    error("Janus room does not support the audio codec specified.");
-		    // TODO: Disconnect - needs proper thread management
-		    // listener->onLoggedError(-EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC);
-		}
+                else if (error_code == EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC)
+                {
+                    error("Janus room does not support the audio codec specified.");
+                    // TODO: Disconnect - needs proper thread management
+                    // listener->onLoggedError(-EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC);
+                    return;
+                }
                 else if (error_code != EVERCAST_SUCCESS)
                 {
                     warn("Unexpected Evercast error response:\n%s\n", x);
+                    return;
+                }
+
+                if (processJoinResponse(msg)) {
+                    return;
                 }
             }
 
@@ -522,6 +528,60 @@ int EvercastWebsocketClientImpl::parsePluginErrorCode(json &msg)
 
     int error_code = data["error_code"];
     return error_code;
+}
+
+bool EvercastWebsocketClientImpl::processJoinResponse(json &msg)
+{
+    // TODO: Get attendees, etc. as well
+    if (msg.find("plugindata") == msg.end())
+    {
+        return false;
+    }
+
+    auto plugindata = msg["plugindata"];
+    if (plugindata.find("data") == plugindata.end())
+    {
+        return false;
+    }
+
+    auto data = plugindata["data"];
+    std::vector<IceServerDefinition> ice_servers;
+    if (data.find("iceServers") == data.end())
+    {
+        defineIceServers(ice_servers);
+        return false;
+    }
+
+    // Parse servers from JSON
+    auto servers = data["iceServers"];
+    for (auto& element : servers.items()) {
+        IceServerDefinition serv;
+        auto value = element.value();
+        serv.urls = value["urls"].get<std::string>();
+        if (!value.at("username").is_null())
+            serv.username = value["username"].get<std::string>();
+        if (!value.at("credential").is_null())
+            serv.password = value["credential"].get<std::string>();
+        ice_servers.push_back(serv);
+    }
+
+    defineIceServers(ice_servers);
+
+    return true;
+}
+
+void EvercastWebsocketClientImpl::defineIceServers(std::vector<IceServerDefinition> &ice_servers)
+{
+    // Fall back to default values.
+    if (ice_servers.empty()) {
+        IceServerDefinition server;
+        server.urls = "stun:stun.l.google.com:19302";
+        ice_servers.push_back(server);
+    }
+
+    // Store servers in sesion object shared with owner
+    EvercastSessionData *session = EvercastSessionData::findOrCreateSession((long long)this);
+    session->storeIceServers(ice_servers);
 }
 
 bool EvercastWebsocketClientImpl::hasTimedOut()

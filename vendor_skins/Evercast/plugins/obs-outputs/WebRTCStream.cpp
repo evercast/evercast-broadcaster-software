@@ -16,6 +16,7 @@
 #include "rtc_base/critical_section.h"
 #include <libyuv.h>
 #include "Evercast.h"
+#include "EvercastSessionData.h"
 
 #include <algorithm>
 #include <chrono>
@@ -210,10 +211,97 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     if (close(false))
         obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
 
+    if (!startWebSocket(type))
+        return false;
+
+    if (!startPeerConnection())
+        return false;
+
+    return true;
+}
+
+bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
+{
+	client = createWebsocketClient(type);
+	if (!client) {
+		warn("Error creating Websocket client");
+		// Close Peer Connection
+		close(false);
+		// NOTE: Placeholder message
+		obs_output_set_last_error(
+			output,
+			"There was a problem connecting to Evercast.  Are you behind a firewall?");
+		// Disconnect, this will call stop on main thread
+		obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
+		return false;
+	}
+
+	// NOTE LUDO: #178 make sure video codec name is written with lower case characters
+	/*    std::transform(video_codec.begin(), video_codec.end(), video_codec.begin(),
+		   [](unsigned char c) {
+			   std::locale loc;
+			   return std::tolower(c, loc);
+		   });
+    */
+	info("Video codec:      %s",
+	     video_codec.empty() ? "Automatic" : video_codec.c_str());
+	info("Protocol:         %s",
+	     protocol.empty() ? "Automatic" : protocol.c_str());
+
+	if (type == WebRTCStream::Type::Janus) {
+		info("Server Room:      %s\nStream Key:       %s\n",
+		     room.c_str(), password.c_str());
+	} else if (type == WebRTCStream::Type::Wowza) {
+		info("Application Name: %s\nStream Name:      %s\n",
+		     room.c_str(), username.c_str());
+	} else if (type == WebRTCStream::Type::Millicast) {
+		info("Stream Name:      %s\nPublishing Token: %s\n",
+		     username.c_str(), password.c_str());
+		url = "Millicast";
+	} else if (type == WebRTCStream::Type::Evercast) {
+		info("Server Room:      %s\nStream Key:       %s\n",
+		     room.c_str(), password.c_str());
+	}
+	info("CONNECTING TO %s", url.c_str());
+
+	// Connect to server
+	if (!client->connect(url, room, username, password, this)) {
+		warn("Error connecting to server");
+		// Shutdown websocket connection and close Peer Connection
+		close(false);
+		obs_output_set_last_error(
+			output,
+			"There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
+		// Disconnect, this will call stop on main thread
+		obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
+		return false;
+	}
+
+    if (type == WebRTCStream::Type::Evercast) {
+        // Wait for ICE servers to come back from server.  If nothing comes back
+        // after the specified timeout has elapsed, continue with a default value.
+        EvercastSessionData *session_data = EvercastSessionData::findOrCreateSession((long long)client);
+        std::vector<IceServerDefinition> servers = session_data->awaitIceServers();
+        for (std::vector<IceServerDefinition>::iterator it = servers.begin(); it != servers.end(); it++) {
+            webrtc::PeerConnectionInterface::IceServer server;
+            server.urls = { it->urls };
+            server.username = it->username;
+            server.password = it->password;
+            this->ice_servers.push_back(server);
+        }
+
+        if (servers.empty()) {
+            return false;
+        }
+    }
+
+	return true;
+}
+
+bool WebRTCStream::startPeerConnection()
+{
     webrtc::PeerConnectionInterface::RTCConfiguration config;
-    webrtc::PeerConnectionInterface::IceServer server;
-    server.urls = { "stun:stun.l.google.com:19302" };
-    config.servers.push_back(server);
+    config.servers = this->ice_servers;
     // config.bundle_policy = webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle;
     // config.disable_ipv6 = true;
     // config.rtcp_mux_policy = webrtc::PeerConnectionInterface::kRtcpMuxPolicyRequire;
@@ -269,53 +357,9 @@ bool WebRTCStream::start(WebRTCStream::Type type)
         return false;
     }
 
-    client = createWebsocketClient(type);
-    if (!client) {
-        warn("Error creating Websocket client");
-        // Close Peer Connection
-        close(false);
-        // NOTE: Placeholder message
-        obs_output_set_last_error(output, "There was a problem connecting to Evercast.  Are you behind a firewall?");
-        // Disconnect, this will call stop on main thread
-        obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
-        return false;
-    }
-
-    // NOTE LUDO: #178 make sure video codec name is written with lower case characters
-/*    std::transform(video_codec.begin(), video_codec.end(), video_codec.begin(),
-		   [](unsigned char c) {
-			   std::locale loc;
-			   return std::tolower(c, loc);
-		   });
-*/
-    info("Video codec:      %s", video_codec.empty() ? "Automatic" : video_codec.c_str());
-    info("Protocol:         %s", protocol.empty() ? "Automatic" : protocol.c_str());
-
-    if (type == WebRTCStream::Type::Janus) {
-        info("Server Room:      %s\nStream Key:       %s\n",
-                room.c_str(), password.c_str());
-    } else if (type == WebRTCStream::Type::Wowza) {
-        info("Application Name: %s\nStream Name:      %s\n",
-                room.c_str(), username.c_str());
-    } else if (type == WebRTCStream::Type::Millicast) {
-        info("Stream Name:      %s\nPublishing Token: %s\n",
-                username.c_str(), password.c_str());
-        url = "Millicast";
-    } else if (type == WebRTCStream::Type::Evercast) {
-        info("Server Room:      %s\nStream Key:       %s\n",
-                room.c_str(), password.c_str());
-    }
-    info("CONNECTING TO %s", url.c_str());
-
-    // Connect to server
-    if (!client->connect(url, room, username, password, this)) {
-        warn("Error connecting to server");
-        // Shutdown websocket connection and close Peer Connection
-        close(false);
-        obs_output_set_last_error(output, "There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
-        // Disconnect, this will call stop on main thread
-        obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
-        return false;
+    if (type == WebRTCStream::Type::Evercast) {
+        // This is done after setup, when ICE servers have been returned from the websocket
+        createOffer();
     }
 
     return true;
@@ -328,10 +372,17 @@ void WebRTCStream::onConnected()
 
 void WebRTCStream::onLogged(int /* code */)
 {
-    info("WebRTCStream::onLogged\nCreating offer...");
-    webrtc::PeerConnectionInterface::RTCOfferAnswerOptions offer_options;
-    offer_options.voice_activity_detection = false;
-    pc->CreateOffer(this, offer_options);
+    if (type != WebRTCStream::Type::Evercast) {
+        createOffer();
+    }
+}
+
+void WebRTCStream::createOffer()
+{
+	info("WebRTCStream::onLogged\nCreating offer...");
+	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions offer_options;
+	offer_options.voice_activity_detection = false;
+	pc->CreateOffer(this, offer_options);
 }
 
 void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
@@ -364,8 +415,8 @@ void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
         SDPModif::stereoSDP(sdpCopy, audio_bitrate);
     } else if (type == WebRTCStream::Type::Evercast) {
         if (audio_codec == "multiopus") {
-	    // Modify offer to accept multiopus
-	    SDPModif::surroundSDP(sdpCopy, channel_count);
+            // Modify offer to accept multiopus
+            SDPModif::surroundSDP(sdpCopy, channel_count);
         }
     }
 

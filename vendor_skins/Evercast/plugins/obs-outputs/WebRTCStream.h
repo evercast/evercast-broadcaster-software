@@ -15,6 +15,7 @@
 #include "VideoCapturer.h"
 #include "AudioDeviceModuleWrapper.h"
 #include "EvercastAudioSource.h"
+#include "EvercastSessionData.h"
 
 #include "api/create_peerconnection_factory.h"
 #include "api/media_stream_interface.h"
@@ -177,6 +178,12 @@ private:
 
   // OBS stream output
   obs_output_t *output;
+
+  webrtc::PeerConnectionInterface::IceServers ice_servers;
+
+  bool startWebSocket(WebRTCStream::Type type);
+  bool startPeerConnection();
+  void createOffer();
 };
 
 #endif

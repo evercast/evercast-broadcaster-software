@@ -2,6 +2,7 @@
 #define __EVERCAST_WEBSOCKET_CLIENT_IMPL_H__
 
 #include "WebsocketClient.h"
+#include "EvercastSessionData.h"
 
 //Use http://think-async.com/ instead of boost
 #define ASIO_STANDALONE
@@ -77,6 +78,8 @@ protected:
                           WebsocketClient::Listener * listener);
     int parsePluginErrorCode(nlohmann::json &msg);
     bool hasTimedOut();
+    bool processJoinResponse(nlohmann::json &msg);
+    void defineIceServers(std::vector<IceServerDefinition> &ice_servers);
 };
 
 #endif // __EVERCAST_WEBSOCKET_CLIENT_IMPL_H__
