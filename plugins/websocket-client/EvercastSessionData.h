@@ -34,8 +34,8 @@ public:
 private:
 	static std::map<long long, EvercastSessionData*> sessions;
 
-    long long session_key;
-    bool closing;
+	long long session_key;
+	bool closing;
 
 	std::mutex initialization_mutex;
 	std::condition_variable initialized_condition;
