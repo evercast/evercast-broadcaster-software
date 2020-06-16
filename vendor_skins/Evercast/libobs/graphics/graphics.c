@@ -171,7 +171,7 @@ static bool graphics_init(struct graphics_subsystem *graphics)
 	return true;
 }
 
-int gs_create(graphics_t **pgraphics, const char *module, uint32_t adapter)
+int gs_create(graphics_t **pgraphics, const char *module, uint32_t adapter, bool force_hardware_capture)
 {
 	int errcode = GS_ERROR_FAIL;
 
@@ -189,7 +189,7 @@ int gs_create(graphics_t **pgraphics, const char *module, uint32_t adapter)
 				   module))
 		goto error;
 
-	errcode = graphics->exports.device_create(&graphics->device, adapter);
+	errcode = graphics->exports.device_create(&graphics->device, adapter, force_hardware_capture);
 	if (errcode != GS_SUCCESS)
 		goto error;
 

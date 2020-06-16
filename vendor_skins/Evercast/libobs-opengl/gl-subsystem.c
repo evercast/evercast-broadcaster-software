@@ -210,7 +210,7 @@ const char *device_preprocessor_name(void)
 	return "_OPENGL";
 }
 
-int device_create(gs_device_t **p_device, uint32_t adapter)
+int device_create(gs_device_t **p_device, uint32_t adapter, bool force_hardware_capture)
 {
 	struct gs_device *device = bzalloc(sizeof(struct gs_device));
 	int errorcode = GS_ERROR_FAIL;

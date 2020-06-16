@@ -263,8 +263,13 @@ static int obs_init_graphics(struct obs_video_info *ovi)
 	bool success = true;
 	int errorcode;
 
+	#ifdef EVERCAST
+	errorcode =
+		gs_create(&video->graphics, ovi->graphics_module, ovi->adapter, ovi->force_hardware_capture);
+	#else
 	errorcode =
 		gs_create(&video->graphics, ovi->graphics_module, ovi->adapter);
+	#endif
 	if (errorcode != GS_SUCCESS) {
 		switch (errorcode) {
 		case GS_ERROR_MODULE_NOT_FOUND:

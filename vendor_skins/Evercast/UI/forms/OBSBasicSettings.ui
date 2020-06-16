@@ -223,8 +223,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>943</height>
+              <width>790</width>
+              <height>989</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -1176,7 +1176,7 @@
                   <x>10</x>
                   <y>10</y>
                   <width>206</width>
-                  <height>81</height>
+                  <height>96</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1320,8 +1320,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>717</height>
+              <width>687</width>
+              <height>653</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -3504,8 +3504,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>632</height>
+              <width>807</width>
+              <height>654</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -4041,6 +4041,22 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="fpsCommonLabel">
+           <property name="minimumSize">
+            <size>
+             <width>170</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Basic.Settings.Video.FPSCommon</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="1">
           <widget class="QStackedWidget" name="fpsTypes">
            <property name="currentIndex">
@@ -4231,22 +4247,6 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="fpsCommonLabel">
-           <property name="minimumSize">
-            <size>
-             <width>170</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Basic.Settings.Video.FPSCommon</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
        <widget class="QScrollArea" name="hotkeyPage">
@@ -4311,8 +4311,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>755</width>
-              <height>755</height>
+              <width>790</width>
+              <height>696</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -4433,7 +4433,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="0">
+                   <item row="3" column="0">
                     <widget class="QLabel" name="label_30">
                      <property name="minimumSize">
                       <size>
@@ -4452,7 +4452,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="1">
+                   <item row="3" column="1">
                     <widget class="QComboBox" name="colorFormat">
                      <item>
                       <property name="text">
@@ -4476,37 +4476,17 @@
                      </item>
                     </widget>
                    </item>
-                   <item row="4" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_18">
-                     <property name="leftMargin">
-                      <number>0</number>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_33">
+                     <property name="text">
+                      <string>Basic.Settings.Advanced.Video.ColorSpace</string>
                      </property>
-                     <property name="topMargin">
-                      <number>0</number>
+                     <property name="buddy">
+                      <cstring>colorSpace</cstring>
                      </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                     <item>
-                      <widget class="QCheckBox" name="disableOSXVSync">
-                       <property name="text">
-                        <string>DisableOSXVSync</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QCheckBox" name="resetOSXVSync">
-                       <property name="text">
-                        <string>ResetOSXVSyncOnExit</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
+                    </widget>
                    </item>
-                   <item row="3" column="1">
+                   <item row="4" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_20">
                      <property name="leftMargin">
                       <number>0</number>
@@ -4555,17 +4535,7 @@
                      </item>
                     </layout>
                    </item>
-                   <item row="3" column="0">
-                    <widget class="QLabel" name="label_33">
-                     <property name="text">
-                      <string>Basic.Settings.Advanced.Video.ColorSpace</string>
-                     </property>
-                     <property name="buddy">
-                      <cstring>colorSpace</cstring>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="0">
+                   <item row="5" column="0">
                     <spacer name="horizontalSpacer_12">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
@@ -4577,6 +4547,50 @@
                       </size>
                      </property>
                     </spacer>
+                   </item>
+                   <item row="5" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_18">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QCheckBox" name="disableOSXVSync">
+                       <property name="text">
+                        <string>DisableOSXVSync</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QCheckBox" name="resetOSXVSync">
+                       <property name="text">
+                        <string>ResetOSXVSyncOnExit</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="forceHardwareCaptureLabel">
+                     <property name="text">
+                      <string>Basic.Settings.Video.ForceHardware</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QCheckBox" name="forceHardwareCaptureCheckBox">
+                     <property name="text">
+                      <string/>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </widget>
@@ -5533,9 +5547,9 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="serviceButtonGroup"/>
   <buttongroup name="outputModeButtonGroup"/>
+  <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="codecButtonGroup"/>
  </buttongroups>
 </ui>

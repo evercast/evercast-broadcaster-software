@@ -1256,6 +1256,9 @@ bool OBSBasic::InitBasicConfigDefaults()
 		config_save_safe(basicConfig, "tmp", nullptr);
 	}
 
+	config_set_default_bool(basicConfig, "Video", "ForceHardwareCapture",
+				true);
+
 	config_set_default_string(basicConfig, "Output", "FilenameFormatting",
 				  "%CCYY-%MM-%DD %hh-%mm-%ss");
 
@@ -3543,6 +3546,8 @@ int OBSBasic::ResetVideo()
 		config_get_string(basicConfig, "Video", "ColorRange");
 
 	ovi.graphics_module = App()->GetRenderModule();
+	ovi.force_hardware_capture = (bool)config_get_bool(
+		basicConfig, "Video", "ForceHardwareCapture");
 	ovi.base_width =
 		(uint32_t)config_get_uint(basicConfig, "Video", "BaseCX");
 	ovi.base_height =

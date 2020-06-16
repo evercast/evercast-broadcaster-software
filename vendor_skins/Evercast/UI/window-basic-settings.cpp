@@ -464,6 +464,7 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	HookWidget(ui->fpsDenominator,       SCROLL_CHANGED, VIDEO_CHANGED);
 	HookWidget(ui->renderer,             COMBO_CHANGED,  ADV_RESTART);
 	HookWidget(ui->adapter,              COMBO_CHANGED,  ADV_RESTART);
+	HookWidget(ui->forceHardwareCaptureCheckBox, CHECK_CHANGED, ADV_RESTART);
 	HookWidget(ui->colorFormat,          COMBO_CHANGED,  ADV_CHANGED);
 	HookWidget(ui->colorSpace,           COMBO_CHANGED,  ADV_CHANGED);
 	HookWidget(ui->colorRange,           COMBO_CHANGED,  ADV_CHANGED);
@@ -2454,6 +2455,9 @@ void OBSBasicSettings::LoadAdvancedSettings()
 		ui->advancedVideoContainer->setEnabled(false);
 	}
 
+	ui->forceHardwareCaptureCheckBox->setVisible(false);
+	ui->forceHardwareCaptureLabel->setVisible(false);
+
 #ifdef __APPLE__
 	bool disableOSXVSync = config_get_bool(App()->GlobalConfig(), "Video",
 					       "DisableOSXVSync");
@@ -2485,6 +2489,12 @@ void OBSBasicSettings::LoadAdvancedSettings()
 	bool browserHWAccel = config_get_bool(App()->GlobalConfig(), "General",
 					      "BrowserHWAccel");
 	ui->browserHWAccel->setChecked(browserHWAccel);
+
+	ui->forceHardwareCaptureCheckBox->setVisible(true);
+	ui->forceHardwareCaptureLabel->setVisible(true);
+	bool forceHardwareCapture =
+		config_get_bool(main->Config(), "Video", "ForceHardwareCapture");
+	ui->forceHardwareCaptureCheckBox->setChecked(forceHardwareCapture);
 #endif
 
 	bool disableFocusHotkeys = config_get_bool(
@@ -3097,6 +3107,9 @@ void OBSBasicSettings::SaveAdvancedSettings()
 	bool browserHWAccel = ui->browserHWAccel->isChecked();
 	config_set_bool(App()->GlobalConfig(), "General", "BrowserHWAccel",
 			browserHWAccel);
+
+	config_set_bool(main->Config(), "Video", "ForceHardwareCapture",
+			ui->forceHardwareCaptureCheckBox->isChecked());
 #endif
 
 	bool disableFocusHotkeys = ui->disableFocusHotkeys->isChecked();

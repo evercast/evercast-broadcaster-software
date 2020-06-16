@@ -494,7 +494,7 @@ EXPORT void gs_enum_adapters(bool (*callback)(void *param, const char *name,
 			     void *param);
 
 EXPORT int gs_create(graphics_t **graphics, const char *module,
-		     uint32_t adapter);
+		     uint32_t adapter, bool force_hardware_capture);
 EXPORT void gs_destroy(graphics_t *graphics);
 
 EXPORT void gs_enter_context(graphics_t *graphics);

@@ -36,6 +36,8 @@
 #include "obs-properties.h"
 #include "obs-interaction.h"
 
+#define EVERCAST
+
 struct matrix4;
 
 /* opaque types */
@@ -156,6 +158,7 @@ struct obs_video_info {
 	 */
 	const char *graphics_module;
 #endif
+	bool force_hardware_capture; // Require D3D_DRIVER_TYPE_HARDWARE for D3D device
 
 	uint32_t fps_num; /**< Output FPS numerator */
 	uint32_t fps_den; /**< Output FPS denominator */

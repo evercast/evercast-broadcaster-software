@@ -351,7 +351,7 @@ try {
 	return false;
 }
 
-void gs_device::InitDevice(uint32_t adapterIdx)
+void gs_device::InitDevice(uint32_t adapterIdx, bool force_hardware_capture)
 {
 	wstring adapterName;
 	DXGI_ADAPTER_DESC desc;
@@ -373,7 +373,8 @@ void gs_device::InitDevice(uint32_t adapterIdx)
 	blog(LOG_INFO, "Loading up D3D11 on adapter %s (%" PRIu32 ")",
 	     adapterNameUTF8.Get(), adapterIdx);
 
-	hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL,
+	D3D_DRIVER_TYPE driver_type = force_hardware_capture ? D3D_DRIVER_TYPE_HARDWARE : D3D_DRIVER_TYPE_UNKNOWN;
+	hr = D3D11CreateDevice(adapter, driver_type, NULL,
 			       createFlags, featureLevels,
 			       sizeof(featureLevels) /
 				       sizeof(D3D_FEATURE_LEVEL),
@@ -630,7 +631,7 @@ void gs_device::UpdateViewProjMatrix()
 				      &curViewProjMatrix);
 }
 
-gs_device::gs_device(uint32_t adapterIdx)
+gs_device::gs_device(uint32_t adapterIdx, bool force_hardware_capture)
 	: curToplogy(D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED)
 {
 	matrix4_identity(&curProjMatrix);
@@ -646,7 +647,7 @@ gs_device::gs_device(uint32_t adapterIdx)
 
 	InitCompiler();
 	InitFactory(adapterIdx);
-	InitDevice(adapterIdx);
+	InitDevice(adapterIdx, force_hardware_capture);
 	device_set_render_target(this, NULL, NULL);
 }
 
@@ -780,7 +781,7 @@ static inline void LogD3DAdapters()
 	}
 }
 
-int device_create(gs_device_t **p_device, uint32_t adapter)
+int device_create(gs_device_t **p_device, uint32_t adapter, bool force_hardware_capture)
 {
 	gs_device *device = NULL;
 	int errorcode = GS_SUCCESS;
@@ -790,7 +791,7 @@ int device_create(gs_device_t **p_device, uint32_t adapter)
 		blog(LOG_INFO, "Initializing D3D11...");
 		LogD3DAdapters();
 
-		device = new gs_device(adapter);
+		device = new gs_device(adapter, force_hardware_capture);
 
 	} catch (UnsupportedHWError error) {
 		blog(LOG_ERROR, "device_create (D3D11): %s (%08lX)", error.str,

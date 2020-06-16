@@ -955,7 +955,7 @@ struct gs_device {
 
 	void InitCompiler();
 	void InitFactory(uint32_t adapterIdx);
-	void InitDevice(uint32_t adapterIdx);
+	void InitDevice(uint32_t adapterIdx, bool force_hardware_capture);
 
 	ID3D11DepthStencilState *AddZStencilState();
 	ID3D11RasterizerState *AddRasterState();
@@ -976,7 +976,7 @@ struct gs_device {
 
 	bool HasBadNV12Output();
 
-	gs_device(uint32_t adapterIdx);
+	gs_device(uint32_t adapterIdx, bool force_hardware_capture);
 	~gs_device();
 };
 
