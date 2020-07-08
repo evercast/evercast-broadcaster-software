@@ -204,11 +204,18 @@ set(obs-outputs_SOURCES
 	EvercastAudioSource.cpp
 	net-if.c)
 
+set(obs-outputs_mach1_HEADERS
+	"${MACH1_INCLUDE_DIR}/Mach1Transcode.h")
+set(obs-outputs_mach1_SOURCES
+	"${MACH1_INCLUDE_DIR}/Mach1Transcode.cpp")
+
 add_library(obs-outputs MODULE
 	${ftl_SOURCES}
 	${ftl_HEADERS}
 	${obs-outputs_SOURCES}
 	${obs-outputs_HEADERS}
+	${obs-outputs_mach1_SOURCES}
+	${obs-outputs_mach1_HEADERS}
 	${obs-outputs_librtmp_SOURCES}
 	${obs-outputs_librtmp_HEADERS}
 	${obs-outputs_webrtc_SOURCES}
@@ -216,12 +223,14 @@ add_library(obs-outputs MODULE
 
 target_include_directories(obs-outputs
 	PUBLIC ${websocketclient_SOURCE_DIR}
+	PUBLIC "${MACH1_INCLUDE_DIR}"
 	PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../websocket-client") # for WebsocketClient.h
 
 target_link_libraries(obs-outputs
 	libobs
 	websocketclient
 	${LIBMBEDTLS_LIBRARIES}
+	${MACH1_LIBRARY_DIR}/libMach1TranscodeCAPI.a
 	${WEBRTC_LIBRARIES}
 	${ZLIB_LIBRARIES}
 	${ftl_IMPORTS}

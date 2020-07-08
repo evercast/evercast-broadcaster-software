@@ -364,8 +364,8 @@ void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
         SDPModif::stereoSDP(sdpCopy, audio_bitrate);
     } else if (type == WebRTCStream::Type::Evercast) {
         if (audio_codec == "multiopus") {
-	    // Modify offer to accept multiopus
-	    SDPModif::surroundSDP(sdpCopy, channel_count);
+            // Modify offer to accept multiopus
+            SDPModif::surroundSDP(sdpCopy, 8); // channel_count);
         }
     }
 

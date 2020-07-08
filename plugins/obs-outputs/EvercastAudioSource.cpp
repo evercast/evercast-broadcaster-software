@@ -1,4 +1,5 @@
 #include "EvercastAudioSource.h"
+#include "Mach1Transcode.h"
 #include <obs.h>
 
 rtc::scoped_refptr<EvercastAudioSource> EvercastAudioSource::Create(cricket::AudioOptions *options)
@@ -40,37 +41,43 @@ void EvercastAudioSource::OnAudioData(audio_data *frame)
 		return;
 	}
 
-	uint8_t *data = frame->data[0];
-	size_t num_channels = audio_output_get_channels(audio_);
+	// uint8_t *data = frame->data[0];
+	size_t input_channels = audio_output_get_channels(audio_);
+	size_t output_channels = 8;
+	size_t sample_size = 2;
+	int data_len = frame->frames * output_channels * sample_size;
+	uint8_t data[data_len];
+
+	TranscodeAudio(frame, input_channels, output_channels, data, data_len);
+
 	uint32_t sample_rate = 48000;
 	size_t chunk = (sample_rate / 100);
-	size_t sample_size = 2;
 	size_t i = 0;
 	uint8_t *position;
 
 	if (pending_remainder) {
 		// Copy missing chunks
 		i = chunk - pending_remainder;
-		memcpy(pending + pending_remainder * sample_size * num_channels, data,
-		       i * sample_size * num_channels);
+		memcpy(pending + pending_remainder * sample_size * output_channels, data,
+		       i * sample_size * output_channels);
 
 		// Send
-		sink->OnData(pending, 16, sample_rate, num_channels, chunk);
+		sink->OnData(pending, 16, sample_rate, output_channels, chunk);
 
 		// No pending chunks
 		pending_remainder = 0;
 	}
 
 	while (i + chunk < frame->frames) {
-		position = data + i * sample_size * num_channels;
-		sink->OnData(position, 16, sample_rate, num_channels, chunk);
+		position = data + i * sample_size * output_channels;
+		sink->OnData(position, 16, sample_rate, output_channels, chunk);
 		i += chunk;
 	}
 
 	if (i != frame->frames) {
 		pending_remainder = frame->frames - i;
-		memcpy(pending, data + i * sample_size * num_channels,
-		       pending_remainder * sample_size * num_channels);
+		memcpy(pending, data + i * sample_size * output_channels,
+		       pending_remainder * sample_size * output_channels);
 	}
 }
 
@@ -91,8 +98,32 @@ void EvercastAudioSource::Initialize(audio_t *audio,
 	audio_ = audio;
 	options_ = *options;
 
-	size_t num_channels = audio_output_get_channels(audio_);
-	size_t pending_len = num_channels * 2 * 640;
+	size_t num_channels = 8; // audio_output_get_channels(audio_);
+	size_t pending_len = num_channels * 2 * 1024;
 	pending = (uint8_t *)malloc(pending_len);
 	pending_remainder = 0;
+	Mach1Transcode transcoder;
+	transcoder.setInputFormat(Mach1TranscodeFormatType::Mach1TranscodeFormatFiveOneFilm);
+	transcoder.setOutputFormat(Mach1TranscodeFormatType::Mach1TranscodeFormatM1Spatial);
+	transcoder.setSpatialDownmixer();
+	transcoder.processConversionPath();
+	conversion = transcoder.getMatrixConversion();
+}
+
+void EvercastAudioSource::TranscodeAudio(audio_data *frame, int input_channels, int output_channels, uint8_t *output, int output_len)
+{
+	int16_t *input = (int16_t*)frame->data[0];
+	int16_t *converted = (int16_t*)output;
+
+	memset(output, 0, output_len);
+	int frames = frame->frames;
+	for (int f=0; f<frames; f++) {
+		for (int i = 0; i < input_channels; i++) {
+			float input_value = (float)input[f * input_channels + i];
+			for (int o = 0; o < output_channels; o++) {
+				int output_index = f * output_channels + o;
+				converted[output_index] += (int16_t)(conversion[o][i] * input_value);
+			}
+		}
+	}
 }

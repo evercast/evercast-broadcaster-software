@@ -35,8 +35,12 @@ protected:
 	uint8_t *pending;
 	cricket::AudioOptions options_;
 	AudioTrackSinkInterface *sink_;
+	std::vector<std::vector<float>> conversion;
+
+
 	EvercastAudioSource();
 	void Initialize(audio_t *audio, cricket::AudioOptions *options);
+	void TranscodeAudio(audio_data *frame, int input_channels, int output_channels, uint8_t *output, int output_len);
 };
 
 #endif
