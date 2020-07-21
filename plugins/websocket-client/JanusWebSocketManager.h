@@ -65,6 +65,7 @@ public:
 
     // WebsocketSender implementation
     bool sendMessage(json &msg, const char *name) override;
+    void onTimeout() override;
     long long getId() override;
 
 private:

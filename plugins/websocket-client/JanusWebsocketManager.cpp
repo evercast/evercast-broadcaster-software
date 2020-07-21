@@ -57,7 +57,7 @@ bool JanusWebsocketManager::connect(const std::string& raw_url, const std::strin
         client.set_open_handler([=](websocketpp::connection_hdl /* con */) {
             // Launch event
             listener->onConnected();
-            messageProcessor->sendLoginMessage(username, token, room);
+            messageProcessor->onOpened(username, token, room);
         });
 
         // --- Close handler
@@ -170,6 +170,7 @@ bool JanusWebsocketManager::disconnect(const bool wait)
 		client.set_open_handler([](...) {});
 		client.set_close_handler([](...) {});
 		client.set_fail_handler([](...) {});
+		client.set_message_handler([](...) {});
 
 		if (wait && processingThread.joinable()) {
 			processingThread.join();
@@ -277,6 +278,11 @@ bool JanusWebsocketManager::sendMessage(json &msg, const char* name)
 	}
 
 	return true;
+}
+
+void JanusWebsocketManager::onTimeout()
+{
+	this->disconnect(false);
 }
 
 long long JanusWebsocketManager::getId()

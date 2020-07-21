@@ -38,6 +38,7 @@ public:
 	bool sendKeepAliveMessage() override;
 	bool sendTrickleMessage(const std::string &mid, int index, const std::string &candidate, bool last) override;
 	bool sendOpenMessage(const std::string &sdp, const std::string &video_codec, const std::string &audio_codec) override;
+	bool onOpened(std::string username, std::string token, std::string room) override;
 	bool sendLoginMessage(std::string username, std::string token, std::string room) override;
 	bool sendAttachMessage() override;
 	bool sendJoinMessage(std::string room) override;

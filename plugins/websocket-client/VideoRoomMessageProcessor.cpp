@@ -55,10 +55,12 @@ VideoRoomMessageProcessor::~VideoRoomMessageProcessor() {
 
 void VideoRoomMessageProcessor::close()
 {
-	// TODO: Make sure calling this multiple times doesn't hurt anything
+	bool needsJoin = is_running.load();
 	is_running.store(false);
-	if (keepAliveThread.joinable()) {
-		keepAliveThread.join();
+	if (needsJoin) {
+	    if (keepAliveThread.joinable()) {
+		    keepAliveThread.join();
+	    }
 	}
 	is_closed.store(true);
 	stateListener.notify_all();
@@ -114,10 +116,6 @@ void VideoRoomMessageProcessor::processSuccessMessage(json &msg)
 		sendAttachMessage();
 		logged = true;
 
-		// Keep the connection alive
-		is_running.store(true);
-
-		keepAliveThread = thread(&VideoRoomMessageProcessor::keepConnectionAlive, this);
 		assignMinimumState(VideoRoomState::LoggedIn);
 	} else { // logged
 		handle_id = data["id"];
@@ -282,6 +280,16 @@ bool VideoRoomMessageProcessor::sendOpenMessage(
 	return sender->sendMessage(open, "open");
 }
 
+bool VideoRoomMessageProcessor::onOpened(string username, string token, string room)
+{
+	// Keep the connection alive
+	is_running.store(true);
+	// Initialize time to present
+	last_message_recd_time = chrono::system_clock::now();
+	keepAliveThread = thread(&VideoRoomMessageProcessor::keepConnectionAlive, this);
+	return sendLoginMessage(username, token, room);
+}
+
 bool VideoRoomMessageProcessor::sendLoginMessage(string username, string token, string room)
 {
     // Login command
@@ -366,7 +374,8 @@ void VideoRoomMessageProcessor::keepConnectionAlive()
 		// Check how long it's been since we last heard from the server
 		if (hasTimedOut()) {
 			warn("Connection lost - no messages received");
-			listener->onDisconnected();
+			is_running.store(false);
+			sender->onTimeout();
 			break;
 		}
 
@@ -388,31 +397,22 @@ bool VideoRoomMessageProcessor::hasTimedOut()
 
 bool VideoRoomMessageProcessor::awaitState(VideoRoomState state, int timeoutSeconds)
 {
-	info("Awaiting state %d in state %d...\n", state, currentState);
 	auto start_time = std::chrono::system_clock::now();
 	auto duration = std::chrono::seconds(timeoutSeconds);
 
-	info("-1\n");
 	unique_lock<mutex> lock(stateMutex);
-	info("0\n");
 	while (currentState < state) {
-		info("1\n");
 		// auto current_time = std::chrono::system_clock::now();
 		// auto remainder = duration - (current_time - start_time);
 		if (is_closed.load()/* || remainder < std::chrono::seconds(0)*/) {
-			info("2a\n");
 			return false;
 		}
-		info("2b\n");
-		info("Waiting for state %d...\n", state);
 		stateListener.wait_for(
 			lock,
 			std::chrono::seconds(timeoutSeconds),
 			[=] { return is_closed.load() || currentState >= state; });
-		info("Waiting for state %d complete.\n", state);
 		lock.unlock();
 	}
-	info("Awaited state %d and got state %d\n", state, currentState);
 
 	return is_running.load();
 }
