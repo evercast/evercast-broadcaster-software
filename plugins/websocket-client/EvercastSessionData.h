@@ -2,6 +2,7 @@
 #define __EVERCAST_SESSION_DATA_H__
 
 #include "WebsocketClient.h"
+#include "WebRTCSessionEventHandler.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -38,6 +39,12 @@ public:
     // Write attendee list to state.
     void storeAttendees(std::vector<AttendeeIdentifier> &attendees);
 
+    void attendeeArrived(AttendeeIdentifier attendee);
+
+    void attendeeLeft(std::string attendeeId);
+
+    void registerEventHandler(WebRTCSessionEventHandler *handler);
+
     // Write a list of ICE servers to the session for use by its owner
     void storeIceServers(std::vector<IceServerDefinition> &servers);
 
@@ -54,6 +61,8 @@ private:
     std::condition_variable initialized_condition;
     std::vector<AttendeeIdentifier> meeting_attendees;
     std::vector<IceServerDefinition> ice_servers;
+
+    WebRTCSessionEventHandler *event_handler;
 
     EvercastSessionData(long long key);
     ~EvercastSessionData();

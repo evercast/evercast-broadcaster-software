@@ -28,6 +28,7 @@
 #include "rtc_base/ref_counted_object.h"
 #include "rtc_base/thread.h"
 #include "rtc_base/timestamp_aligner.h"
+#include "WebRTCSessionEventHandler.h"
 
 #include <initializer_list>
 #include <regex>
@@ -43,7 +44,7 @@ class WebRTCStreamInterface :
   public webrtc::SetSessionDescriptionObserver,
   public webrtc::SetRemoteDescriptionObserverInterface {};
 
-class WebRTCStream : public rtc::RefCountedObject<WebRTCStreamInterface> {
+class WebRTCStream : public rtc::RefCountedObject<WebRTCStreamInterface>, public WebRTCSessionEventHandler {
 public:
   enum Type {
     Janus     = 0,
@@ -115,6 +116,8 @@ public:
   rtc::scoped_refptr<T> make_scoped_refptr(T *t) {
     return rtc::scoped_refptr<T>(t);
   }
+
+  void handleEmptyRoom() override;
 
 private:
   // Connection properties

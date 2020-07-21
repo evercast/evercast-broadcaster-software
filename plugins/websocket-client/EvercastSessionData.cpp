@@ -41,6 +41,41 @@ void EvercastSessionData::storeAttendees(std::vector<AttendeeIdentifier>& attend
 	initialized_condition.notify_all();
 }
 
+void EvercastSessionData::attendeeArrived(AttendeeIdentifier attendee)
+{
+	const std::lock_guard<std::mutex> lock(initialization_mutex);
+	this->meeting_attendees.push_back(attendee);
+}
+
+void EvercastSessionData::attendeeLeft(std::string attendeeId)
+{
+	bool removed = false;
+	{
+		const std::lock_guard<std::mutex> lock(initialization_mutex);
+		for (auto it = this->meeting_attendees.begin();
+		     it != this->meeting_attendees.end(); it++) {
+			if (it->id == attendeeId) {
+				this->meeting_attendees.erase(it);
+				removed = true;
+				break;
+			}
+		}
+	}
+
+	// Janus seems to send multiple "unpublished" messages, so make sure something
+	// has really been removed before acting on it.
+	if (removed && this->meeting_attendees.size() == 0) {
+		if (event_handler != nullptr) {
+			event_handler->handleEmptyRoom();
+		}
+	}
+}
+
+void EvercastSessionData::registerEventHandler(WebRTCSessionEventHandler *handler)
+{
+	this->event_handler = handler;
+}
+
 void EvercastSessionData::storeIceServers(
 	std::vector<IceServerDefinition> &servers)
 {
@@ -83,6 +118,7 @@ EvercastSessionData::EvercastSessionData(long long key)
 {
 	this->session_key = key;
 	this->closing = false;
+	this->event_handler = nullptr;
 }
 
 EvercastSessionData::~EvercastSessionData()

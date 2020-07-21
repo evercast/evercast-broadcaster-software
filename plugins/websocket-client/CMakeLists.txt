@@ -79,7 +79,8 @@ set(websocketclient_HEADERS
 	EvercastSessionData.h
 	ThreadSafeQueue.h
 	WebSocketSender.h
-	VideoRoomWebsocketClientImpl.h)
+	VideoRoomWebsocketClientImpl.h
+	WebRTCSessionEventHandler.h)
 
 add_library(websocketclient SHARED
 	${websocketclient_SOURCES}

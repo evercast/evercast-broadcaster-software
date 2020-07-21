@@ -36,10 +36,13 @@ protected:
 private:
 	bool processPluginData(json& msg);
 	bool processJoinResponse(json& data);
+	bool processArriveResponse(json& data);
+	bool processLeaveResponse(json& data);
 	void parseAttendees(json& data);
 	void defineAttendees(std::vector<AttendeeIdentifier>& attendees);
 	void parseIceServers(json &data);
 	void defineIceServers(std::vector<IceServerDefinition> &ice_servers);
+	EvercastSessionData* getSession();
 };
 
 #endif

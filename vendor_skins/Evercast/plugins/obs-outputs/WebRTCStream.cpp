@@ -274,6 +274,9 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
         // Wait for ICE servers to come back from server.  If nothing comes back
         // after the specified timeout has elapsed, continue with a default value.
         EvercastSessionData *session_data = EvercastSessionData::findOrCreateSession((long long)client);
+
+	session_data->registerEventHandler(this);
+
 	bool successfullyJoined = session_data->awaitJoinComplete(5);
 	if (!successfullyJoined) {
 		// TODO: Merge with above, put in helper function
@@ -390,6 +393,14 @@ void WebRTCStream::createOffer()
 	webrtc::PeerConnectionInterface::RTCOfferAnswerOptions offer_options;
 	offer_options.voice_activity_detection = false;
 	pc->CreateOffer(this, offer_options);
+}
+
+void WebRTCStream::handleEmptyRoom()
+{
+	info("Room is empty.  Shutting down stream...");
+	this->close(false);
+	obs_output_set_last_error(output, "Everyone has left your room.  Shutting down stream.");
+	obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
 }
 
 void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)

@@ -106,7 +106,15 @@ bool EvercastMessageProcessor::processPluginData(json& msg)
     }
 
     if (processJoinResponse(data)) {
-	    return true;
+	return true;
+    }
+
+    if (processArriveResponse(data)) {
+	return true;
+    }
+
+    if (processLeaveResponse(data)) {
+	return true;
     }
 
     return false;
@@ -121,6 +129,41 @@ bool EvercastMessageProcessor::processJoinResponse(json& data)
 
     parseAttendees(data);
     parseIceServers(data);
+}
+
+bool EvercastMessageProcessor::processArriveResponse(json& data)
+{
+	if (data.find("event") == data.end()) {
+		return false;
+	}
+
+	auto joiningEvent = data["event"];
+	if (joiningEvent != "joining") {
+		return false;
+	}
+
+	AttendeeIdentifier identifier;
+	identifier.display = data["display"].get<std::string>();
+	identifier.id = data["id"].get<std::string>();
+
+	EvercastSessionData *session = getSession();
+	session->attendeeArrived(identifier);
+
+	return false;
+}
+
+bool EvercastMessageProcessor::processLeaveResponse(json& data)
+{
+	if (data.find("unpublished") == data.end()) {
+		return false;
+	}
+
+	auto leaving = data["unpublished"];
+
+	EvercastSessionData *session = getSession();
+	session->attendeeLeft(leaving);
+
+	return true;
 }
 
 void EvercastMessageProcessor::parseAttendees(json& data)
@@ -146,7 +189,7 @@ void EvercastMessageProcessor::parseAttendees(json& data)
 void EvercastMessageProcessor::defineAttendees(std::vector<AttendeeIdentifier>& attendees)
 {
     // Store attendees in sesion object shared with owner
-    EvercastSessionData *session = EvercastSessionData::findOrCreateSession((long long)sender->getId());
+    EvercastSessionData *session = getSession();
     session->storeAttendees(attendees);
 }
 
@@ -185,7 +228,11 @@ void EvercastMessageProcessor::defineIceServers(std::vector<IceServerDefinition>
     }
 
     // Store servers in sesion object shared with owner
-    EvercastSessionData *session = EvercastSessionData::findOrCreateSession((long long)sender->getId());
+    EvercastSessionData *session = getSession();
     session->storeIceServers(ice_servers);
 }
 
+EvercastSessionData *EvercastMessageProcessor::getSession()
+{
+	return EvercastSessionData::findOrCreateSession((long long)sender->getId());
+}
