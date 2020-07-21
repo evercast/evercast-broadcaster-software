@@ -4,6 +4,8 @@
 #include "WowzaWebsocketClientImpl.h"
 #include "MillicastWebsocketClientImpl.h"
 #include "EvercastWebsocketClientImpl.h"
+#include "JanusWebsocketManager.h"
+#include "EvercastMessageProcessor.h"
 #include "VideoRoomWebsocketClientImpl.h"
 
 OBS_DECLARE_MODULE()
@@ -23,8 +25,9 @@ WEBSOCKETCLIENT_API WebsocketClient * createWebsocketClient(int type)
     if (type == Type::Millicast)
         return new MillicastWebsocketClientImpl();
     if (type == Type::Evercast)
-        return new EvercastWebsocketClientImpl();
+	return new JanusWebsocketManager(EvercastMessageProcessor::create);
+        // return new EvercastWebsocketClientImpl();
     if (type == Type::VideoRoom)
-        return new VideoRoomWebsocketClientImpl();
+	return new JanusWebsocketManager(VideoRoomMessageProcessor::create);
     return nullptr;
 }

@@ -236,13 +236,6 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 		return false;
 	}
 
-	// NOTE LUDO: #178 make sure video codec name is written with lower case characters
-	/*    std::transform(video_codec.begin(), video_codec.end(), video_codec.begin(),
-		   [](unsigned char c) {
-			   std::locale loc;
-			   return std::tolower(c, loc);
-		   });
-    */
 	info("Video codec:      %s",
 	     video_codec.empty() ? "Automatic" : video_codec.c_str());
 	info("Protocol:         %s",
@@ -281,7 +274,21 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
         // Wait for ICE servers to come back from server.  If nothing comes back
         // after the specified timeout has elapsed, continue with a default value.
         EvercastSessionData *session_data = EvercastSessionData::findOrCreateSession((long long)client);
-        std::vector<IceServerDefinition> servers = session_data->awaitIceServers();
+	bool successfullyJoined = session_data->awaitJoinComplete(5);
+	if (!successfullyJoined) {
+		// TODO: Merge with above, put in helper function
+		warn("Error connecting to server");
+		// Shutdown websocket connection and close Peer Connection
+		close(false);
+		obs_output_set_last_error(
+			output,
+			"There was a problem connecting to your Evercast room.  Are attendees present?");
+		// Disconnect, this will call stop on main thread
+		obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
+		return false;
+	}
+
+        std::vector<IceServerDefinition> servers = session_data->getIceServers();
         for (std::vector<IceServerDefinition>::iterator it = servers.begin(); it != servers.end(); it++) {
             webrtc::PeerConnectionInterface::IceServer server;
             server.urls = { it->urls };
@@ -552,8 +559,6 @@ bool WebRTCStream::close(bool wait)
     // Shutdown websocket connection
     if (client) {
         client->disconnect(wait);
-        delete(client);
-        client = nullptr;
     }
     return true;
 }
@@ -576,13 +581,10 @@ void WebRTCStream::onDisconnected()
         thread_closeAsync.join();
     }
 
-    // Execute asynchronously so that calls from within the socket client itself don't run into reclaimed memory.
-    thread_closeAsync = std::thread([&]() {
-        // Shutdown websocket connection and close Peer Connection
-        close(false);
-        // Disconnect, this will call stop on main thread
-        obs_output_signal_stop(output, OBS_OUTPUT_DISCONNECTED);
-    });
+    // Shutdown websocket connection and close Peer Connection
+    close(false);
+    // Disconnect, this will call stop on main thread
+    obs_output_signal_stop(output, OBS_OUTPUT_DISCONNECTED);
 }
 
 void WebRTCStream::onLoggedError(int code)
