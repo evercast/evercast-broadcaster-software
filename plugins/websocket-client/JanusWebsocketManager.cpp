@@ -57,7 +57,7 @@ bool JanusWebsocketManager::connect(const std::string& raw_url, const std::strin
         client.set_open_handler([=](websocketpp::connection_hdl /* con */) {
             // Launch event
             listener->onConnected();
-            messageProcessor->onOpened(username, token, room);
+            messageProcessor->onWebsocketOpened();
         });
 
         // --- Close handler
@@ -146,10 +146,11 @@ bool JanusWebsocketManager::trickle(const std::string &mid, const int index,
 bool JanusWebsocketManager::disconnect(const bool wait)
 {
 	bool result = true;
-	// TODO: This is super bad
+
 	is_running.store(false);
 	this->messageProcessor->sendDestroyMessage();
 	this->messageProcessor->close();
+
 	if (!connection)
 		return true;
 

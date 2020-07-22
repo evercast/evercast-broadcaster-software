@@ -6,31 +6,34 @@
 #include "WebsocketSender.h"
 #include "EvercastSessionData.h"
 
+using namespace std;
+
 class EvercastMessageProcessor : public VideoRoomMessageProcessor {
 public:
 	static JanusMessageProcessor * create(
-		const std::string &url,
-		const std::string &room,
-		const std::string &username,
-		const std::string &token,
+		const string &url,
+		const string &room,
+		const string &username,
+		const string &token,
 		WebsocketSender *sender,
 		WebsocketClient::Listener* listener);
 
 	EvercastMessageProcessor(
-		const std::string &url,
-		const std::string &room,
-		const std::string &username,
-		const std::string &token,
+		const string &url,
+		const string &room,
+		const string &username,
+		const string &token,
 		WebsocketSender *sender,
 		WebsocketClient::Listener* listener) :
 		VideoRoomMessageProcessor(url, room, username, token, sender, listener) {};
 
-	bool sendLoginMessage(std::string username, std::string token, std::string room) override;
+	bool sendLoginMessage() override;
 	bool sendAttachMessage() override;
-	bool sendJoinMessage(std::string room) override;
+	bool sendJoinMessage(string room) override;
 	bool sendDestroyMessage() override;
 
 protected:
+	void processErrorEvent(int errorCode, json &msg) override;
 	void processResponseEvent(json &msg) override;
 
 private:
@@ -39,9 +42,9 @@ private:
 	bool processArriveResponse(json& data);
 	bool processLeaveResponse(json& data);
 	void parseAttendees(json& data);
-	void defineAttendees(std::vector<AttendeeIdentifier>& attendees);
+	void defineAttendees(vector<AttendeeIdentifier>& attendees);
 	void parseIceServers(json &data);
-	void defineIceServers(std::vector<IceServerDefinition> &ice_servers);
+	void defineIceServers(vector<IceServerDefinition> &ice_servers);
 	EvercastSessionData* getSession();
 };
 

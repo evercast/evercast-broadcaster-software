@@ -1,12 +1,9 @@
 #include <obs-module.h>
 #include <openssl/opensslv.h>
-#include "JanusWebsocketClientImpl.h"
 #include "WowzaWebsocketClientImpl.h"
 #include "MillicastWebsocketClientImpl.h"
-#include "EvercastWebsocketClientImpl.h"
 #include "JanusWebsocketManager.h"
 #include "EvercastMessageProcessor.h"
-#include "VideoRoomWebsocketClientImpl.h"
 
 OBS_DECLARE_MODULE()
 
@@ -19,14 +16,13 @@ bool obs_module_load(void)
 WEBSOCKETCLIENT_API WebsocketClient * createWebsocketClient(int type)
 {
     if (type == Type::Janus)
-        return new JanusWebsocketClientImpl();
+	return new JanusWebsocketManager(VideoRoomMessageProcessor::create);
     if (type == Type::Wowza)
         return new WowzaWebsocketClientImpl();
     if (type == Type::Millicast)
         return new MillicastWebsocketClientImpl();
     if (type == Type::Evercast)
 	return new JanusWebsocketManager(EvercastMessageProcessor::create);
-        // return new EvercastWebsocketClientImpl();
     if (type == Type::VideoRoom)
 	return new JanusWebsocketManager(VideoRoomMessageProcessor::create);
     return nullptr;

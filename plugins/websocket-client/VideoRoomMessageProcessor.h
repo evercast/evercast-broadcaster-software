@@ -12,23 +12,26 @@
 #include <mutex>
 #include <condition_variable>
 
-#define EVERCAST_MESSAGE_TIMEOUT 5.0
+#define MESSAGE_TIMEOUT 5.0
+#define SUCCESS_CODE 0
+
+using namespace std;
 
 class VideoRoomMessageProcessor : public JanusMessageProcessor {
 public:
 	static JanusMessageProcessor * create(
-		const std::string &url,
-		const std::string &room,
-		const std::string &username,
-		const std::string &token,
+		const string &url,
+		const string &room,
+		const string &username,
+		const string &token,
 		WebsocketSender *sender,
 		WebsocketClient::Listener* listener);
 
 	VideoRoomMessageProcessor(
-		const std::string& url,
-		const std::string& room,
-		const std::string& username,
-		const std::string& token,
+		const string& url,
+		const string& room,
+		const string& username,
+		const string& token,
 		WebsocketSender *sender,
 		WebsocketClient::Listener* listener);
 
@@ -36,12 +39,12 @@ public:
 
 	void processServerMessage(json &msg) override;
 	bool sendKeepAliveMessage() override;
-	bool sendTrickleMessage(const std::string &mid, int index, const std::string &candidate, bool last) override;
-	bool sendOpenMessage(const std::string &sdp, const std::string &video_codec, const std::string &audio_codec) override;
-	bool onOpened(std::string username, std::string token, std::string room) override;
-	bool sendLoginMessage(std::string username, std::string token, std::string room) override;
+	bool sendTrickleMessage(const string &mid, int index, const string &candidate, bool last) override;
+	bool sendOpenMessage(const string &sdp, const string &video_codec, const string &audio_codec) override;
+	bool onWebsocketOpened() override;
+	bool sendLoginMessage() override;
 	bool sendAttachMessage() override;
-	bool sendJoinMessage(std::string room) override;
+	bool sendJoinMessage(string room) override;
 	bool sendDestroyMessage() override;
 	void close() override;
 
@@ -60,9 +63,13 @@ protected:
 	long long handle_id;
 	WebsocketSender *sender;
 	WebsocketClient::Listener *listener;
+	string url;
+	string room;
+	string username;
+	string token;
 
 	virtual void processSuccessMessage(json &msg);
-	virtual void processUnhandledMessage(std::string messageType, json &msg);
+	virtual void processUnhandledMessage(string messageType, json &msg);
 	void processEvent(json &msg);
 	virtual void processErrorEvent(int errorCode, json &msg);
 	virtual void processResponseEvent(json &msg);
@@ -70,17 +77,12 @@ protected:
 	void assignMinimumState(VideoRoomState state);
 
 private:
-	std::string url;
-	std::string room;
-	std::string username;
-	std::string token;
-	std::atomic<bool> is_running;
-	std::atomic<bool> is_closed;
-	std::thread keepAliveThread;
-	std::chrono::time_point<std::chrono::system_clock> last_message_recd_time;
-	std::mutex stateMutex;
+	atomic<bool> is_running;
+	thread keepAliveThread;
+	chrono::time_point<chrono::system_clock> last_message_recd_time;
+	mutex stateMutex;
 	VideoRoomState currentState;
-	std::condition_variable stateListener;
+	condition_variable stateListener;
 
 	bool processJoinResponse(json& msg);
 	void keepConnectionAlive();

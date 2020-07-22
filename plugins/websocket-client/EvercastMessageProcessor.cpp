@@ -1,10 +1,12 @@
 #include "EvercastMessageProcessor.h"
+#include "Evercast.h"
+#include <util/base.h>
 
 JanusMessageProcessor * EvercastMessageProcessor::create(
-	const std::string& url,
-	const std::string& room,
-	const std::string& username,
-	const std::string& token,
+	const string& url,
+	const string& room,
+	const string& username,
+	const string& token,
 	WebsocketSender* sender,
 	WebsocketClient::Listener* listener)
 {
@@ -13,12 +15,12 @@ JanusMessageProcessor * EvercastMessageProcessor::create(
 }
 
 
-bool EvercastMessageProcessor::sendLoginMessage(std::string username, std::string token, std::string room)
+bool EvercastMessageProcessor::sendLoginMessage()
 {
 	// Login command
 	json login = {
             { "janus", "create" },
-            { "transaction", std::to_string(rand()) },
+            { "transaction", to_string(rand()) },
             { "payload",
                     {
                             { "username", username },
@@ -36,7 +38,7 @@ bool EvercastMessageProcessor::sendAttachMessage()
 	// Create handle command
 	json attachPlugin = {
             { "janus", "attach" },
-            { "transaction", std::to_string(rand()) },
+            { "transaction", to_string(rand()) },
             { "session_id", session_id },
             { "plugin", "janus.plugin.lua" }
 	};
@@ -44,11 +46,11 @@ bool EvercastMessageProcessor::sendAttachMessage()
 	return sender->sendMessage(attachPlugin, "attach");
 }
 
-bool EvercastMessageProcessor::sendJoinMessage(std::string room)
+bool EvercastMessageProcessor::sendJoinMessage(string room)
 {
 	json joinRoom = {
             { "janus", "message" },
-            { "transaction", std::to_string(rand()) },
+            { "transaction", to_string(rand()) },
             { "session_id", session_id },
             { "handle_id", handle_id },
             { "body",
@@ -69,7 +71,7 @@ bool EvercastMessageProcessor::sendDestroyMessage()
 	json destroy = {
             { "janus", "destroy" },
             { "session_id", session_id },
-            { "transaction", std::to_string(rand()) }
+            { "transaction", to_string(rand()) }
 	};
 
 	return sender->sendMessage(destroy, "destroy");
@@ -85,9 +87,32 @@ void EvercastMessageProcessor::processResponseEvent(json &msg)
 	}
 }
 
+void EvercastMessageProcessor::processErrorEvent(int errorCode, json& msg)
+{
+	switch (errorCode) {
+	case EVERCAST_ERR_DUPLICATE_USER:
+		// Someone is already using that ID, probably a previous version of us.  Log in with a fresh ID.
+		logged = false;
+		session_id = 0;
+		handle_id = 0;
+
+		sendLoginMessage();
+
+		// Launch logged event
+		listener->onLogged(session_id);
+		break;
+	case EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC:
+		blog(LOG_ERROR, "Janus room does not support the audio codec specified.");
+		listener->onLoggedError(-EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC);
+		break;
+	default:
+		VideoRoomMessageProcessor::processErrorEvent(errorCode, msg);
+		break;
+	}
+}
+
 bool EvercastMessageProcessor::processPluginData(json& msg)
 {
-    // TODO: Get attendees, etc. as well
     if (msg.find("plugindata") == msg.end())
     {
         return false;
@@ -143,8 +168,8 @@ bool EvercastMessageProcessor::processArriveResponse(json& data)
 	}
 
 	AttendeeIdentifier identifier;
-	identifier.display = data["display"].get<std::string>();
-	identifier.id = data["id"].get<std::string>();
+	identifier.display = data["display"].get<string>();
+	identifier.id = data["id"].get<string>();
 
 	EvercastSessionData *session = getSession();
 	session->attendeeArrived(identifier);
@@ -168,7 +193,7 @@ bool EvercastMessageProcessor::processLeaveResponse(json& data)
 
 void EvercastMessageProcessor::parseAttendees(json& data)
 {
-    std::vector<AttendeeIdentifier> attendees;
+    vector<AttendeeIdentifier> attendees;
     if (data.find("attendees") == data.end())
     {
 	defineAttendees(attendees);
@@ -178,15 +203,15 @@ void EvercastMessageProcessor::parseAttendees(json& data)
     for (auto& element : raw.items()) {
 	AttendeeIdentifier identifier;
 	auto value = element.value();
-	identifier.id = value["id"].get<std::string>();
-	identifier.display = value["display"].get<std::string>();
+	identifier.id = value["id"].get<string>();
+	identifier.display = value["display"].get<string>();
 	attendees.push_back(identifier);
     }
 
     defineAttendees(attendees);
 }
 
-void EvercastMessageProcessor::defineAttendees(std::vector<AttendeeIdentifier>& attendees)
+void EvercastMessageProcessor::defineAttendees(vector<AttendeeIdentifier>& attendees)
 {
     // Store attendees in sesion object shared with owner
     EvercastSessionData *session = getSession();
@@ -195,7 +220,7 @@ void EvercastMessageProcessor::defineAttendees(std::vector<AttendeeIdentifier>& 
 
 void EvercastMessageProcessor::parseIceServers(json &data) {
     // Ice servers
-    std::vector<IceServerDefinition> ice_servers;
+    vector<IceServerDefinition> ice_servers;
     if (data.find("iceServers") == data.end())
     {
         defineIceServers(ice_servers);
@@ -207,18 +232,18 @@ void EvercastMessageProcessor::parseIceServers(json &data) {
     for (auto& element : servers.items()) {
         IceServerDefinition serv;
         auto value = element.value();
-        serv.urls = value["urls"].get<std::string>();
+        serv.urls = value["urls"].get<string>();
         if (!value.at("username").is_null())
-            serv.username = value["username"].get<std::string>();
+            serv.username = value["username"].get<string>();
         if (!value.at("credential").is_null())
-            serv.password = value["credential"].get<std::string>();
+            serv.password = value["credential"].get<string>();
         ice_servers.push_back(serv);
     }
 
     defineIceServers(ice_servers);
 }
 
-void EvercastMessageProcessor::defineIceServers(std::vector<IceServerDefinition> &ice_servers)
+void EvercastMessageProcessor::defineIceServers(vector<IceServerDefinition> &ice_servers)
 {
     // Fall back to default values.
     if (ice_servers.empty()) {
