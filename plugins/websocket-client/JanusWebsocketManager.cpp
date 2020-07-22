@@ -270,7 +270,7 @@ bool JanusWebsocketManager::sendMessage(json &msg, const char* name)
 	}
 
 	info("Sending %s message...", name);
-	debug("MESSAGE: %s\n", msg.dump());
+	debug("MESSAGE: %s\n", msg.dump().c_str());
 
 	// Serialize and send
 	if (connection->send(msg.dump())) {

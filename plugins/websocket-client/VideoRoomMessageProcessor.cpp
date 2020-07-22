@@ -136,7 +136,7 @@ void VideoRoomMessageProcessor::processEvent(json &msg)
 void VideoRoomMessageProcessor::processErrorEvent(int errorCode, json &msg)
 {
 	if (errorCode != SUCCESS_CODE) {
-		warn("Unexpected error response:\n%s\n", msg.dump());
+		warn("Unexpected error response:\n%s\n", msg.dump().c_str());
 	}
 }
 
@@ -163,15 +163,20 @@ bool VideoRoomMessageProcessor::processJoinResponse(json& msg)
     auto data = plugindata["data"];
 
     auto videoroomEvent = data["videoroom"];
-    if (videoroomEvent == "joined") {
-	    this->assignMinimumState(VideoRoomState::Joined);
+    if (videoroomEvent != "joined") {
+		return false;
     }
+
+	this->assignMinimumState(VideoRoomState::Joined);
+	return true;
 }
 
 void VideoRoomMessageProcessor::processUnhandledMessage(string messageType,
 						       json &msg)
 {
-	info("Ignored message of type %s.", messageType);
+	UNUSED_PARAMETER(msg);
+
+	info("Ignored message of type %s.", messageType.c_str());
 }
 
 /*********************** END INBOUND MESSAGE PROCESSING ***********************/
@@ -372,9 +377,6 @@ bool VideoRoomMessageProcessor::hasTimedOut()
 
 bool VideoRoomMessageProcessor::awaitState(VideoRoomState state, int timeoutSeconds)
 {
-	auto start_time = chrono::system_clock::now();
-	auto duration = chrono::seconds(timeoutSeconds);
-
 	unique_lock<mutex> lock(stateMutex);
 	while (currentState < state) {
 		if (!is_running.load()) {
