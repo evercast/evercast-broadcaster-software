@@ -956,6 +956,7 @@ struct gs_device {
 	void InitCompiler();
 	void InitFactory(uint32_t adapterIdx);
 	void InitDevice(uint32_t adapterIdx);
+	int CheckDuplicationSupport();
 
 	ID3D11DepthStencilState *AddZStencilState();
 	ID3D11RasterizerState *AddRasterState();

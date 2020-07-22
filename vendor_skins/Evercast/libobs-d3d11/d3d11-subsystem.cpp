@@ -351,15 +351,52 @@ try {
 	return false;
 }
 
+// Ensure D3D can duplicate the default output device.  If not, we will want to fall back to OpenGL
+int gs_device::CheckDuplicationSupport()
+{
+	HRESULT hrInterface, hrOutput, hrMonitor;
+	ComPtr<IDXGIOutput> dxgiOutput;
+	ComPtr<IDXGIOutput1> output1;
+	ComPtr<IDXGIOutputDuplication> duplicator;
+
+	// Grab the first available monitor
+	hrMonitor = adapter->EnumOutputs(0, dxgiOutput.Assign());
+
+	// Fail safe here - we are setting up the display adapter, and we only
+	// want to rule it out if we successfully grab a monitor and find it
+	// doesn't agree with our device
+	if (FAILED(hrMonitor)) {
+		if (hrMonitor == DXGI_ERROR_NOT_FOUND)
+			return 0;
+
+		return 0;
+	}
+
+	hrInterface = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1),
+						 (void **)output1.Assign());
+
+	// As above, fail safe
+	if (FAILED(hrInterface))
+		return 0;
+
+	// This call can fail for a number of reasons - unsupported bit depth, hybrid
+	// (onboard/card) graphics system, etc.  Therefore, just call it and see if
+	// it works
+	hrOutput = output1->DuplicateOutput(device, duplicator.Assign());
+
+	// If the output can't be duplicated, we want to try a different graphics library
+	if (DXGI_ERROR_UNSUPPORTED == hrOutput)
+		return 1;
+
+	return 0;
+}
+
 void gs_device::InitDevice(uint32_t adapterIdx)
 {
 	wstring adapterName;
 	DXGI_ADAPTER_DESC desc;
 	D3D_FEATURE_LEVEL levelUsed = D3D_FEATURE_LEVEL_9_3;
 	HRESULT hr = 0;
-
-	adpIdx = adapterIdx;
-
 	uint32_t createFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef _DEBUG
 	//createFlags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -382,6 +419,12 @@ void gs_device::InitDevice(uint32_t adapterIdx)
 	if (FAILED(hr))
 		throw UnsupportedHWError("Failed to create device", hr);
 
+	// Soft check - if driver type is invalid, the device may load up but not function correctly.
+	// If this is the case, don't use D3D
+	if (CheckDuplicationSupport()) {
+		throw UnsupportedHWError("Device does not support screen duplication", hr);
+	}
+	
 	blog(LOG_INFO, "D3D11 loaded successfully, feature level used: %u",
 	     (unsigned int)levelUsed);
 
