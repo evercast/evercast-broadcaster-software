@@ -22,9 +22,8 @@ struct AttendeeIdentifier {
 };
 
 /**
- * Manages Evercast session state.  Currently only used to hold ICE servers and
- * provide access to them from outside; other state will follow.  Lifetime of
- * instances of this type will match the lifetime of Evercast WebSockets.
+ * Manages Evercast session state.  Lifetime of instances of this type will match
+ * the lifetime of Evercast WebSockets.
  */
 class WEBSOCKETCLIENT_API EvercastSessionData {
 public:
