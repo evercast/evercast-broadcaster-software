@@ -220,6 +220,18 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     return true;
 }
 
+void WebRTCStream::recordConnectionError(std::string message)
+{
+	warn("Error connecting to server");
+
+	// Shutdown websocket connection and close Peer Connection
+	close(false);
+	obs_output_set_last_error(output, message.c_str());
+		
+	// Disconnect, this will call stop on main thread
+	obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
+}
+
 bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 {
 	client = createWebsocketClient(type);
@@ -259,51 +271,41 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 	// Connect to server
 	if (!client->connect(url, room, username, password, this)) {
-		warn("Error connecting to server");
-		// Shutdown websocket connection and close Peer Connection
-		close(false);
-		obs_output_set_last_error(
-			output,
-			"There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
-		// Disconnect, this will call stop on main thread
-		obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
+		recordConnectionError("There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
 		return false;
 	}
 
-    if (type == WebRTCStream::Type::Evercast) {
-        // Wait for ICE servers to come back from server.  If nothing comes back
-        // after the specified timeout has elapsed, continue with a default value.
-        EvercastSessionData *session_data = EvercastSessionData::findOrCreateSession((long long)client);
+	if (type == WebRTCStream::Type::Evercast) {
+		// Wait for ICE servers to come back from server.  If nothing comes back
+		// after the specified timeout has elapsed, continue with a default value.
+		EvercastSessionData *session_data =
+			EvercastSessionData::findOrCreateSession(
+				(long long)client);
 
-	session_data->registerEventHandler(this);
+		session_data->registerEventHandler(this);
 
-	bool successfullyJoined = session_data->awaitJoinComplete(5);
-	if (!successfullyJoined) {
-		// TODO: Merge with above, put in helper function
-		warn("Error connecting to server");
-		// Shutdown websocket connection and close Peer Connection
-		close(false);
-		obs_output_set_last_error(
-			output,
-			"There was a problem connecting to your Evercast room.  Are attendees present?");
-		// Disconnect, this will call stop on main thread
-		obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
-		return false;
+		bool successfullyJoined = session_data->awaitJoinComplete(5);
+		if (!successfullyJoined) {
+			recordConnectionError("There was a problem connecting to your Evercast room.  Are attendees present?");
+			return false;
+		}
+
+		std::vector<IceServerDefinition> servers =
+			session_data->getIceServers();
+		for (std::vector<IceServerDefinition>::iterator it =
+			     servers.begin();
+		     it != servers.end(); it++) {
+			webrtc::PeerConnectionInterface::IceServer server;
+			server.urls = {it->urls};
+			server.username = it->username;
+			server.password = it->password;
+			this->ice_servers.push_back(server);
+		}
+
+		if (servers.empty()) {
+			return false;
+		}
 	}
-
-        std::vector<IceServerDefinition> servers = session_data->getIceServers();
-        for (std::vector<IceServerDefinition>::iterator it = servers.begin(); it != servers.end(); it++) {
-            webrtc::PeerConnectionInterface::IceServer server;
-            server.urls = { it->urls };
-            server.username = it->username;
-            server.password = it->password;
-            this->ice_servers.push_back(server);
-        }
-
-        if (servers.empty()) {
-            return false;
-        }
-    }
 
 	return true;
 }

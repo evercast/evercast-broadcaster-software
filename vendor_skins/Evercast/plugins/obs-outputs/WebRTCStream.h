@@ -187,6 +187,7 @@ private:
   bool startWebSocket(WebRTCStream::Type type);
   bool startPeerConnection();
   void createOffer();
+  void recordConnectionError(std::string message);
 };
 
 #endif
