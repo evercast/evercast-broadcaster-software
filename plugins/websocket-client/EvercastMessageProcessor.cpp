@@ -154,6 +154,8 @@ bool EvercastMessageProcessor::processJoinResponse(json& data)
 
     parseAttendees(data);
     parseIceServers(data);
+
+    return true;
 }
 
 bool EvercastMessageProcessor::processArriveResponse(json& data)
