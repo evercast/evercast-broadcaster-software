@@ -1,20 +1,5 @@
 #include "update-helpers.hpp"
 
-void FreeProvider(HCRYPTPROV prov)
-{
-	CryptReleaseContext(prov, 0);
-}
-
-void FreeHash(HCRYPTHASH hash)
-{
-	CryptDestroyHash(hash);
-}
-
-void FreeKey(HCRYPTKEY key)
-{
-	CryptDestroyKey(key);
-}
-
 std::string vstrprintf(const char *format, va_list args)
 {
 	if (!format)

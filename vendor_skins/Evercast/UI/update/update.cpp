@@ -15,8 +15,6 @@
 #include <jansson.h>
 
 #include <time.h>
-#include <strsafe.h>
-#include <shellapi.h>
 
 using namespace std;
 
@@ -112,6 +110,7 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string &str, std:
 	vector<string> extraHeaders;
 	const char *query = "{\"query\": \"{  getEBSUpgradeInfo(currentVersion: \\\"" EBS_VERSION "\\\") {    upgradeAvailable    version    releaseNotes  } } \", \"variables\": null}";
 
+	config_set_default_string(GetGlobalConfig(), "General", "SkipUpdateVersion", "");
 	config_set_default_string(GetGlobalConfig(), "General", "EBSUpdateUrl", EBS_DEFAULT_UPDATE_URL);
 	string updateUrl = config_get_string(GetGlobalConfig(), "General", "EBSUpdateUrl");
 
@@ -146,6 +145,16 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string &str, std:
 		return false;
 
 	return success;
+}
+
+static void openEBSDownload()
+{
+
+	#ifdef WIN32
+	system("start " EBS_DOWNLOAD_URL);
+	#else
+	system("open " EBS_DOWNLOAD_URL);
+	#endif
 }
 
 void AutoUpdateThread::run()
@@ -216,7 +225,7 @@ try {
 		return;
 	}
 
-	system("start " EBS_DOWNLOAD_URL);
+	openEBSDownload();
 
 	/* force OBS to perform another update check immediately after updating
 	* in case of issues with the new version */
@@ -230,4 +239,5 @@ catch (string text) {
 }
 
 /* ------------------------------------------------------------------------ */
+
 

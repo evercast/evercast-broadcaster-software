@@ -94,10 +94,9 @@ find_package(Libcurl REQUIRED)
 include_directories(${LIBCURL_INCLUDE_DIRS})
 add_definitions(${LIBCURL_DEFINITIONS})
 
-if(WIN32)
-	include_directories(${OBS_JANSSON_INCLUDE_DIRS})
-	include_directories(${BLAKE2_INCLUDE_DIR})
+include_directories(${OBS_JANSSON_INCLUDE_DIRS})
 
+if(WIN32)
 	set(obs_PLATFORM_SOURCES
 		platform-windows.cpp
 		${obs.rc_DIR}/obs.rc)
@@ -114,7 +113,7 @@ elseif(APPLE)
 		platform-osx.mm)
 
 	find_package(AppKit REQUIRED)
-	set(obs_PLATFORM_LIBRARIES ${APPKIT_LIBRARIES})
+	set(obs_PLATFORM_LIBRARIES ${APPKIT_LIBRARIES} ${OBS_JANSSON_IMPORT})
 
 	add_definitions(-fobjc-arc)
 
