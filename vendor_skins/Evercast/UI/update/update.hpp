@@ -24,14 +24,3 @@ public:
 	AutoUpdateThread(bool manualUpdate_) : manualUpdate(manualUpdate_) {}
 };
 
-class WhatsNewInfoThread : public QThread {
-	Q_OBJECT
-
-	virtual void run() override;
-
-signals:
-	void Result(const QString &text);
-
-public:
-	inline WhatsNewInfoThread() {}
-};

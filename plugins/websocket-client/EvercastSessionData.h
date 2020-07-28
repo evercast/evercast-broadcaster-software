@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <WebsocketClient.h>
 
 struct IceServerDefinition {
 	std::string urls;
@@ -18,7 +19,7 @@ struct IceServerDefinition {
  * provide access to them from outside; other state will follow.  Lifetime of
  * instances of this type will match the lifetime of Evercast WebSockets.
  */
-class EvercastSessionData {
+class WEBSOCKETCLIENT_API EvercastSessionData {
 public:
     // Create a new session instance, or find one with the appropriate key.
 	static EvercastSessionData *findOrCreateSession(long long key);

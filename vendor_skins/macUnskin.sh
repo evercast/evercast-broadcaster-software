@@ -4,6 +4,7 @@ rm CI/install/osx/dylibBundler
 rm CI/install/osx/packageApp.sh
 git checkout -- CI/*
 rm UI/webrtcVersion.h
+rm -rf UI/update
 git checkout -- UI/*
 git checkout -- cmake/*
 git checkout -- deps/*

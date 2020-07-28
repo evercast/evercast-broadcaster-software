@@ -56,7 +56,6 @@
 #include <fstream>
 #include <sstream>
 #include "../plugins/obs-outputs/EvercastOutputs.h"
-#include "ebs-update-notifier.h"
 
 #include "update/update.hpp"
 
@@ -3123,7 +3122,6 @@ void OBSBasic::CheckForUpdates(bool manualUpdate)
 
 void OBSBasic::updateCheckFinished()
 {
-	ui->actionCheckForUpdates->setEnabled(true);
 }
 
 void OBSBasic::DuplicateSelectedScene()
