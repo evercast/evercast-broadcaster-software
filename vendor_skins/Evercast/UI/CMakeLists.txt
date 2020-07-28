@@ -100,14 +100,7 @@ if(WIN32)
 
 	set(obs_PLATFORM_SOURCES
 		platform-windows.cpp
-		win-update/update-window.cpp
-		win-update/win-update.cpp
-		win-update/win-update-helpers.cpp
 		${obs.rc_DIR}/obs.rc)
-	set(obs_PLATFORM_HEADERS
-		win-update/update-window.hpp
-		win-update/win-update.hpp
-		win-update/win-update-helpers.hpp)
 	set(obs_PLATFORM_LIBRARIES
 		crypt32
 		blake2
@@ -234,6 +227,9 @@ set(obs_SOURCES
 	window-log-reply.cpp
 	window-projector.cpp
 	window-remux.cpp
+	update/update-window.cpp
+	update/update.cpp
+	update/update-helpers.cpp
 	auth-base.cpp
 	source-tree.cpp
 	properties-view.cpp
@@ -285,6 +281,9 @@ set(obs_HEADERS
 	window-log-reply.hpp
 	window-projector.hpp
 	window-remux.hpp
+	update/update-window.hpp
+	update/update.hpp
+	update/update-helpers.hpp
 	auth-base.hpp
 	source-tree.hpp
 	properties-view.hpp

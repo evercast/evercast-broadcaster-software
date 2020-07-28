@@ -56,10 +56,9 @@
 #include <fstream>
 #include <sstream>
 #include "../plugins/obs-outputs/EvercastOutputs.h"
+#include "ebs-update-notifier.h"
 
-#ifdef _WIN32
-#include "win-update/win-update.hpp"
-#endif
+#include "update/update.hpp"
 
 #include "ui_OBSBasic.h"
 #include "ui_ColorSelect.h"
@@ -1040,6 +1039,8 @@ retryScene:
 		api->on_event(OBS_FRONTEND_EVENT_SCENE_CHANGED);
 		api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 	}
+
+	CheckForUpdates(false);
 }
 
 #define SERVICE_PATH "service.json"
@@ -3111,26 +3112,18 @@ void OBSBasic::TimedCheckForUpdates()
 
 void OBSBasic::CheckForUpdates(bool manualUpdate)
 {
-#ifdef UPDATE_SPARKLE
-	trigger_sparkle_update();
-#elif _WIN32
-  // NOTE LUDO: #186 do not check for OBS Studio updates
-	// ui->actionCheckForUpdates->setEnabled(false);
-
 	if (updateCheckThread && updateCheckThread->isRunning())
 		return;
 
 	updateCheckThread.reset(new AutoUpdateThread(manualUpdate));
 	updateCheckThread->start();
-#endif
 
 	UNUSED_PARAMETER(manualUpdate);
 }
 
 void OBSBasic::updateCheckFinished()
 {
-  // NOTE LUDO: #186 do not check for OBS Studio updates
-	// ui->actionCheckForUpdates->setEnabled(true);
+	ui->actionCheckForUpdates->setEnabled(true);
 }
 
 void OBSBasic::DuplicateSelectedScene()
