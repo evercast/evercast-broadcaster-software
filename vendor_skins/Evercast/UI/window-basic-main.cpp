@@ -1191,7 +1191,7 @@ bool OBSBasic::InitBasicConfigDefaults()
 	config_set_default_string(basicConfig, "SimpleOutput", "RecFormat",
 				  "mkv");
 	config_set_default_uint(basicConfig, "SimpleOutput", "VBitrate", 2500);
-	config_set_default_uint(basicConfig, "SimpleOutput", "ABitrate", 128);
+	config_set_default_uint(basicConfig, "SimpleOutput", "ABitrate", 320);
 	config_set_default_bool(basicConfig, "SimpleOutput", "UseAdvanced",
 				false);
 	config_set_default_bool(basicConfig, "SimpleOutput", "EnforceBitrate",
