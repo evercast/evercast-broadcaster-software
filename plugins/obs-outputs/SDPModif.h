@@ -22,7 +22,7 @@ public:
         // audio section contains at least 1 stereo codec
         if (testLine >= audio_start && testLine <= audio_end)
             return;
-        std::string opusRe = "a=rtpmap:([0-9]{1,3}) [oO][pP][uU][sS]";
+        std::string opusRe = "a=rtpmap:([0-9]{1,3}) ([Mm][Uu][Ll][Tt][Ii])*[oO][pP][uU][sS]";
         int rtpmap = findLinesRegEx(sdpLines, opusRe);
         if (rtpmap == -1)
             return;
