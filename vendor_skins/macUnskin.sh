@@ -14,7 +14,7 @@ rm libobs-d3d11/d3d11-texture3d.cpp
 git checkout -- libobs-d3d11/*
 rm libobs-opengl/gl-texture3d.c
 git checkout -- libobs-opengl/*
-#git checkout -- plugins/*
+git checkout -- plugins/obs-outputs
 git checkout -- plugins/mac-avcapture/*
 git checkout -- plugins/rtmp-services/*
 git checkout -- plugins/obs-outputs/*

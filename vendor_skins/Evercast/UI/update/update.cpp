@@ -38,7 +38,9 @@ static json_t* ReadChildNode(const json_t* parent, const char* key)
 {
 	json_t* node = json_object_get(parent, key);
 	if (!node) {
-		throw strprintf("Could not read node %s in JSON.", key);
+		char errorBuffer[256];
+		snprintf(errorBuffer, 256, "Could not read node %s in JSON.", key);
+		throw string(errorBuffer);
 	}
 
 	return node;
@@ -49,9 +51,13 @@ static void ParseEBSVersionResponse(string& ebsVersionResponse, bool* updatesAva
 	json_error_t error;
 	Json root(json_loads(ebsVersionResponse.c_str(), 0, &error));
 
-	if (!root)
-		throw strprintf("Failed to read EBS version response (%d): %s",
-			error.line, error.text);
+	if (!root) {
+		char errorBuffer[256];
+		snprintf(errorBuffer, 256,
+			"Failed to read EBS version response (%d): %s", error.line,
+			error.text);
+		throw string(errorBuffer);
+	}
 
 	if (!json_is_object(root.get()))
 		throw string("Response received was not an object.");
@@ -129,8 +135,9 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string& str, std:
 		if (*responseCode == 404)
 			return false;
 
-		throw strprintf("Failed to fetch download page content: %s",
-			error.c_str());
+		char errorBuffer[256];
+		snprintf(errorBuffer, 256, "Failed to fetch download page content: %s", error.c_str());
+		throw string(errorBuffer);
 	}
 
 	/* ----------------------------------- *
