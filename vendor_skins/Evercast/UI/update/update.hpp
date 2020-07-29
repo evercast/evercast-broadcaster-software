@@ -18,7 +18,7 @@ private slots:
 	void infoMsg(const QString &title, const QString &text);
 	int queryUpdateSlot(bool manualUpdate, const QString &text);
 
-	bool EBSVersionQuery(bool manualUpdate, std::string &str, std::string &error, long *responseCode, bool *updatesAvailable, std::string &version, std::string &notes);
+	bool EBSVersionQuery(bool manualUpdate, std::string &str, std::string &error, long *responseCode, bool *updatesAvailable, bool *isBeta, std::string &version, std::string &notes);
 
 public:
 	AutoUpdateThread(bool manualUpdate_) : manualUpdate(manualUpdate_) {}

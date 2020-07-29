@@ -28,11 +28,15 @@ using namespace std;
 #define EBS_DOWNLOAD_URL "https://www.evercast.us/ebs"
 #endif
 
+#ifndef EBS_BETA_URL
+#define EBS_BETA_URL "https://www.evercast.us/beta"
+#endif
+
 /* ------------------------------------------------------------------------ */
 
 static json_t* ReadChildNode(const json_t* parent, const char* key)
 {
-	json_t *node = json_object_get(parent, key);
+	json_t* node = json_object_get(parent, key);
 	if (!node) {
 		throw strprintf("Could not read node %s in JSON.", key);
 	}
@@ -40,7 +44,7 @@ static json_t* ReadChildNode(const json_t* parent, const char* key)
 	return node;
 }
 
-static void ParseEBSVersionResponse(string &ebsVersionResponse, bool *updatesAvailable, string& notes, string& updateVersion)
+static void ParseEBSVersionResponse(string& ebsVersionResponse, bool* updatesAvailable, bool* isBeta, string& notes, string& updateVersion)
 {
 	json_error_t error;
 	Json root(json_loads(ebsVersionResponse.c_str(), 0, &error));
@@ -52,7 +56,7 @@ static void ParseEBSVersionResponse(string &ebsVersionResponse, bool *updatesAva
 	if (!json_is_object(root.get()))
 		throw string("Response received was not an object.");
 
-	json_t *node = ReadChildNode(root, "data");
+	json_t* node = ReadChildNode(root, "data");
 	node = ReadChildNode(node, "getEBSUpgradeInfo");
 
 	if (json_is_null(node)) {
@@ -61,13 +65,16 @@ static void ParseEBSVersionResponse(string &ebsVersionResponse, bool *updatesAva
 		return;
 	}
 
-	json_t *upgrade_available_node = ReadChildNode(node, "upgradeAvailable");
+	json_t* upgrade_available_node = ReadChildNode(node, "upgradeAvailable");
 	*updatesAvailable = json_boolean_value(upgrade_available_node);
 
-	json_t *version_node = ReadChildNode(node, "version");
+	json_t* beta_node = ReadChildNode(node, "beta");
+	*isBeta = json_boolean_value(beta_node);
+
+	json_t* version_node = ReadChildNode(node, "version");
 	updateVersion = json_string_value(version_node);
 
-	json_t *note_node = ReadChildNode(node, "releaseNotes");
+	json_t* note_node = ReadChildNode(node, "releaseNotes");
 	notes = json_string_value(note_node);
 }
 
@@ -103,20 +110,20 @@ int AutoUpdateThread::queryUpdate(bool localManualUpdate, const char* text_utf8)
 	return ret;
 }
 
-bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string &str, std::string &error, long *responseCode, bool *updatesAvailable, string &version, string &notes)
-		     
+bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string& str, std::string& error, long* responseCode, bool* updatesAvailable, bool* isBeta, string& version, string& notes)
+
 {
 	string signature;
 	vector<string> extraHeaders;
-	const char *query = "{\"query\": \"{  getEBSUpgradeInfo(currentVersion: \\\"" EBS_VERSION "\\\") {    upgradeAvailable    version    releaseNotes  } } \", \"variables\": null}";
+	const char* query = "{\"query\": \"{  getEBSUpgradeInfo(currentVersion: \\\"" EBS_VERSION "\\\") {    upgradeAvailable    beta    version    releaseNotes  } } \", \"variables\": null}";
 
 	config_set_default_string(GetGlobalConfig(), "General", "SkipUpdateVersion", "");
 	config_set_default_string(GetGlobalConfig(), "General", "EBSUpdateUrl", EBS_DEFAULT_UPDATE_URL);
 	string updateUrl = config_get_string(GetGlobalConfig(), "General", "EBSUpdateUrl");
 
 	bool success = GetRemoteFile(updateUrl.c_str(), str, error, responseCode,
-				     "application/json", query, extraHeaders,
-				     &signature);
+		"application/json", query, extraHeaders,
+		&signature);
 
 	if (!success || (*responseCode != 200 && *responseCode != 304)) {
 		if (*responseCode == 404)
@@ -128,7 +135,7 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string &str, std:
 
 	/* ----------------------------------- *
 	 * check page for update           */
-	ParseEBSVersionResponse(str, updatesAvailable, notes, version);
+	ParseEBSVersionResponse(str, updatesAvailable, isBeta, notes, version);
 
 	if (!(*updatesAvailable)) {
 		if (manualUpdate)
@@ -147,14 +154,17 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string &str, std:
 	return success;
 }
 
-static void openEBSDownload()
+static void openEBSDownload(bool isBeta)
 {
+	string url = isBeta ? EBS_BETA_URL : EBS_DOWNLOAD_URL;
 
-	#ifdef WIN32
-	system("start " EBS_DOWNLOAD_URL);
-	#else
-	system("open " EBS_DOWNLOAD_URL);
-	#endif
+#ifdef WIN32
+	string launch = "start ";
+#else
+	string launch = "open ";
+#endif
+
+	system((launch + url).c_str());
 }
 
 void AutoUpdateThread::run()
@@ -163,6 +173,7 @@ try {
 	string text;
 	string error;
 	bool updatesAvailable = false;
+	bool isBeta = false;
 	bool success;
 
 	struct FinishedTrigger {
@@ -194,7 +205,7 @@ try {
 	 * get update info from server            */
 
 	string version, notes;
-	success = EBSVersionQuery(manualUpdate, text, error, &responseCode, &updatesAvailable, version, notes);
+	success = EBSVersionQuery(manualUpdate, text, error, &responseCode, &updatesAvailable, &isBeta, version, notes);
 	if (!success)
 		return;
 
@@ -225,7 +236,7 @@ try {
 		return;
 	}
 
-	openEBSDownload();
+	openEBSDownload(isBeta);
 
 	/* force OBS to perform another update check immediately after updating
 	* in case of issues with the new version */
@@ -239,5 +250,4 @@ catch (string text) {
 }
 
 /* ------------------------------------------------------------------------ */
-
 
