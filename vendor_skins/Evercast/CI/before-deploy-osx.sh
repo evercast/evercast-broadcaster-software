@@ -54,22 +54,6 @@ plutil -insert SUPublicDSAKeyFile -string OBSPublicDSAKey.pem ./EBS.app/Contents
 
 dmgbuild "EBS" ebs.dmg
 
-#if [ -v "$TRAVIS" ]; then
-	# Signing stuff
-	#hr "Decrypting Cert"
-	#openssl aes-256-cbc -K $encrypted_dd3c7f5e9db9_key -iv $encrypted_dd3c7f5e9db9_iv -in ../CI/osxcert/Certificates.p12.enc -out Certificates.p12 -d
-	# hr "Creating Keychain"
-	# security create-keychain -p $CERT_PASS build.keychain
-	# security default-keychain -s build.keychain
-	# security unlock-keychain -p $CERT_PASS build.keychain
-	# security set-keychain-settings -t 3600 -u build.keychain
-	# hr "Importing certs into keychain"
-	# cp ../../EBS\ Installer\ Certificate.p12 .
-	# security import ./EBS\ Installer\ Certificate.p12 -k build.keychain -T /usr/bin/productsign -P ""
-	# macOS 10.12+
-	# security set-key-partition-list -S apple-tool:,apple: -s -k $CERT_PASS build.keychain
-#fi
-
 # Package app
 hr "Generating .pkg"
 packagesbuild ../CI/install/osx/CMakeLists.pkgproj
