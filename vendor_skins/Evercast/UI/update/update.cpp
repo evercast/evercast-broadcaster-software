@@ -78,6 +78,10 @@ static void ParseEBSVersionResponse(string& ebsVersionResponse, bool* updatesAva
 	*isBeta = json_boolean_value(beta_node);
 
 	json_t* version_node = ReadChildNode(node, "version");
+	if (json_is_null(version_node)) {
+		*updatesAvailable = false;
+		return;
+	}
 	updateVersion = json_string_value(version_node);
 
 	json_t* note_node = ReadChildNode(node, "releaseNotes");
