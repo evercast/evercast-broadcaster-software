@@ -63,10 +63,12 @@ static void ParseEBSVersionResponse(string& ebsVersionResponse, bool* updatesAva
 		throw string("Response received was not an object.");
 
 	json_t* node = ReadChildNode(root, "data");
-	node = ReadChildNode(node, "getEBSUpgradeInfo");
+	node = ReadChildNode(node, "fetchActiveEbsVersion");
+	node = ReadChildNode(node, "edges");
+	node = json_array_get(node, 0);
+	node = ReadChildNode(node, "node");
 
 	if (json_is_null(node)) {
-
 		*updatesAvailable = false;
 		return;
 	}
@@ -125,7 +127,7 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string& str, std:
 {
 	string signature;
 	vector<string> extraHeaders;
-	const char* query = "{\"query\": \"{  getEBSUpgradeInfo(currentVersion: \\\"" EBS_VERSION "\\\") {    upgradeAvailable    beta    version    releaseNotes  } } \", \"variables\": null}";
+	const char* query = "{\"query\": \"{  fetchActiveEbsVersion(currentVersion: \\\"" EBS_VERSION "\\\") {    edges { node { upgradeAvailable    beta    version    releaseNotes  } } } } \", \"variables\": null}";
 
 	config_set_default_string(GetGlobalConfig(), "General", "SkipUpdateVersion", "");
 	config_set_default_string(GetGlobalConfig(), "General", "EBSUpdateUrl", EBS_DEFAULT_UPDATE_URL);
