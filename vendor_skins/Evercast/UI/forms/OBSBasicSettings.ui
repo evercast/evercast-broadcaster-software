@@ -4466,6 +4466,11 @@
                      </item>
                      <item>
                       <property name="text">
+                       <string notr="true">I010</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
                        <string>I444</string>
                       </property>
                      </item>

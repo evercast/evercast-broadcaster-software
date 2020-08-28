@@ -11,6 +11,7 @@
 #endif
 
 #include "obs.h"
+#include "media-io/video-io.h"
 #include "WebsocketClient.h"
 #include "VideoCapturer.h"
 #include "AudioDeviceModuleWrapper.h"
@@ -129,6 +130,7 @@ private:
   std::string audio_codec;
   std::string video_codec;
   int channel_count;
+  enum video_format videoFormat;
 
   // NOTE LUDO: #80 add getStats
   std::string stats_list;
@@ -184,6 +186,7 @@ private:
   bool startWebSocket(WebRTCStream::Type type);
   bool startPeerConnection();
   void createOffer();
+  webrtc::VideoFrame handleFrameConversion(video_data* frame);
 };
 
 #endif

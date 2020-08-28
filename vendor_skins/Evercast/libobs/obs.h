@@ -1163,6 +1163,9 @@ obs_source_draw_set_color_matrix(const struct matrix4 *color_matrix,
 EXPORT void obs_source_draw(gs_texture_t *image, int x, int y, uint32_t cx,
 			    uint32_t cy, bool flip);
 
+EXPORT void obs_source_hotwire_output(obs_source_t *source,
+				    const struct obs_source_frame *frame);
+
 /**
  * Outputs asynchronous video data.  Set to NULL to deactivate the texture
  *
