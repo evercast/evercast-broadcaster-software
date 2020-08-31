@@ -4547,6 +4547,16 @@ void OBSBasic::on_scenes_itemDoubleClicked(QListWidgetItem *witem)
 	}
 }
 
+void OBSBasic::on_watermarkButton_clicked()
+{
+	AddSource("text_ft2_source");
+}
+
+void OBSBasic::on_logoButton_clicked()
+{
+	AddSource("image_source");
+}
+
 void OBSBasic::AddSource(const char *id)
 {
 	if (id && *id) {
