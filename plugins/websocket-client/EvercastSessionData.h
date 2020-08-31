@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <WebsocketClient.h>
 
 struct IceServerDefinition {
     std::string urls;

@@ -94,20 +94,12 @@ find_package(Libcurl REQUIRED)
 include_directories(${LIBCURL_INCLUDE_DIRS})
 add_definitions(${LIBCURL_DEFINITIONS})
 
-if(WIN32)
-	include_directories(${OBS_JANSSON_INCLUDE_DIRS})
-	include_directories(${BLAKE2_INCLUDE_DIR})
+include_directories(${OBS_JANSSON_INCLUDE_DIRS})
 
+if(WIN32)
 	set(obs_PLATFORM_SOURCES
 		platform-windows.cpp
-		win-update/update-window.cpp
-		win-update/win-update.cpp
-		win-update/win-update-helpers.cpp
 		${obs.rc_DIR}/obs.rc)
-	set(obs_PLATFORM_HEADERS
-		win-update/update-window.hpp
-		win-update/win-update.hpp
-		win-update/win-update-helpers.hpp)
 	set(obs_PLATFORM_LIBRARIES
 		crypt32
 		blake2
@@ -121,7 +113,7 @@ elseif(APPLE)
 		platform-osx.mm)
 
 	find_package(AppKit REQUIRED)
-	set(obs_PLATFORM_LIBRARIES ${APPKIT_LIBRARIES})
+	set(obs_PLATFORM_LIBRARIES ${APPKIT_LIBRARIES} ${OBS_JANSSON_IMPORT})
 
 	add_definitions(-fobjc-arc)
 
@@ -234,6 +226,9 @@ set(obs_SOURCES
 	window-log-reply.cpp
 	window-projector.cpp
 	window-remux.cpp
+	update/update-window.cpp
+	update/update.cpp
+	update/update-helpers.cpp
 	auth-base.cpp
 	source-tree.cpp
 	properties-view.cpp
@@ -285,6 +280,9 @@ set(obs_HEADERS
 	window-log-reply.hpp
 	window-projector.hpp
 	window-remux.hpp
+	update/update-window.hpp
+	update/update.hpp
+	update/update-helpers.hpp
 	auth-base.hpp
 	source-tree.hpp
 	properties-view.hpp
