@@ -738,6 +738,8 @@ private slots:
 	void on_streamButton_clicked();
 	void on_recordButton_clicked();
 	void on_settingsButton_clicked();
+	void on_watermarkButton_clicked();
+	void on_logoButton_clicked();
 
 	void on_actionHelpPortal_triggered();
 	void on_actionWebsite_triggered();

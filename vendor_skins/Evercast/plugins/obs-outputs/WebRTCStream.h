@@ -15,6 +15,7 @@
 #include "VideoCapturer.h"
 #include "AudioDeviceModuleWrapper.h"
 #include "EvercastAudioSource.h"
+#include "EvercastSessionData.h"
 
 #include "api/create_peerconnection_factory.h"
 #include "api/media_stream_interface.h"
@@ -27,6 +28,7 @@
 #include "rtc_base/ref_counted_object.h"
 #include "rtc_base/thread.h"
 #include "rtc_base/timestamp_aligner.h"
+#include "WebRTCSessionEventHandler.h"
 
 #include <initializer_list>
 #include <regex>
@@ -42,7 +44,7 @@ class WebRTCStreamInterface :
   public webrtc::SetSessionDescriptionObserver,
   public webrtc::SetRemoteDescriptionObserverInterface {};
 
-class WebRTCStream : public rtc::RefCountedObject<WebRTCStreamInterface> {
+class WebRTCStream : public rtc::RefCountedObject<WebRTCStreamInterface>, public WebRTCSessionEventHandler {
 public:
   enum Type {
     Janus     = 0,
@@ -115,6 +117,8 @@ public:
     return rtc::scoped_refptr<T>(t);
   }
 
+  void handleEmptyRoom() override;
+
 private:
   // Connection properties
   Type type;
@@ -177,6 +181,13 @@ private:
 
   // OBS stream output
   obs_output_t *output;
+
+  webrtc::PeerConnectionInterface::IceServers ice_servers;
+
+  bool startWebSocket(WebRTCStream::Type type);
+  bool startPeerConnection();
+  void createOffer();
+  void recordConnectionError(std::string message);
 };
 
 #endif

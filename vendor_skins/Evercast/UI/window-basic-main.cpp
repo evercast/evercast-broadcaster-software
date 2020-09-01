@@ -57,9 +57,7 @@
 #include <sstream>
 #include "../plugins/obs-outputs/EvercastOutputs.h"
 
-#ifdef _WIN32
-#include "win-update/win-update.hpp"
-#endif
+#include "update/update.hpp"
 
 #include "ui_OBSBasic.h"
 #include "ui_ColorSelect.h"
@@ -1040,6 +1038,8 @@ retryScene:
 		api->on_event(OBS_FRONTEND_EVENT_SCENE_CHANGED);
 		api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 	}
+
+	CheckForUpdates(false);
 }
 
 #define SERVICE_PATH "service.json"
@@ -1191,7 +1191,7 @@ bool OBSBasic::InitBasicConfigDefaults()
 	config_set_default_string(basicConfig, "SimpleOutput", "RecFormat",
 				  "mkv");
 	config_set_default_uint(basicConfig, "SimpleOutput", "VBitrate", 2500);
-	config_set_default_uint(basicConfig, "SimpleOutput", "ABitrate", 128);
+	config_set_default_uint(basicConfig, "SimpleOutput", "ABitrate", 320);
 	config_set_default_bool(basicConfig, "SimpleOutput", "UseAdvanced",
 				false);
 	config_set_default_bool(basicConfig, "SimpleOutput", "EnforceBitrate",
@@ -3111,26 +3111,17 @@ void OBSBasic::TimedCheckForUpdates()
 
 void OBSBasic::CheckForUpdates(bool manualUpdate)
 {
-#ifdef UPDATE_SPARKLE
-	trigger_sparkle_update();
-#elif _WIN32
-  // NOTE LUDO: #186 do not check for OBS Studio updates
-	// ui->actionCheckForUpdates->setEnabled(false);
-
 	if (updateCheckThread && updateCheckThread->isRunning())
 		return;
 
 	updateCheckThread.reset(new AutoUpdateThread(manualUpdate));
 	updateCheckThread->start();
-#endif
 
 	UNUSED_PARAMETER(manualUpdate);
 }
 
 void OBSBasic::updateCheckFinished()
 {
-  // NOTE LUDO: #186 do not check for OBS Studio updates
-	// ui->actionCheckForUpdates->setEnabled(true);
 }
 
 void OBSBasic::DuplicateSelectedScene()
@@ -4554,6 +4545,16 @@ void OBSBasic::on_scenes_itemDoubleClicked(QListWidgetItem *witem)
 				SetCurrentScene(scene, false, true);
 		}
 	}
+}
+
+void OBSBasic::on_watermarkButton_clicked()
+{
+	AddSource("text_ft2_source");
+}
+
+void OBSBasic::on_logoButton_clicked()
+{
+	AddSource("image_source");
 }
 
 void OBSBasic::AddSource(const char *id)
@@ -6877,7 +6878,7 @@ void OBSBasic::SystemTrayInit()
 	trayIcon.reset(new QSystemTrayIcon(
 		QIcon::fromTheme("obs-tray", QIcon(":/res/images/obs.png")),
 		this));
-	trayIcon->setToolTip("OBS Studio");
+	trayIcon->setToolTip("EBS");
 
 	showHide = new QAction(QTStr("Basic.SystemTray.Show"), trayIcon.data());
 	sysTrayStream = new QAction(QTStr("Basic.Main.StartStreaming"),
@@ -6941,7 +6942,7 @@ void OBSBasic::SysTrayNotify(const QString &text,
 	if (trayIcon && QSystemTrayIcon::supportsMessages()) {
 		QSystemTrayIcon::MessageIcon icon =
 			QSystemTrayIcon::MessageIcon(n);
-		trayIcon->showMessage("OBS Studio", text, icon, 10000);
+		trayIcon->showMessage("EBS", text, icon, 10000);
 	}
 }
 

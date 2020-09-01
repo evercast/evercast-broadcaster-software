@@ -48,11 +48,12 @@ include_directories(${CURL_INCLUDE_DIR})
 #
 set(websocketclient_SOURCES
 	WebsocketClient.cpp
-	JanusWebsocketClientImpl.cpp
+	JanusWebsocketManager.cpp
+	VideoRoomMessageProcessor.cpp
+	EvercastMessageProcessor.cpp
 	WowzaWebsocketClientImpl.cpp
 	MillicastWebsocketClientImpl.cpp
-	EvercastWebsocketClientImpl.cpp
-	VideoRoomWebsocketClientImpl.cpp
+	EvercastSessionData.cpp
 	restclient-cpp/source/connection.cc
 	restclient-cpp/source/helpers.cc
 	restclient-cpp/source/restclient.cc)
@@ -64,11 +65,16 @@ add_definitions(-DWEBSOCKETCLIENT_EXPORTS)
 
 set(websocketclient_HEADERS
 	WebsocketClient.h
-	JanusWebsocketClientImpl.h
+	JanusWebsocketManager.h
+	JanusMessageProcessor.h
+	VideoRoomMessageProcessor.h
+	EvercastMessageProcessor.h
 	WowzaWebsocketClientImpl.h
 	MillicastWebsocketClientImpl.h
-	EvercastWebsocketClientImpl.h
-	VideoRoomWebsocketClientImpl.h)
+	EvercastSessionData.h
+	ThreadSafeQueue.h
+	WebSocketSender.h
+	WebRTCSessionEventHandler.h)
 
 add_library(websocketclient SHARED
 	${websocketclient_SOURCES}

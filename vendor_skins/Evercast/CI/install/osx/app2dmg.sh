@@ -1,5 +1,10 @@
+xattr -rc ./EBS.app
+rm -rf ./EBS.app/Contents/Frameworks/Qt*.framework/Headers
+codesign --deep --options runtime -vfs 'Developer ID Application: Evercast LLC' './EBS.app' --keychain 'login.keychain'
 mkdir /tmp/installebs
-cp -r "./EBS.app" /tmp/installebs
+cp -R "./EBS.app" /tmp/installebs
 cp $NDI_RUNTIME /tmp/installebs
 hdiutil create /tmp/tmp.dmg -ov -volname "EBS_""$EBS_VERSION""_Install" -fs HFS+ -srcfolder /tmp/installebs # "./EBS.app"
-hdiutil convert /tmp/tmp.dmg -format UDZO -o ./EBS_"$EBS_VERSION"_Install.dmg
+hdiutil convert /tmp/tmp.dmg -format UDRO -o ./EBS_"$EBS_VERSION"_Install.dmg
+# productsign --sign 'Developer ID Installer: Evercast LLC' --keychain 'login.keychain' ./EBS_"$EBS_VERSION"_Install_unsigned.dmg ./EBS_"$EBS_VERSION"_Install.dmg
+xcrun altool --notarize-app --primary-bundle-id "ci.cosmosoftware.obs-webrtc" --username brad@evercast.co --password $NOTARIZE_PASS --file ./EBS_"$EBS_VERSION"_Install.dmg
