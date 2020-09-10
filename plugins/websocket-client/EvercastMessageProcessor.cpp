@@ -91,14 +91,7 @@ void EvercastMessageProcessor::processErrorEvent(int errorCode, json& msg)
 {
 	switch (errorCode) {
 	case EVERCAST_ERR_DUPLICATE_USER:
-		// Someone is already using that ID, probably a previous version of us.  Log in with a fresh ID.
-		logged = false;
-		session_id = 0;
-		handle_id = 0;
-
-		sendLoginMessage();
-
-		// Launch logged event
+		// Launch logged event: someone else is logged in
 		listener->onLogged(session_id);
 		break;
 	case EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC:
