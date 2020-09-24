@@ -4600,12 +4600,7 @@ QMenu *OBSBasic::CreateAddSourcePopupMenu()
 		popup->insertAction(after, popupItem);
 	};
 
-	bool showAdvancedOptions = config_get_bool(this->Config(), "General", "ShowAdvancedOptions");
 	while (obs_enum_input_types(idx++, &type)) {
-		if (strncmp(type, "window_capture", strlen(type)) == 0 && !showAdvancedOptions) {
-			continue;
-		}
-
 		const char *name = obs_source_get_display_name(type);
 		uint32_t caps = obs_get_source_output_flags(type);
 
