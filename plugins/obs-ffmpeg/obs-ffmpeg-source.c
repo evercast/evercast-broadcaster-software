@@ -227,6 +227,7 @@ static void dump_source_info(struct ffmpeg_source *s, const char *input,
 static void get_frame(void *opaque, struct obs_source_frame *f)
 {
 	struct ffmpeg_source *s = opaque;
+	obs_source_hotwire_output(s->source, f);
 	obs_source_output_video(s->source, f);
 }
 

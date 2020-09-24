@@ -83,10 +83,16 @@ enum video_range_type {
 	VIDEO_RANGE_FULL
 };
 
+struct hotwire_video_info {
+	uint32_t width;
+	uint32_t height;
+};
+
 struct video_data {
 	uint8_t *data[MAX_AV_PLANES];
 	uint32_t linesize[MAX_AV_PLANES];
 	uint64_t timestamp;
+	struct hotwire_video_info info;
 };
 
 struct video_output_info {
@@ -261,6 +267,8 @@ EXPORT double video_output_get_frame_rate(const video_t *video);
 
 EXPORT uint32_t video_output_get_skipped_frames(const video_t *video);
 EXPORT uint32_t video_output_get_total_frames(const video_t *video);
+
+EXPORT void send_hotwire_frame(const video_t *video, struct video_data* frame);
 
 extern void video_output_inc_texture_encoders(video_t *video);
 extern void video_output_dec_texture_encoders(video_t *video);

@@ -658,6 +658,10 @@ QLabel#errorLabel {
 
 * [themeID="aboutVersion"] {
     font-size: 16px;
+}
+
+* [themeID="aboutLastVersion"] {
+    font-size: 16px;
     margin-bottom: 20px;
 }
 

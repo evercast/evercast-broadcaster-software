@@ -115,6 +115,26 @@ static inline bool scale_video_output(struct video_input *input,
 	return success;
 }
 
+void send_hotwire_frame(struct video_output *video, struct video_data* frame) {
+	/* -------------------------------- */
+
+	if (NULL == video || video->initialized != true) {
+		return;
+	}
+
+	pthread_mutex_lock(&video->input_mutex);
+
+	for (size_t i = 0; i < video->inputs.num; i++) {
+		struct video_input* input = video->inputs.array + i;
+		if (scale_video_output(input, frame))
+			input->callback(input->param, frame);
+	}
+
+	pthread_mutex_unlock(&video->input_mutex);
+
+	/* -------------------------------- */
+}
+
 static inline bool video_output_cur_frame(struct video_output *video)
 {
 	struct cached_frame_info *frame_info;
@@ -137,8 +157,10 @@ static inline bool video_output_cur_frame(struct video_output *video)
 		struct video_input *input = video->inputs.array + i;
 		struct video_data frame = frame_info->frame;
 
+		/*
 		if (scale_video_output(input, &frame))
 			input->callback(input->param, &frame);
+		*/
 	}
 
 	pthread_mutex_unlock(&video->input_mutex);

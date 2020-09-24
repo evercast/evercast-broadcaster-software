@@ -25,6 +25,8 @@ void video_frame_init(struct video_frame *frame, enum video_format format,
 {
 	size_t size;
 	size_t offsets[MAX_AV_PLANES];
+	size_t stride_uv;
+	size_t vstride_uv;
 	int alignment = base_get_alignment();
 
 	if (!frame)
@@ -52,6 +54,25 @@ void video_frame_init(struct video_frame *frame, enum video_format format,
 		frame->linesize[0] = width;
 		frame->linesize[1] = width / 2;
 		frame->linesize[2] = width / 2;
+		break;
+
+	case VIDEO_FORMAT_I010:
+		stride_uv = (width + 1) / 2;
+		vstride_uv = (height + 1) / 2;
+		size = width * height * sizeof(uint16_t);
+		ALIGN_SIZE(size, alignment);
+		offsets[0] = size;
+		size += stride_uv * vstride_uv * sizeof(uint16_t);
+		ALIGN_SIZE(size, alignment);
+		offsets[1] = size;
+		size += stride_uv * vstride_uv * sizeof(uint16_t);
+		ALIGN_SIZE(size, alignment);
+		frame->data[0] = bmalloc(size);
+		frame->data[1] = (uint8_t *)frame->data[0] + offsets[0];
+		frame->data[2] = (uint8_t *)frame->data[0] + offsets[1];
+		frame->linesize[0] = width * sizeof(uint16_t);
+		frame->linesize[1] = stride_uv * sizeof(uint16_t);
+		frame->linesize[2] = stride_uv * sizeof(uint16_t);
 		break;
 
 	case VIDEO_FORMAT_NV12:

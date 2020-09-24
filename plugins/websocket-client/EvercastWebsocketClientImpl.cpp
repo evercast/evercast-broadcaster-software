@@ -409,6 +409,7 @@ bool EvercastWebsocketClientImpl::sendOpenMessage(const std::string &sdp, const 
             { "request", "configure" },
             { "videocodec", video_codec },
             { "audiocodec", audio_codec },
+	    { "vp9_profile", 2 },
             { "muted", false },
             { "video", true },
             { "audio", true }

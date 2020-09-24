@@ -35,6 +35,7 @@ enum video_format {
 
 	/* planar 420 format */
 	VIDEO_FORMAT_I420, /* three-plane */
+	VIDEO_FORMAT_I010, /* 10-bit 4:2:0 planar */
 	VIDEO_FORMAT_NV12, /* two-plane, luma and packed chroma */
 
 	/* packed 422 formats */
@@ -82,10 +83,16 @@ enum video_range_type {
 	VIDEO_RANGE_FULL
 };
 
+struct hotwire_video_info {
+	uint32_t width;
+	uint32_t height;
+};
+
 struct video_data {
 	uint8_t *data[MAX_AV_PLANES];
 	uint32_t linesize[MAX_AV_PLANES];
 	uint64_t timestamp;
+	struct hotwire_video_info info;
 };
 
 struct video_output_info {
@@ -106,6 +113,7 @@ static inline bool format_is_yuv(enum video_format format)
 {
 	switch (format) {
 	case VIDEO_FORMAT_I420:
+	case VIDEO_FORMAT_I010:
 	case VIDEO_FORMAT_NV12:
 	case VIDEO_FORMAT_I422:
 	case VIDEO_FORMAT_YVYU:
@@ -134,6 +142,8 @@ static inline const char *get_video_format_name(enum video_format format)
 	switch (format) {
 	case VIDEO_FORMAT_I420:
 		return "I420";
+	case VIDEO_FORMAT_I010:
+		return "I010";
 	case VIDEO_FORMAT_NV12:
 		return "NV12";
 	case VIDEO_FORMAT_I422:
@@ -257,6 +267,8 @@ EXPORT double video_output_get_frame_rate(const video_t *video);
 
 EXPORT uint32_t video_output_get_skipped_frames(const video_t *video);
 EXPORT uint32_t video_output_get_total_frames(const video_t *video);
+
+EXPORT void send_hotwire_frame(const video_t *video, struct video_data* frame);
 
 extern void video_output_inc_texture_encoders(video_t *video);
 extern void video_output_dec_texture_encoders(video_t *video);

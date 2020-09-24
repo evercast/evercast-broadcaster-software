@@ -245,7 +245,7 @@ private:
 
 	void SetupEncoders();
 
-	void CreateFirstRunSources();
+	// NOTE: The firstStart parameter is no longer used, but is preserved for API compatibility with other parts of EBS
 	void CreateDefaultScene(bool firstStart);
 
 	void UpdateVolumeControlsDecayRate();

@@ -165,17 +165,26 @@ set(obs-outputs_webrtc_HEADERS
 	SDPModif.h
 	VideoCapturer.h
 	WebRTCStream.h
-	janus-stream.h
-	wowza-stream.h
-	millicast-stream.h
+	EvercastOutputs.h
+	ExtendedVideoEncoderFactory.h
+	VP9WrapperEncoder.h
+	DualPurposeI420Buffer.h
+	I010Frame.h
+#	janus-stream.h
+#	wowza-stream.h
+#	millicast-stream.h
 	evercast-stream.h)
 set(obs-outputs_webrtc_SOURCES
 	AudioDeviceModuleWrapper.cpp
 	VideoCapturer.cpp
 	WebRTCStream.cpp
-	janus-stream.cpp
-	wowza-stream.cpp
-	millicast-stream.cpp
+	ExtendedVideoEncoderFactory.cpp
+	VP9WrapperEncoder.cpp
+	DualPurposeI420Buffer.cpp
+	I010Frame.cpp
+#	janus-stream.cpp
+#	wowza-stream.cpp
+#	millicast-stream.cpp
 	evercast-stream.cpp)
 
 if(NOT WIN32)
@@ -189,6 +198,8 @@ set(obs-outputs_HEADERS
 	rtmp-helpers.h
 	rtmp-stream.h
 	net-if.h
+	opus_audio_encoder_factory.h
+	EvercastAudioSource.h
 	flv-mux.h)
 set(obs-outputs_SOURCES
 	obs-outputs.c
@@ -197,6 +208,8 @@ set(obs-outputs_SOURCES
 	rtmp-windows.c
 	flv-output.c
 	flv-mux.c
+	opus_audio_encoder_factory.cpp
+	EvercastAudioSource.cpp
 	net-if.c)
 
 add_library(obs-outputs MODULE

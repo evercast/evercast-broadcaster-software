@@ -147,6 +147,7 @@ private:
 	uint32_t outputCX = 0;
 	uint32_t outputCY = 0;
 
+    void SaveFPSCommon();
 	void SaveCombo(QComboBox *widget, const char *section,
 		       const char *value);
 	void SaveComboData(QComboBox *widget, const char *section,
@@ -238,6 +239,7 @@ private slots:
 
 private:
 	/* output */
+	void CheckAdvancedOptions();
 	void LoadSimpleOutputSettings();
 	void LoadAdvOutputStreamingSettings();
 	void LoadAdvOutputStreamingEncoderProperties();
@@ -282,7 +284,9 @@ private:
 private slots:
 	void on_theme_activated(int idx);
 
+        // NOTE LUDO #170: Settings: replace QListWidget by QPushButtons
 	void on_listWidget_itemSelectionChanged();
+        void on_basicSettingsButtonGroup_buttonClicked(int row);
 	void on_buttonBox_clicked(QAbstractButton *button);
 
 	void on_service_currentIndexChanged(int idx);
@@ -320,6 +324,9 @@ private slots:
 	void ReloadHotkeys(obs_hotkey_id ignoreKey = OBS_INVALID_HOTKEY_ID);
 	void AdvancedChanged();
 	void AdvancedChangedRestart();
+
+	void ProtocolChanged();
+	void Vp9Changed();
 
 	void UpdateStreamDelayEstimate();
 

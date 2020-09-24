@@ -124,7 +124,7 @@ void ffmpeg_decode_free(struct ffmpeg_decode *decode)
 	memset(decode, 0, sizeof(*decode));
 }
 
-static inline enum video_format convert_pixel_format(int f)
+static enum video_format convert_pixel_format(int f)
 {
 	switch (f) {
 	case AV_PIX_FMT_NONE:
@@ -132,6 +132,8 @@ static inline enum video_format convert_pixel_format(int f)
 	case AV_PIX_FMT_YUV420P:
 	case AV_PIX_FMT_YUVJ420P:
 		return VIDEO_FORMAT_I420;
+	case AV_PIX_FMT_YUV420P10:
+		return VIDEO_FORMAT_I010;
 	case AV_PIX_FMT_NV12:
 		return VIDEO_FORMAT_NV12;
 	case AV_PIX_FMT_YUYV422:

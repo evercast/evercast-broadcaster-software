@@ -30,6 +30,14 @@
 #include <QX11Info>
 #endif
 
+static void handleRichText(QMessageBox &mb, const QString &text, bool enableRichText)
+{
+    if (enableRichText) {
+        mb.setTextFormat(Qt::RichText);
+        mb.setText(QString(text).replace("\n", "<br/>"));
+    }
+}
+
 static inline void OBSErrorBoxva(QWidget *parent, const char *msg, va_list args)
 {
 	char full_message[4096];
@@ -77,10 +85,11 @@ OBSMessageBox::question(QWidget *parent, const QString &title,
 }
 
 void OBSMessageBox::information(QWidget *parent, const QString &title,
-				const QString &text)
+				const QString &text, bool enableRichText)
 {
 	QMessageBox mb(QMessageBox::Information, title, text, QMessageBox::Ok,
 		       parent);
+	handleRichText(mb, text, enableRichText);
 	mb.setButtonText(QMessageBox::Ok, QTStr("OK"));
 	mb.exec();
 }
@@ -90,17 +99,17 @@ void OBSMessageBox::warning(QWidget *parent, const QString &title,
 {
 	QMessageBox mb(QMessageBox::Warning, title, text, QMessageBox::Ok,
 		       parent);
-	if (enableRichText)
-		mb.setTextFormat(Qt::RichText);
+    handleRichText(mb, text, enableRichText);
 	mb.setButtonText(QMessageBox::Ok, QTStr("OK"));
 	mb.exec();
 }
 
 void OBSMessageBox::critical(QWidget *parent, const QString &title,
-			     const QString &text)
+			     const QString &text, bool enableRichText)
 {
 	QMessageBox mb(QMessageBox::Critical, title, text, QMessageBox::Ok,
 		       parent);
+    handleRichText(mb, text, enableRichText);
 	mb.setButtonText(QMessageBox::Ok, QTStr("OK"));
 	mb.exec();
 }

@@ -634,10 +634,11 @@ static inline bool update_frame(av_capture *capture, obs_source_frame *frame,
 }
 @end
 
-static void av_capture_enable_buffering(av_capture *capture, bool enabled)
-{
-	obs_source_set_async_unbuffered(capture->source, !enabled);
-}
+// NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
+// static void av_capture_enable_buffering(av_capture *capture, bool enabled)
+// {
+// 	obs_source_set_async_unbuffered(capture->source, !enabled);
+// }
 
 static const char *av_capture_getname(void *)
 {
@@ -1221,8 +1222,9 @@ static void *av_capture_create(obs_data_t *settings, obs_source_t *source)
 		return nullptr;
 	}
 
-	av_capture_enable_buffering(capture.get(),
-				    obs_data_get_bool(settings, "buffering"));
+  // NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
+	// av_capture_enable_buffering(capture.get(),
+	// 			    obs_data_get_bool(settings, "buffering"));
 
 	return capture.release();
 }
@@ -2087,8 +2089,9 @@ static obs_properties_t *av_capture_properties(void *capture)
 
 	add_manual_properties(props);
 
-	obs_properties_add_bool(props, "buffering",
-				obs_module_text("Buffering"));
+  // NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
+	// obs_properties_add_bool(props, "buffering",
+	// 			obs_module_text("Buffering"));
 
 	return props;
 }
@@ -2157,8 +2160,9 @@ static void av_capture_update(void *data, obs_data_t *settings)
 		update_manual(capture, settings);
 	}
 
-	av_capture_enable_buffering(capture,
-				    obs_data_get_bool(settings, "buffering"));
+  // NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
+	// av_capture_enable_buffering(capture,
+	// 			    obs_data_get_bool(settings, "buffering"));
 }
 
 OBS_DECLARE_MODULE()

@@ -1,4 +1,5 @@
 #include "WebRTCStream.h"
+#include "I010Frame.h"
 #include "SDPModif.h"
 
 #include "media-io/video-io.h"
@@ -18,6 +19,7 @@
 #include <libyuv.h>
 #include "Evercast.h"
 #include "EvercastSessionData.h"
+#include "ExtendedVideoEncoderFactory.h"
 
 #include <algorithm>
 #include <chrono>
@@ -106,7 +108,7 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
             adm,
             webrtc::CreateOpusAudioEncoderFactory(),
             webrtc::CreateBuiltinAudioDecoderFactory(),
-            webrtc::CreateBuiltinVideoEncoderFactory(),
+            CreateExtendedVideoEncoderFactory(),
             webrtc::CreateBuiltinVideoDecoderFactory(),
             nullptr,
             nullptr);
@@ -423,12 +425,6 @@ void WebRTCStream::OnSuccess(webrtc::SessionDescriptionInterface *desc)
             // Modify offer to accept multiopus
             SDPModif::surroundSDP(sdpCopy, channel_count);
         }
-
-	/* TODO: Do we need to restrict to only profile 2?  If so, do something here to select only the profile-id 2 VP9 offer
-	if (videoFormat == VIDEO_FORMAT_I010) {
-            // Modify offer to accept profile 2 (10-bit)
-            SDPModif::profile2Video(sdpCopy);
-	} */
     }
 
     info("SETTING LOCAL DESCRIPTION\n\n");
@@ -644,15 +640,7 @@ webrtc::VideoFrame WebRTCStream::handleFrameConversion(video_data* frame) {
 	uint32_t size;
 
 	if (this->videoFormat == VIDEO_FORMAT_I010) {
-		// Convert frame
-		auto videoType = webrtc::VideoType::kI010;
-		// TODO: Copy data from frame into buffer such that it corresponds to the target format.  For this, it will be (direct?)
-		rtc::scoped_refptr<webrtc::I010Buffer> buffer = webrtc::I010Buffer::Copy((webrtc::I010BufferInterface)frame)
-		size = outputWidth * outputHeight * 3;
-
-		libyuv::RotationMode rotation_mode = libyuv::kRotate0;
-
-		frameBuffer = buffer;
+		frameBuffer = I010Frame::Create(frame, target_width, target_height);
 	} else {
 		// Calculate size
 		auto videoType = webrtc::VideoType::kNV12;
@@ -679,16 +667,16 @@ webrtc::VideoFrame WebRTCStream::handleFrameConversion(video_data* frame) {
 		// not using the result yet, silence compiler
 		(void)conversionResult;
 
-		const int64_t obs_timestamp_us = (int64_t)frame->timestamp /
-						 rtc::kNumNanosecsPerMicrosec;
-
-		// Align timestamps from OBS capturer with rtc::TimeMicros timebase
-		const int64_t aligned_timestamp_us =
-			timestamp_aligner_.TranslateTimestamp(
-				obs_timestamp_us, rtc::TimeMicros());
-
 		frameBuffer = buffer;
 	}
+
+	const int64_t obs_timestamp_us = (int64_t)frame->timestamp /
+					 rtc::kNumNanosecsPerMicrosec;
+
+	// Align timestamps from OBS capturer with rtc::TimeMicros timebase
+	const int64_t aligned_timestamp_us =
+		timestamp_aligner_.TranslateTimestamp(
+			obs_timestamp_us, rtc::TimeMicros());
 
 	// Create a webrtc::VideoFrame to pass to the capturer
 	return webrtc::VideoFrame::Builder()

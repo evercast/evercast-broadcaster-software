@@ -192,6 +192,7 @@ bool obs_source_init(struct obs_source *source)
 	}
 
 	source->private_settings = obs_data_create();
+	source->hotwire_frame = NULL;
 
 	obs_context_data_insert(&source->context, &obs->data.sources_mutex,
 				&obs->data.first_source);
@@ -2484,6 +2485,12 @@ static void copy_frame_data(struct obs_source_frame *dst,
 		copy_frame_data_plane(dst, src, 2, dst->height / 2);
 		break;
 
+	case VIDEO_FORMAT_I010:
+		copy_frame_data_plane(dst, src, 0, dst->height);
+		copy_frame_data_plane(dst, src, 1, dst->height / 2);
+		copy_frame_data_plane(dst, src, 2, dst->height / 2);
+		break;
+
 	case VIDEO_FORMAT_NV12:
 		copy_frame_data_plane(dst, src, 0, dst->height);
 		copy_frame_data_plane(dst, src, 1, dst->height / 2);
@@ -2661,6 +2668,70 @@ obs_source_output_video_internal(obs_source_t *source,
 	}
 	pthread_mutex_unlock(&source->async_mutex);
 }
+
+static void
+obs_source_hotwire_output_internal(obs_source_t *source, const struct obs_source_frame *frame)
+{
+	if(!obs_source_valid(source, "obs_source_hotwire_output"))
+		return;
+
+	if (!frame) {
+		source->hotwire_active = false;
+		return;
+	}
+
+	set_hotwire_frame(source, frame);
+	
+	source->hotwire_active = true;
+}
+
+struct obs_source_frame* get_hotwire_frame(obs_source_t *source)
+{
+	if (!source->enabled)
+		return NULL;
+
+	pthread_mutex_lock(&source->async_mutex);
+
+	if (NULL == source->hotwire_frame) {
+		pthread_mutex_unlock(&source->async_mutex);
+		return NULL;
+	}
+
+	struct obs_source_frame *frame = obs_source_frame_create(source->hotwire_frame->format, source->hotwire_frame->width, source->hotwire_frame->height);
+
+	copy_frame_data(frame, source->hotwire_frame);
+
+	pthread_mutex_unlock(&source->async_mutex);
+
+	return frame;
+}
+
+void set_hotwire_frame(obs_source_t *source, struct obs_source_frame* frame)
+{
+	pthread_mutex_lock(&source->async_mutex);
+
+	if (NULL == source->hotwire_frame) {
+		source->hotwire_frame = obs_source_frame_create(frame->format, frame->width, frame->height);
+	}
+
+	copy_frame_data(source->hotwire_frame, frame);
+
+	pthread_mutex_unlock(&source->async_mutex);
+}
+
+void obs_source_hotwire_output(obs_source_t *source, const struct obs_source_frame *frame)
+{
+	if(!frame) {
+		// obs_source_hotwire_output_internal(source, NULL);
+		return;
+	}
+
+	struct obs_source_frame new_frame = *frame;
+	new_frame.full_range =
+		format_is_yuv(frame->format) ? new_frame.full_range: true;
+
+	obs_source_hotwire_output_internal(source, &new_frame);
+}	
 
 void obs_source_output_video(obs_source_t *source,
 			     const struct obs_source_frame *frame)
@@ -4589,3 +4660,4 @@ float obs_source_get_balance_value(const obs_source_t *source)
 		       ? source->balance
 		       : 0.5f;
 }
+

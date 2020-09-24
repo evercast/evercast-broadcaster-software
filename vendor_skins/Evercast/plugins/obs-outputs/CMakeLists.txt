@@ -166,6 +166,10 @@ set(obs-outputs_webrtc_HEADERS
 	VideoCapturer.h
 	WebRTCStream.h
 	EvercastOutputs.h
+	ExtendedVideoEncoderFactory.h
+	VP9WrapperEncoder.h
+	DualPurposeI420Buffer.h
+	I010Frame.h
 #	janus-stream.h
 #	wowza-stream.h
 #	millicast-stream.h
@@ -174,6 +178,10 @@ set(obs-outputs_webrtc_SOURCES
 	AudioDeviceModuleWrapper.cpp
 	VideoCapturer.cpp
 	WebRTCStream.cpp
+	ExtendedVideoEncoderFactory.cpp
+	VP9WrapperEncoder.cpp
+	DualPurposeI420Buffer.cpp
+	I010Frame.cpp
 #	janus-stream.cpp
 #	wowza-stream.cpp
 #	millicast-stream.cpp

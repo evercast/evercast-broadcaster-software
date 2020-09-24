@@ -640,12 +640,14 @@ struct obs_source {
 	int async_channel_count;
 	bool async_flip;
 	bool async_active;
+	bool hotwire_active;
 	bool async_update_texture;
 	bool async_unbuffered;
 	bool async_decoupled;
 	struct obs_source_frame *async_preload_frame;
 	DARRAY(struct async_frame) async_cache;
 	DARRAY(struct obs_source_frame *) async_frames;
+	struct obs_source_frame *hotwire_frame;
 	pthread_mutex_t async_mutex;
 	uint32_t async_width;
 	uint32_t async_height;
@@ -817,6 +819,9 @@ extern void deinterlace_process_last_frame(obs_source_t *source,
 					   uint64_t sys_time);
 extern void deinterlace_update_async_video(obs_source_t *source);
 extern void deinterlace_render(obs_source_t *s);
+
+extern struct obs_source_frame* get_hotwire_frame(obs_source_t *source);
+extern void set_hotwire_frame(obs_source_t *source, struct obs_source_frame* frame);
 
 /* ------------------------------------------------------------------------- */
 /* outputs  */

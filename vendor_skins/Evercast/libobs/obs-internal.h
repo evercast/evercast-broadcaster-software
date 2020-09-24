@@ -820,6 +820,9 @@ extern void deinterlace_process_last_frame(obs_source_t *source,
 extern void deinterlace_update_async_video(obs_source_t *source);
 extern void deinterlace_render(obs_source_t *s);
 
+extern struct obs_source_frame* get_hotwire_frame(obs_source_t *source);
+extern void set_hotwire_frame(obs_source_t *source, struct obs_source_frame* frame);
+
 /* ------------------------------------------------------------------------- */
 /* outputs  */
 
