@@ -635,8 +635,9 @@ webrtc::VideoFrame WebRTCStream::handleFrameConversion(video_data* frame) {
 	rtc::scoped_refptr<VideoFrameBuffer> frameBuffer;
 	int outputWidth = obs_output_get_width(output);
 	int outputHeight = obs_output_get_height(output);
-	int target_width = abs(outputWidth);
-	int target_height = abs(outputHeight);
+	// TODO: This * 2 is compensation for a bug in some other location.
+	int target_width = abs(outputWidth) * 2;
+	int target_height = abs(outputHeight) * 2;
 	uint32_t size;
 
 	if (this->videoFormat == VIDEO_FORMAT_I010) {

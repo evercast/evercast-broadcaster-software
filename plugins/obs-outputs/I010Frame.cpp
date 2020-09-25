@@ -31,13 +31,11 @@ rtc::scoped_refptr<I010Frame> I010Frame::Create(video_data* src, int width, int 
 		data[i] = (data[i] >> 8) | (data[i] << 8);
 	}
 
-	/*
 	int end = height / 4;
 	for (long i = 0; i < end; i++) {
 		memcpy((frame->data[1] + i * frame->linesize[1]), (frame->data[1] + (i * 2 + 1) * frame->linesize[1]), frame->linesize[1]);
 		memcpy((frame->data[2] + i * frame->linesize[2]), (frame->data[2] + (i * 2 + 1) * frame->linesize[2]), frame->linesize[2]);
 	}
-	*/
 
 	return new rtc::RefCountedObject<I010Frame>(frame, width, height);
 }
@@ -95,12 +93,11 @@ rtc::scoped_refptr<webrtc::I420BufferInterface> I010Frame::ToI420() {
 		DualPurposeI420Buffer::Create(width(), height());
 	i420_buffer->setRealFrame(this);
 
-	/*
 	libyuv::I010ToI420(DataY(), StrideY(), DataU(), StrideU(), DataV(), StrideV(),
-		i420_buffer->MutableDataY(), i420_buffer->StrideY() / 2,
+		i420_buffer->MutableDataY(), i420_buffer->StrideY(),
 		i420_buffer->MutableDataU(), StrideU() / 2,
 		i420_buffer->MutableDataV(), StrideV() / 2,
-		width(), height());*/
+		width(), height());
 	return i420_buffer;
 }
 
