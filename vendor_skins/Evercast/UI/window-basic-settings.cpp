@@ -1334,7 +1334,7 @@ void OBSBasicSettings::LoadRendererList()
 	const char *renderer =
 		config_get_string(GetGlobalConfig(), "Video", "Renderer");
 
-	ui->renderer->addItem(QT_UTF8("Direct3D 11"));
+	// ui->renderer->addItem(QT_UTF8("Direct3D 11"));
 	if (opt_allow_opengl || strcmp(renderer, "OpenGL") == 0)
 		ui->renderer->addItem(QT_UTF8("OpenGL"));
 

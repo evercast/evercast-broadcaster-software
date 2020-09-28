@@ -3534,6 +3534,13 @@ int OBSBasic::ResetVideo()
 		config_get_string(basicConfig, "Video", "ColorRange");
 
 	ovi.graphics_module = App()->GetRenderModule();
+	// OBS 25 introduced some problematic changes to DirectX handling which tend to
+	// break display capture on a lot of Windows machines, so until they get that
+	// figured out we'll run OpenGL.
+	if (ovi.graphics_module == DL_D3D11)
+	{
+		ovi.graphics_module = DL_OPENGL;
+	}
 	ovi.base_width =
 		(uint32_t)config_get_uint(basicConfig, "Video", "BaseCX");
 	ovi.base_height =
