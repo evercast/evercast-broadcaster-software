@@ -36,7 +36,6 @@
 				SourceFile=".\NDI 4 Runtime.exe"
 				Permanent="yes" />
 			<ExePackage
-				InstallCondition="VCRedist2015x64 = v0.0.0.0"
 				SourceFile=".\VC_redist.x64.exe"
 				InstallCommand="/q /ACTION=Install"
 				RepairCommand="/q ACTION=Repair /hideconsole"
