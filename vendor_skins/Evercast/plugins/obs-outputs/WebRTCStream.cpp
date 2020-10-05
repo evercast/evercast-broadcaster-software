@@ -286,7 +286,7 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
-			recordConnectionError("There was a problem connecting to your Evercast room.  Are attendees present?");
+			recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
 			return false;
 		}
 

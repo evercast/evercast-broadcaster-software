@@ -5260,8 +5260,7 @@ void OBSBasic::StreamingStop(int code, QString last_error)
 	}
 
 	if (use_last_error && !last_error.isEmpty())
-		dstr_printf(errorMessage, "%s\n\n%s", errorDescription,
-			    QT_TO_UTF8(last_error));
+		dstr_printf(errorMessage, "%s", QT_TO_UTF8(last_error));
 	else
 		dstr_copy(errorMessage, errorDescription);
 
