@@ -25,3 +25,6 @@
 [submodule "plugins/websocket-client/nlohmann_json"]
 	path = plugins/websocket-client/nlohmann_json
 	url = https://github.com/nlohmann/json.git
+[submodule "UI/frontend-plugins/media-controls"]
+	path = UI/frontend-plugins/media-controls
+	url = git@github.com:exeldro/obs-media-controls.git
