@@ -422,9 +422,6 @@ static void mp_media_calc_next_ns(mp_media_t *m)
 	int64_t min_next_ns = mp_media_get_next_min_pts(m);
 
 	int64_t delta = min_next_ns - m->next_pts_ns;
-#ifdef _DEBUG
-	assert(delta >= 0);
-#endif
 	if (delta < 0)
 		delta = 0;
 	if (delta > 3000000000)
