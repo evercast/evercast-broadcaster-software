@@ -4624,12 +4624,14 @@ bool obs_source_audio_active(const obs_source_t *source)
 		       : false;
 }
 
+/*
 uint32_t obs_source_get_last_obs_version(const obs_source_t *source)
 {
 	return obs_source_valid(source, "obs_source_get_last_obs_version")
 		       ? source->last_obs_ver
 		       : 0;
 }
+*/
 
 enum obs_icon_type obs_source_get_icon_type(const char *id)
 {
