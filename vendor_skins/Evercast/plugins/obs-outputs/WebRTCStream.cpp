@@ -75,6 +75,7 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
     // Store output
     this->output = output;
     this->client = nullptr;
+    this->connection_invalidated = false;
 
     // Create audio device module
     adm = new rtc::RefCountedObject<AudioDeviceModuleWrapper>();
@@ -270,6 +271,7 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 	info("CONNECTING TO %s", url.c_str());
 
 	// Connect to server
+    this->connection_invalidated = false;
 	if (!client->connect(url, room, username, password, this)) {
 		recordConnectionError("There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
 		return false;
@@ -286,7 +288,9 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
-			recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
+            if (!this->connection_invalidated) {
+                recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
+            }
 			return false;
 		}
 
@@ -603,19 +607,23 @@ void WebRTCStream::onDisconnected()
 void WebRTCStream::onLoggedError(int code)
 {
     info("WebRTCStream::onLoggedError [code: %d]", code);
-    // Shutdown websocket connection and close Peer Connection
-    close(false);
+    this->connection_invalidated = true;
 
+    // Close Peer Connection
     const char *error;
     switch (code)
     {
     case -EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC:
-	error = "Your Evercast room does not support surround sound.  Try setting output to stereo, then reconnect.";
+        error = "Your Evercast room does not support surround sound.  Try setting output to stereo, then reconnect.";
+        break;
+    case -EVERCAST_ERR_DUPLICATE_USER:
+        error = "Another instance of EBS with the same user account is already broadcasting to this room.";
         break;
     default:
         error = "Evercast is having trouble connecting to your room.  Are you behind a firewall?\n\n"
         "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.";
     }
+
     obs_output_set_last_error(output, error);
 
     // Disconnect, this will call stop on main thread

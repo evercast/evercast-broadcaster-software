@@ -92,7 +92,7 @@ void EvercastMessageProcessor::processErrorEvent(int errorCode, json& msg)
 	switch (errorCode) {
 	case EVERCAST_ERR_DUPLICATE_USER:
 		// Launch logged event: someone else is logged in
-		listener->onLogged(session_id);
+		listener->onLoggedError(-EVERCAST_ERR_DUPLICATE_USER);
 		break;
 	case EVERCAST_ERR_UNSUPPORTED_AUDIO_CODEC:
 		blog(LOG_ERROR, "Janus room does not support the audio codec specified.");
