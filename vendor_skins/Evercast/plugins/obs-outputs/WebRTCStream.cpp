@@ -3,7 +3,7 @@
 
 #include "media-io/video-io.h"
 
-#include "opus_audio_encoder_factory.h"
+// #include "opus_audio_encoder_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
@@ -13,7 +13,7 @@
 #include "common_video/libyuv/include/webrtc_libyuv.h"
 #include "pc/rtc_stats_collector.h"
 #include "rtc_base/checks.h"
-#include "rtc_base/critical_section.h"
+#include "rtc_base/synchronization/mutex.h"
 #include <libyuv.h>
 #include "Evercast.h"
 #include "EvercastSessionData.h"
@@ -100,7 +100,7 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
             worker.get(),
             signaling.get(),
             adm,
-            webrtc::CreateOpusAudioEncoderFactory(),
+            webrtc::CreateBuiltinAudioEncoderFactory(),
             webrtc::CreateBuiltinAudioDecoderFactory(),
             webrtc::CreateBuiltinVideoEncoderFactory(),
             webrtc::CreateBuiltinVideoDecoderFactory(),
@@ -456,9 +456,12 @@ void WebRTCStream::OnSuccess()
     info("Local Description set\n");
 }
 
-void WebRTCStream::OnFailure(const std::string &error)
+void WebRTCStream::OnFailure(webrtc::RTCError error)
 {
-    warn("WebRTCStream::OnFailure [%s]", error.c_str());
+    if (error.ok()) {
+        return;
+    }
+    warn("WebRTCStream::OnFailure [%s]", error.message());
     // Shutdown websocket connection and close Peer Connection
     close(false);
     // Disconnect, this will call stop on main thread
@@ -856,10 +859,11 @@ void WebRTCStream::getStats()
 
 rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 {
-    rtc::CritScope lock(&crit_);
+    mutex_.Lock();
 
     if (nullptr == pc)
     {
+	mutex_.Unlock();
 	return nullptr;
     }
 
@@ -871,5 +875,7 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
     while (!stats_callback->called())
         std::this_thread::sleep_for(std::chrono::microseconds(1));
 
-    return stats_callback->report();
+    rtc::scoped_refptr<const webrtc::RTCStatsReport> result = stats_callback->report();
+    mutex_.Unlock();
+    return result;
 }
