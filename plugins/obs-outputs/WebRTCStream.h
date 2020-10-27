@@ -23,7 +23,7 @@
 #include "api/scoped_refptr.h"
 #include "api/set_remote_description_observer_interface.h"
 #include "modules/audio_processing/include/audio_processing.h"
-#include "rtc_base/critical_section.h"
+#include "rtc_base/synchronization/mutex.h"
 // #include "rtc_base/platform_file.h"
 #include "rtc_base/ref_counted_object.h"
 #include "rtc_base/thread.h"
@@ -92,7 +92,7 @@ public:
   void OnSuccess(webrtc::SessionDescriptionInterface *desc) override;
 
   // CreateSessionDescriptionObserver / SetSessionDescriptionObserver
-  void OnFailure(const std::string &error) override;
+  void OnFailure(webrtc::RTCError error) override;
 
   // SetSessionDescriptionObserver
   void OnSuccess() override;
@@ -146,7 +146,7 @@ private:
 
   std::thread thread_closeAsync;
 
-  rtc::CriticalSection crit_;
+  webrtc::Mutex mutex_;
 
   // Audio Wrapper
   rtc::scoped_refptr<AudioDeviceModuleWrapper> adm;
