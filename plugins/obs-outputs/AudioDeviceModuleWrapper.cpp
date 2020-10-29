@@ -41,10 +41,13 @@ bool AudioDeviceModuleWrapper::Initialized() const
 void AudioDeviceModuleWrapper::onIncomingData(uint8_t* data,
                                               size_t samples_per_channel)
 {
-    _critSect.Enter();
-    if (!audioTransport)
+    _mutex.lock();
+    if (!audioTransport) {
+        _mutex.unlock();
         return;
-    _critSect.Leave();
+    }
+
+    _mutex.unlock();
 
     // Get audio
     audio_t *audio = obs_get_audio();

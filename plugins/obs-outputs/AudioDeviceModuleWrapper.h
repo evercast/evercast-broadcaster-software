@@ -4,10 +4,10 @@
 #include "api/scoped_refptr.h"
 #include "modules/audio_device/include/audio_device_default.h"
 #include "rtc_base/checks.h"
-#include "rtc_base/critical_section.h"
 #include "rtc_base/ref_counted_object.h"
 
 #include <stdio.h>
+#include <mutex>
 
 using webrtc::AudioDeviceModule;
 using webrtc::AudioTransport;
@@ -80,7 +80,7 @@ public:
 
 public:
     bool                 _initialized;
-    rtc::CriticalSection _critSect;
+    std::mutex		 _mutex;
     AudioTransport*      audioTransport;
     uint8_t              pending[640 * 2 * 2];
     size_t               pendingLength;

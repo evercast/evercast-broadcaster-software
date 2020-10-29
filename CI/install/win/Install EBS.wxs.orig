@@ -4,7 +4,11 @@
 	xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 	<Bundle
 	      Version="2.6.0"
+<<<<<<< HEAD:CI/install/win/Install EBS.wxs
+	      UpgradeCode="44c72510-2e8e-489c-8bc0-2011a9631b0b"
+=======
 	      UpgradeCode="01234567-89AB-CDEF-0123-456789ABCDEF"
+>>>>>>> 050f1d52 (Added basic 444 buffer support):vendor_skins/Evercast/CI/install/win/Install EBS.wxs
 	      Manufacturer="Evercast"
 	      IconSourceFile=".\ebs.ico"
 	      Name="EBS"
@@ -40,8 +44,12 @@
 				SourceFile=".\VC_redist.x64.exe"
 				InstallCommand="/q /ACTION=Install"
 				RepairCommand="/q ACTION=Repair /hideconsole"
+<<<<<<< HEAD:CI/install/win/Install EBS.wxs
 				Permanent="yes"
 				Vital="no"/>
+=======
+				Permanent="yes" />
+>>>>>>> 050f1d52 (Added basic 444 buffer support):vendor_skins/Evercast/CI/install/win/Install EBS.wxs
 			<MsiPackage SourceFile=".\ebs-x64-2.6.0.msi" />
 		</Chain>
 	</Bundle>
