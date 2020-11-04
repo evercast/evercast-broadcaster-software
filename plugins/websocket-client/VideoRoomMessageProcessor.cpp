@@ -238,6 +238,7 @@ bool VideoRoomMessageProcessor::sendOpenMessage(
             { "request", "configure" },
             { "videocodec", video_codec },
             { "audiocodec", audio_codec },
+            { "vp9_profile", 1 },
             { "muted", false },
             { "video", true },
             { "audio", true }
