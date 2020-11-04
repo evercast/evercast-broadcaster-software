@@ -670,9 +670,9 @@ webrtc::VideoFrame WebRTCStream::constructOutputFrame(video_data* frame)
         int stride = outputWidth;
         // Convert frame
         rtc::scoped_refptr<webrtc::I444Buffer> i444Buffer = webrtc::I444Buffer::Create(target_width, target_height, stride);
-	memcpy(i444Buffer.get()->MutableDataY(), frame->data[0], width * height);
-	memcpy(i444Buffer.get()->MutableDataU(), frame->data[1], width * height);
-	memcpy(i444Buffer.get()->MutableDataV(), frame->data[2], width * height);
+	memcpy(i444Buffer.get()->MutableDataY(), frame->data[0], target_width * target_height);
+	memcpy(i444Buffer.get()->MutableDataU(), frame->data[1], target_width * target_height);
+	memcpy(i444Buffer.get()->MutableDataV(), frame->data[2], target_width * target_height);
 
 	buffer = i444Buffer;
     } else {
