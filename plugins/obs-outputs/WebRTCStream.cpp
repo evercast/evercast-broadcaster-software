@@ -3,17 +3,18 @@
 
 #include "media-io/video-io.h"
 
-#include "opus_audio_encoder_factory.h"
+// #include "opus_audio_encoder_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 #include "api/video/i420_buffer.h"
+#include "api/video/i444_buffer.h"
 #include "api/peer_connection_interface.h"
 #include "common_video/libyuv/include/webrtc_libyuv.h"
 #include "pc/rtc_stats_collector.h"
 #include "rtc_base/checks.h"
-#include "rtc_base/critical_section.h"
+#include "rtc_base/synchronization/mutex.h"
 #include <libyuv.h>
 #include "Evercast.h"
 #include "EvercastSessionData.h"
@@ -77,6 +78,10 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
     this->client = nullptr;
     this->connection_invalidated = false;
 
+    struct obs_video_info ovi;
+    obs_get_video_info(&ovi);
+    videoFormat = ovi.output_format;
+
     // Create audio device module
     adm = new rtc::RefCountedObject<AudioDeviceModuleWrapper>();
 
@@ -100,7 +105,7 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
             worker.get(),
             signaling.get(),
             adm,
-            webrtc::CreateOpusAudioEncoderFactory(),
+            webrtc::CreateBuiltinAudioEncoderFactory(),
             webrtc::CreateBuiltinAudioDecoderFactory(),
             webrtc::CreateBuiltinVideoEncoderFactory(),
             webrtc::CreateBuiltinVideoDecoderFactory(),
@@ -271,7 +276,7 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 	info("CONNECTING TO %s", url.c_str());
 
 	// Connect to server
-	this->connection_invalidated = false;
+    this->connection_invalidated = false;
 	if (!client->connect(url, room, username, password, this)) {
 		recordConnectionError("There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
 		return false;
@@ -288,12 +293,9 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
-			crit_.Enter();
-			if (!this->connection_invalidated) {
-				this->connection_invalidated = true;
-				recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
-			}
-			crit_.Leave();
+            if (!this->connection_invalidated) {
+                recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
+            }
 			return false;
 		}
 
@@ -459,9 +461,12 @@ void WebRTCStream::OnSuccess()
     info("Local Description set\n");
 }
 
-void WebRTCStream::OnFailure(const std::string &error)
+void WebRTCStream::OnFailure(webrtc::RTCError error)
 {
-    warn("WebRTCStream::OnFailure [%s]", error.c_str());
+    if (error.ok()) {
+        return;
+    }
+    warn("WebRTCStream::OnFailure [%s]", error.message());
     // Shutdown websocket connection and close Peer Connection
     close(false);
     // Disconnect, this will call stop on main thread
@@ -610,18 +615,7 @@ void WebRTCStream::onDisconnected()
 void WebRTCStream::onLoggedError(int code)
 {
     info("WebRTCStream::onLoggedError [code: %d]", code);
-    // We have already given up on the connection.
-    crit_.Enter();
-    if (this->connection_invalidated) {
-        crit_.Leave();
-	return;
-    }
-
     this->connection_invalidated = true;
-    if (client) {
-	client->disconnect(false);
-    }
-    crit_.Leave();
 
     // Close Peer Connection
     const char *error;
@@ -661,6 +655,64 @@ void WebRTCStream::onAudioFrame(audio_data *frame)
     audio_source->OnAudioData(frame);
 }
 
+webrtc::VideoFrame WebRTCStream::constructOutputFrame(video_data* frame)
+{
+    // Calculate size
+    int outputWidth = obs_output_get_width(output);
+    int outputHeight = obs_output_get_height(output);
+    int target_width = abs(outputWidth);
+    int target_height = abs(outputHeight);
+    libyuv::RotationMode rotation_mode = libyuv::kRotate0;
+
+    webrtc::VideoType videoType;
+    rtc::scoped_refptr<VideoFrameBuffer> buffer;
+    if (videoFormat == VIDEO_FORMAT_I444) {
+        int stride = outputWidth;
+        // Convert frame
+        rtc::scoped_refptr<webrtc::I444Buffer> i444Buffer = webrtc::I444Buffer::Create(target_width, target_height, stride);
+	memcpy(i444Buffer.get()->MutableDataY(), frame->data[0], target_width * target_height);
+	memcpy(i444Buffer.get()->MutableDataU(), frame->data[1], target_width * target_height);
+	memcpy(i444Buffer.get()->MutableDataV(), frame->data[2], target_width * target_height);
+
+	buffer = i444Buffer;
+    } else {
+        videoType = webrtc::VideoType::kNV12;
+        uint32_t size = outputWidth * outputHeight * 3 / 2;
+        int stride_y = outputWidth;
+        int stride_uv = (outputWidth + 1) / 2;
+        // Convert frame
+        rtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Create(target_width, target_height, stride_y, stride_uv, stride_uv);
+
+        const int conversionResult = libyuv::ConvertToI420(
+            frame->data[0], size,
+            i420Buffer.get()->MutableDataY(), i420Buffer.get()->StrideY(),
+            i420Buffer.get()->MutableDataU(), i420Buffer.get()->StrideU(),
+            i420Buffer.get()->MutableDataV(), i420Buffer.get()->StrideV(), 0, 0,
+            outputWidth, outputHeight, target_width, target_height,
+            rotation_mode, ConvertVideoType(videoType));
+
+        // not using the result yet, silence compiler
+        (void)conversionResult;
+
+	buffer = i420Buffer;
+    }
+
+    const int64_t obs_timestamp_us =
+            (int64_t)frame->timestamp / rtc::kNumNanosecsPerMicrosec;
+
+    // Align timestamps from OBS capturer with rtc::TimeMicros timebase
+    const int64_t aligned_timestamp_us =
+            timestamp_aligner_.TranslateTimestamp(obs_timestamp_us, rtc::TimeMicros());
+
+    // Create a webrtc::VideoFrame to pass to the capturer
+    return webrtc::VideoFrame::Builder()
+            .set_video_frame_buffer(buffer)
+            .set_rotation(webrtc::kVideoRotation_0)
+            .set_timestamp_us(aligned_timestamp_us)
+            .set_id(++frame_id)
+            .build();
+}
+
 void WebRTCStream::onVideoFrame(video_data *frame)
 {
     if (!frame)
@@ -672,49 +724,7 @@ void WebRTCStream::onVideoFrame(video_data *frame)
       // First frame sent: Initialize previous_time
       previous_time = std::chrono::system_clock::now();
 
-    // Calculate size
-    int outputWidth = obs_output_get_width(output);
-    int outputHeight = obs_output_get_height(output);
-    auto videoType = webrtc::VideoType::kNV12;
-    uint32_t size = outputWidth * outputHeight * 3 / 2;
-
-    int stride_y = outputWidth;
-    int stride_uv = (outputWidth + 1) / 2;
-    int target_width = abs(outputWidth);
-    int target_height = abs(outputHeight);
-
-    // Convert frame
-    rtc::scoped_refptr<webrtc::I420Buffer> buffer = webrtc::I420Buffer::Create(
-            target_width, target_height, stride_y, stride_uv, stride_uv);
-
-    libyuv::RotationMode rotation_mode = libyuv::kRotate0;
-
-    const int conversionResult = libyuv::ConvertToI420(
-            frame->data[0], size,
-            buffer.get()->MutableDataY(), buffer.get()->StrideY(),
-            buffer.get()->MutableDataU(), buffer.get()->StrideU(),
-            buffer.get()->MutableDataV(), buffer.get()->StrideV(), 0, 0,
-            outputWidth, outputHeight, target_width, target_height,
-            rotation_mode, ConvertVideoType(videoType));
-
-    // not using the result yet, silence compiler
-    (void)conversionResult;
-
-    const int64_t obs_timestamp_us =
-            (int64_t)frame->timestamp / rtc::kNumNanosecsPerMicrosec;
-
-    // Align timestamps from OBS capturer with rtc::TimeMicros timebase
-    const int64_t aligned_timestamp_us =
-            timestamp_aligner_.TranslateTimestamp(obs_timestamp_us, rtc::TimeMicros());
-
-    // Create a webrtc::VideoFrame to pass to the capturer
-    webrtc::VideoFrame video_frame =
-            webrtc::VideoFrame::Builder()
-            .set_video_frame_buffer(buffer)
-            .set_rotation(webrtc::kVideoRotation_0)
-            .set_timestamp_us(aligned_timestamp_us)
-            .set_id(++frame_id)
-            .build();
+    webrtc::VideoFrame video_frame = constructOutputFrame(frame);
 
     // Send frame to video capturer
     videoCapturer->OnFrameCaptured(video_frame);
@@ -870,10 +880,11 @@ void WebRTCStream::getStats()
 
 rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 {
-    rtc::CritScope lock(&crit_);
+    mutex_.Lock();
 
     if (nullptr == pc)
     {
+	mutex_.Unlock();
 	return nullptr;
     }
 
@@ -885,6 +896,7 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
     while (!stats_callback->called())
         std::this_thread::sleep_for(std::chrono::microseconds(1));
 
-    return stats_callback->report();
+    rtc::scoped_refptr<const webrtc::RTCStatsReport> result = stats_callback->report();
+    mutex_.Unlock();
+    return result;
 }
-
