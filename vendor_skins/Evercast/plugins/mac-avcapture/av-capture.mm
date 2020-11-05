@@ -733,6 +733,7 @@ static bool init_format(av_capture *capture, AVCaptureDevice *dev);
 
 static bool init_device_input(av_capture *capture, AVCaptureDevice *dev)
 {
+
 	NSError *err = nil;
 	AVCaptureDeviceInput *device_input =
 		[AVCaptureDeviceInput deviceInputWithDevice:dev error:&err];

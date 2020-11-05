@@ -13,6 +13,7 @@ cp -r rundir/$BUILD_CONFIG/data ./EBS.app/Contents/Resources
 cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources
 cp -r rundir/$BUILD_CONFIG/obs-plugins/ ./EBS.app/Contents/PlugIns
 cp ../CI/install/osx/Info.plist ./EBS.app/Contents
+cp ../CI/install/osx/entitlements.plist ./EBS.app/Contents
 
 #NDI Plugin
 cp $NDI_PATH/build/obs-ndi.so ./EBS.app/Contents/PlugIns
