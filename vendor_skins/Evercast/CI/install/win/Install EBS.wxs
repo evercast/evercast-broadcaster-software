@@ -3,7 +3,7 @@
 	xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
 	xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 	<Bundle
-	      Version="2.5.9"
+	      Version="2.6.0"
 	      UpgradeCode="01234567-89AB-CDEF-0123-456789ABCDEF"
 	      Manufacturer="Evercast"
 	      IconSourceFile=".\ebs.ico"
@@ -36,11 +36,13 @@
 				SourceFile=".\NDI 4 Runtime.exe"
 				Permanent="yes" />
 			<ExePackage
+				InstallCondition="NOT (VCRedist2015x64 = v14.25.28508)"
 				SourceFile=".\VC_redist.x64.exe"
 				InstallCommand="/q /ACTION=Install"
 				RepairCommand="/q ACTION=Repair /hideconsole"
-				Permanent="yes" />
-			<MsiPackage SourceFile=".\ebs-x64-2.5.9.msi" />
+				Permanent="yes"
+				Vital="no"/>
+			<MsiPackage SourceFile=".\ebs-x64-2.6.0.msi" />
 		</Chain>
 	</Bundle>
 </Wix>
