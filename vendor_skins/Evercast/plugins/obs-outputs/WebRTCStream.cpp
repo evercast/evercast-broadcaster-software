@@ -618,6 +618,9 @@ void WebRTCStream::onLoggedError(int code)
     }
 
     this->connection_invalidated = true;
+    if (client) {
+	client->disconnect(false);
+    }
     crit_.Leave();
 
     // Close Peer Connection
