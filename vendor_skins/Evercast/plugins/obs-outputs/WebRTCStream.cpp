@@ -271,7 +271,7 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 	info("CONNECTING TO %s", url.c_str());
 
 	// Connect to server
-    this->connection_invalidated = false;
+	this->connection_invalidated = false;
 	if (!client->connect(url, room, username, password, this)) {
 		recordConnectionError("There was a problem connecting to your Evercast room.  Have you double-checked your room settings?");
 		return false;
@@ -288,9 +288,12 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
-            if (!this->connection_invalidated) {
-                recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
-            }
+			crit_.Enter();
+			if (!this->connection_invalidated) {
+				this->connection_invalidated = true;
+				recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
+			}
+			crit_.Leave();
 			return false;
 		}
 
@@ -607,7 +610,18 @@ void WebRTCStream::onDisconnected()
 void WebRTCStream::onLoggedError(int code)
 {
     info("WebRTCStream::onLoggedError [code: %d]", code);
+    // We have already given up on the connection.
+    crit_.Enter();
+    if (this->connection_invalidated) {
+        crit_.Leave();
+	return;
+    }
+
     this->connection_invalidated = true;
+    if (client) {
+	client->disconnect(false);
+    }
+    crit_.Leave();
 
     // Close Peer Connection
     const char *error;
@@ -873,3 +887,4 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 
     return stats_callback->report();
 }
+
