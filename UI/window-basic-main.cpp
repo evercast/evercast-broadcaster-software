@@ -55,10 +55,9 @@
 #include "remote-text.hpp"
 #include <fstream>
 #include <sstream>
+#include "../plugins/obs-outputs/EvercastOutputs.h"
 
-#ifdef _WIN32
-#include "win-update/win-update.hpp"
-#endif
+#include "update/update.hpp"
 
 #include "ui_OBSBasic.h"
 #include "ui_ColorSelect.h"
@@ -268,7 +267,7 @@ OBSBasic::OBSBasic(QWidget *parent)
 	installEventFilter(shortcutFilter);
 
 	stringstream name;
-	name << "OBS " << App()->GetVersionString();
+	name << "Evercast Broadcast Studio " << App()->GetVersionString();
 	blog(LOG_INFO, "%s", name.str().c_str());
 	blog(LOG_INFO, "---------------------------------");
 
@@ -688,21 +687,9 @@ static inline bool HasAudioDevices(const char *source_id)
 	return count != 0;
 }
 
-void OBSBasic::CreateFirstRunSources()
-{
-	bool hasDesktopAudio = HasAudioDevices(App()->OutputAudioSource());
-	bool hasInputAudio = HasAudioDevices(App()->InputAudioSource());
-
-	if (hasDesktopAudio)
-		ResetAudioDevice(App()->OutputAudioSource(), "default",
-				 Str("Basic.DesktopDevice1"), 1);
-	if (hasInputAudio)
-		ResetAudioDevice(App()->InputAudioSource(), "default",
-				 Str("Basic.AuxDevice1"), 3);
-}
-
 void OBSBasic::CreateDefaultScene(bool firstStart)
 {
+	UNUSED_PARAMETER(firstStart);
 	disableSaving++;
 
 	ClearSceneData();
@@ -712,9 +699,6 @@ void OBSBasic::CreateDefaultScene(bool firstStart)
 	SetTransition(fadeTransition);
 
 	obs_scene_t *scene = obs_scene_create(Str("Basic.Scene"));
-
-	if (firstStart)
-		CreateFirstRunSources();
 
 	SetCurrentScene(scene, true);
 	obs_scene_release(scene);
@@ -1054,6 +1038,8 @@ retryScene:
 		api->on_event(OBS_FRONTEND_EVENT_SCENE_CHANGED);
 		api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 	}
+
+	CheckForUpdates(false);
 }
 
 #define SERVICE_PATH "service.json"
@@ -1095,7 +1081,8 @@ bool OBSBasic::LoadService()
 	obs_data_t *data =
 		obs_data_create_from_json_file_safe(serviceJsonPath, "bak");
 
-	obs_data_set_default_string(data, "type", "rtmp_common");
+  // NOTE LUDO: make evercast the dafault service instead of rtmp_common
+	obs_data_set_default_string(data, "type", "webrtc_evercast");
 	type = obs_data_get_string(data, "type");
 
 	obs_data_t *settings = obs_data_get_obj(data, "settings");
@@ -1119,7 +1106,9 @@ bool OBSBasic::InitService()
 	if (LoadService())
 		return true;
 
-	service = obs_service_create("rtmp_common", "default_service", nullptr,
+  // NOTE LUDO: #182 make evercast the dafault service instead of rtmp_common
+	// service = obs_service_create("rtmp_common", "default_service", nullptr,
+	service = obs_service_create("webrtc_evercast", "default_service", nullptr,
 				     nullptr);
 	if (!service)
 		return false;
@@ -1202,7 +1191,7 @@ bool OBSBasic::InitBasicConfigDefaults()
 	config_set_default_string(basicConfig, "SimpleOutput", "RecFormat",
 				  "mkv");
 	config_set_default_uint(basicConfig, "SimpleOutput", "VBitrate", 2500);
-	config_set_default_uint(basicConfig, "SimpleOutput", "ABitrate", 128);
+	config_set_default_uint(basicConfig, "SimpleOutput", "ABitrate", 320);
 	config_set_default_bool(basicConfig, "SimpleOutput", "UseAdvanced",
 				false);
 	config_set_default_bool(basicConfig, "SimpleOutput", "EnforceBitrate",
@@ -1275,8 +1264,8 @@ bool OBSBasic::InitBasicConfigDefaults()
 	config_set_default_bool(basicConfig, "Output", "DelayPreserve", true);
 
 	config_set_default_bool(basicConfig, "Output", "Reconnect", true);
-	config_set_default_uint(basicConfig, "Output", "RetryDelay", 10);
-	config_set_default_uint(basicConfig, "Output", "MaxRetries", 20);
+	config_set_default_uint(basicConfig, "Output", "RetryDelay", 5);
+	config_set_default_uint(basicConfig, "Output", "MaxRetries", 2);
 
 	config_set_default_string(basicConfig, "Output", "BindIP", "default");
 	config_set_default_bool(basicConfig, "Output", "NewSocketLoopEnable",
@@ -1284,17 +1273,18 @@ bool OBSBasic::InitBasicConfigDefaults()
 	config_set_default_bool(basicConfig, "Output", "LowLatencyEnable",
 				false);
 
-	int i = 0;
+  // NOTE LUDO: #116 set default temporal and spatial resolutions
+	// int i = 0;
 	uint32_t scale_cx = cx;
 	uint32_t scale_cy = cy;
 
 	/* use a default scaled resolution that has a pixel count no higher
 	 * than 1280x720 */
-	while (((scale_cx * scale_cy) > (1280 * 720)) && scaled_vals[i] > 0.0) {
-		double scale = scaled_vals[i++];
-		scale_cx = uint32_t(double(cx) / scale);
-		scale_cy = uint32_t(double(cy) / scale);
-	}
+	// while (((scale_cx * scale_cy) > (1280 * 720)) && scaled_vals[i] > 0.0) {
+	// 	double scale = scaled_vals[i++];
+	// 	scale_cx = uint32_t(double(cx) / scale);
+	// 	scale_cy = uint32_t(double(cy) / scale);
+	// }
 
 	config_set_default_uint(basicConfig, "Video", "OutputCX", scale_cx);
 	config_set_default_uint(basicConfig, "Video", "OutputCY", scale_cy);
@@ -1313,7 +1303,9 @@ bool OBSBasic::InitBasicConfigDefaults()
 	config_set_default_uint(basicConfig, "Video", "FPSInt", 30);
 	config_set_default_uint(basicConfig, "Video", "FPSNum", 30);
 	config_set_default_uint(basicConfig, "Video", "FPSDen", 1);
-	config_set_default_string(basicConfig, "Video", "ScaleType", "bicubic");
+  // NOTE LUDO: #116 set default temporal and spatial resolutions
+	// config_set_default_string(basicConfig, "Video", "ScaleType", "bicubic");
+	config_set_default_string(basicConfig, "Video", "ScaleType", "bilinear");
 	config_set_default_string(basicConfig, "Video", "ColorFormat", "NV12");
 	config_set_default_string(basicConfig, "Video", "ColorSpace", "709");
 	config_set_default_string(basicConfig, "Video", "ColorRange",
@@ -1634,7 +1626,8 @@ void OBSBasic::OBSInit()
 		disableSaving++;
 	}
 
-	TimedCheckForUpdates();
+  // NOTE LUDO: #186 do not check for OBS Studio updates
+	// TimedCheckForUpdates();
 	loaded = true;
 
 	previewEnabled = config_get_bool(App()->GlobalConfig(), "BasicWindow",
@@ -1802,12 +1795,22 @@ void OBSBasic::OBSInit()
 	delete ui->actionShowCrashLogs;
 	delete ui->actionUploadLastCrashLog;
 	delete ui->menuCrashLogs;
-	delete ui->actionCheckForUpdates;
+  // NOTE LUDO: #186 do not check for OBS Studio updates
+	// delete ui->actionCheckForUpdates;
 	ui->actionShowCrashLogs = nullptr;
 	ui->actionUploadLastCrashLog = nullptr;
 	ui->menuCrashLogs = nullptr;
-	ui->actionCheckForUpdates = nullptr;
+  // NOTE LUDO: #186 do not check for OBS Studio updates
+	// ui->actionCheckForUpdates = nullptr;
 #endif
+
+  // NOTE LUDO: #186 do not check for OBS Studio updates
+	delete ui->actionCheckForUpdates;
+	ui->actionCheckForUpdates = nullptr;
+
+	// Don't show studio mode unless advanced options are on.
+	bool showAdvancedOptions = config_get_bool(this->Config(), "General", "ShowAdvancedOptions");
+	ui->modeSwitch->setHidden(!showAdvancedOptions);
 
 	OnFirstLoad();
 
@@ -2125,42 +2128,45 @@ void OBSBasic::CreateHotkeys()
 		Str("Basic.Main.ForceStopStreaming"), cb, this);
 	LoadHotkey(forceStreamingStopHotkey, "OBSBasic.ForceStopStreaming");
 
-	recordingHotkeys = obs_hotkey_pair_register_frontend(
-		"OBSBasic.StartRecording", Str("Basic.Main.StartRecording"),
-		"OBSBasic.StopRecording", Str("Basic.Main.StopRecording"),
-		MAKE_CALLBACK(!basic.outputHandler->RecordingActive() &&
-				      !basic.ui->recordButton->isChecked(),
-			      basic.StartRecording, "Starting recording"),
-		MAKE_CALLBACK(basic.outputHandler->RecordingActive() &&
-				      basic.ui->recordButton->isChecked(),
-			      basic.StopRecording, "Stopping recording"),
-		this, this);
-	LoadHotkeyPair(recordingHotkeys, "OBSBasic.StartRecording",
-		       "OBSBasic.StopRecording");
+  // NOTE LUDO: #165 Remove button recording
+	// recordingHotkeys = obs_hotkey_pair_register_frontend(
+	// 	"OBSBasic.StartRecording", Str("Basic.Main.StartRecording"),
+	// 	"OBSBasic.StopRecording", Str("Basic.Main.StopRecording"),
+	// 	MAKE_CALLBACK(!basic.outputHandler->RecordingActive() &&
+	// 			      !basic.ui->recordButton->isChecked(),
+	// 		      basic.StartRecording, "Starting recording"),
+	// 	MAKE_CALLBACK(basic.outputHandler->RecordingActive() &&
+	// 			      basic.ui->recordButton->isChecked(),
+	// 		      basic.StopRecording, "Stopping recording"),
+	// 	this, this);
+	// LoadHotkeyPair(recordingHotkeys, "OBSBasic.StartRecording",
+	// 	       "OBSBasic.StopRecording");
 
-	pauseHotkeys = obs_hotkey_pair_register_frontend(
-		"OBSBasic.PauseRecording", Str("Basic.Main.PauseRecording"),
-		"OBSBasic.UnpauseRecording", Str("Basic.Main.UnpauseRecording"),
-		MAKE_CALLBACK(basic.pause && !basic.pause->isChecked(),
-			      basic.PauseRecording, "Pausing recording"),
-		MAKE_CALLBACK(basic.pause && basic.pause->isChecked(),
-			      basic.UnpauseRecording, "Unpausing recording"),
-		this, this);
-	LoadHotkeyPair(pauseHotkeys, "OBSBasic.PauseRecording",
-		       "OBSBasic.UnpauseRecording");
+    // NOTE LUDO: #165 Remove button recording
+	// pauseHotkeys = obs_hotkey_pair_register_frontend(
+	// 	"OBSBasic.PauseRecording", Str("Basic.Main.PauseRecording"),
+	// 	"OBSBasic.UnpauseRecording", Str("Basic.Main.UnpauseRecording"),
+	// 	MAKE_CALLBACK(basic.pause && !basic.pause->isChecked(),
+	// 		      basic.PauseRecording, "Pausing recording"),
+	// 	MAKE_CALLBACK(basic.pause && basic.pause->isChecked(),
+	// 		      basic.UnpauseRecording, "Unpausing recording"),
+	// 	this, this);
+	// LoadHotkeyPair(pauseHotkeys, "OBSBasic.PauseRecording",
+	// 	       "OBSBasic.UnpauseRecording");
 
-	replayBufHotkeys = obs_hotkey_pair_register_frontend(
-		"OBSBasic.StartReplayBuffer",
-		Str("Basic.Main.StartReplayBuffer"),
-		"OBSBasic.StopReplayBuffer", Str("Basic.Main.StopReplayBuffer"),
-		MAKE_CALLBACK(!basic.outputHandler->ReplayBufferActive(),
-			      basic.StartReplayBuffer,
-			      "Starting replay buffer"),
-		MAKE_CALLBACK(basic.outputHandler->ReplayBufferActive(),
-			      basic.StopReplayBuffer, "Stopping replay buffer"),
-		this, this);
-	LoadHotkeyPair(replayBufHotkeys, "OBSBasic.StartReplayBuffer",
-		       "OBSBasic.StopReplayBuffer");
+  // NOTE LUDO: #166 Remove replay
+	// replayBufHotkeys = obs_hotkey_pair_register_frontend(
+	// 	"OBSBasic.StartReplayBuffer",
+	// 	Str("Basic.Main.StartReplayBuffer"),
+	// 	"OBSBasic.StopReplayBuffer", Str("Basic.Main.StopReplayBuffer"),
+	// 	MAKE_CALLBACK(!basic.outputHandler->ReplayBufferActive(),
+	// 		      basic.StartReplayBuffer,
+	// 		      "Starting replay buffer"),
+	// 	MAKE_CALLBACK(basic.outputHandler->ReplayBufferActive(),
+	// 		      basic.StopReplayBuffer, "Stopping replay buffer"),
+	// 	this, this);
+	// LoadHotkeyPair(replayBufHotkeys, "OBSBasic.StartReplayBuffer",
+	// 	       "OBSBasic.StopReplayBuffer");
 
 	togglePreviewHotkeys = obs_hotkey_pair_register_frontend(
 		"OBSBasic.EnablePreview",
@@ -2582,12 +2588,34 @@ static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 	return true;
 }
 
+static void CenterAlignSceneItem(obs_sceneitem_t *item, obs_bounds_type boundsType)
+{
+    obs_video_info ovi;
+    obs_get_video_info(&ovi);
+
+    obs_transform_info itemInfo;
+    vec2_set(&itemInfo.pos, 0.0f, 0.0f);
+    vec2_set(&itemInfo.scale, 1.0f, 1.0f);
+    itemInfo.alignment = OBS_ALIGN_LEFT | OBS_ALIGN_TOP;
+    itemInfo.rot = 0.0f;
+
+    vec2_set(&itemInfo.bounds, float(ovi.base_width),
+             float(ovi.base_height));
+    itemInfo.bounds_type = boundsType;
+    itemInfo.bounds_alignment = OBS_ALIGN_CENTER;
+
+    obs_sceneitem_set_info(item, &itemInfo);
+}
+
 void OBSBasic::AddSceneItem(OBSSceneItem item)
 {
 	obs_scene_t *scene = obs_sceneitem_get_scene(item);
 
 	if (GetCurrentScene() == scene)
-		ui->sources->Add(item);
+	{
+    		ui->sources->Add(item);
+    		CenterAlignSceneItem((obs_sceneitem_t *)item, OBS_BOUNDS_SCALE_INNER);
+	}
 
 	SaveProject();
 
@@ -3083,24 +3111,17 @@ void OBSBasic::TimedCheckForUpdates()
 
 void OBSBasic::CheckForUpdates(bool manualUpdate)
 {
-#ifdef UPDATE_SPARKLE
-	trigger_sparkle_update();
-#elif _WIN32
-	ui->actionCheckForUpdates->setEnabled(false);
-
 	if (updateCheckThread && updateCheckThread->isRunning())
 		return;
 
 	updateCheckThread.reset(new AutoUpdateThread(manualUpdate));
 	updateCheckThread->start();
-#endif
 
 	UNUSED_PARAMETER(manualUpdate);
 }
 
 void OBSBasic::updateCheckFinished()
 {
-	ui->actionCheckForUpdates->setEnabled(true);
 }
 
 void OBSBasic::DuplicateSelectedScene()
@@ -3445,12 +3466,12 @@ static inline enum obs_scale_type GetScaleType(ConfigFile &basicConfig)
 	const char *scaleTypeStr =
 		config_get_string(basicConfig, "Video", "ScaleType");
 
-	if (astrcmpi(scaleTypeStr, "bilinear") == 0)
-		return OBS_SCALE_BILINEAR;
+	if (astrcmpi(scaleTypeStr, "bicubic") == 0)
+		return OBS_SCALE_BICUBIC;
 	else if (astrcmpi(scaleTypeStr, "lanczos") == 0)
 		return OBS_SCALE_LANCZOS;
 	else
-		return OBS_SCALE_BICUBIC;
+		return OBS_SCALE_BILINEAR;
 }
 
 static inline enum video_format GetVideoFormatFromName(const char *name)
@@ -3513,6 +3534,13 @@ int OBSBasic::ResetVideo()
 		config_get_string(basicConfig, "Video", "ColorRange");
 
 	ovi.graphics_module = App()->GetRenderModule();
+	// OBS 25 introduced some problematic changes to DirectX handling which tend to
+	// break display capture on a lot of Windows machines, so until they get that
+	// figured out we'll run OpenGL.
+	if (ovi.graphics_module == DL_D3D11)
+	{
+		ovi.graphics_module = DL_OPENGL;
+	}
 	ovi.base_width =
 		(uint32_t)config_get_uint(basicConfig, "Video", "BaseCX");
 	ovi.base_height =
@@ -3904,6 +3932,10 @@ void OBSBasic::on_action_Settings_triggered()
 
 	OBSBasicSettings settings(this);
 	settings.exec();
+
+	bool showAdvancedOptions = config_get_bool(this->Config(), "General", "ShowAdvancedOptions");
+	ui->modeSwitch->setHidden(!showAdvancedOptions);
+
 	SystemTray(false);
 
 	settings_already_executing = false;
@@ -4522,14 +4554,51 @@ void OBSBasic::on_scenes_itemDoubleClicked(QListWidgetItem *witem)
 	}
 }
 
-void OBSBasic::AddSource(const char *id)
+void OBSBasic::on_watermarkButton_clicked()
+{
+	AddSource("text_ft2_source", "Watermark", SourceSetting::Watermark);
+}
+
+void OBSBasic::on_logoButton_clicked()
+{
+	AddSource("image_source");
+}
+
+void OBSBasic::AddSource(const char *id, const char *defaultText, SourceSetting setting)
 {
 	if (id && *id) {
-		OBSBasicSourceSelect sourceSelect(this, id);
+		OBSBasicSourceSelect sourceSelect(this, id, defaultText);
 		sourceSelect.exec();
-		if (sourceSelect.newSource && strcmp(id, "group") != 0)
+		if (sourceSelect.newSource && strcmp(id, "group") != 0) {
+                        PresetSourceData(sourceSelect.newSource, setting);
 			CreatePropertiesWindow(sourceSelect.newSource);
+		}
+
 	}
+}
+
+void OBSBasic::PresetSourceData(obs_source_t *source, SourceSetting setting)
+{
+
+	if(setting == SourceSetting::None)
+		return;
+
+	obs_data_t *settings = obs_source_get_settings(source);
+
+	switch(setting) {
+
+	case SourceSetting::Watermark:
+                obs_data_set_int(settings, "color1", 0x7FFFFFFF);
+                obs_data_set_int(settings, "color2", 0x7FFFFFFF);
+		break;
+
+	default: // do nothing;
+		break;
+	}
+
+        obs_source_update(source, settings);
+        obs_data_release(settings);
+
 }
 
 QMenu *OBSBasic::CreateAddSourcePopupMenu()
@@ -4772,7 +4841,7 @@ void OBSBasic::UploadLog(const char *subdir, const char *file)
 	ui->menuLogFiles->setEnabled(false);
 
 	stringstream ss;
-	ss << "OBS " << App()->GetVersionString() << " log file uploaded at "
+	ss << "EBS " << App()->GetVersionString() << " log file uploaded at "
 	   << CurrentDateTimeString() << "\n\n"
 	   << fileString;
 
@@ -4965,10 +5034,6 @@ void OBSBasic::StartStreaming()
 	}
 
 	if (!outputHandler->StartStreaming(service)) {
-		QString message =
-			!outputHandler->lastError.empty()
-				? QTStr(outputHandler->lastError.c_str())
-				: QTStr("Output.StartFailedGeneric");
 		ui->streamButton->setText(QTStr("Basic.Main.StartStreaming"));
 		ui->streamButton->setEnabled(true);
 		ui->streamButton->setChecked(false);
@@ -4978,8 +5043,6 @@ void OBSBasic::StartStreaming()
 			sysTrayStream->setEnabled(true);
 		}
 
-		QMessageBox::critical(this, QTStr("Output.StartStreamFailed"),
-				      message);
 		return;
 	}
 
@@ -5224,8 +5287,7 @@ void OBSBasic::StreamingStop(int code, QString last_error)
 	}
 
 	if (use_last_error && !last_error.isEmpty())
-		dstr_printf(errorMessage, "%s\n\n%s", errorDescription,
-			    QT_TO_UTF8(last_error));
+		dstr_printf(errorMessage, "%s", QT_TO_UTF8(last_error));
 	else
 		dstr_copy(errorMessage, errorDescription);
 
@@ -5256,7 +5318,8 @@ void OBSBasic::StreamingStop(int code, QString last_error)
 	} else if (code != OBS_OUTPUT_SUCCESS && isVisible()) {
 		OBSMessageBox::information(this,
 					   QTStr("Output.ConnectFail.Title"),
-					   QT_UTF8(errorMessage));
+					   QT_UTF8(errorMessage),
+					   use_last_error);
 
 	} else if (code != OBS_OUTPUT_SUCCESS && !isVisible()) {
 		SysTrayNotify(QT_UTF8(errorDescription),
@@ -5325,16 +5388,18 @@ void OBSBasic::StartRecording()
 
 	SaveProject();
 
-	if (!outputHandler->StartRecording())
-		ui->recordButton->setChecked(false);
+  // NOTE LUDO: #165 Remove button recording
+	// if (!outputHandler->StartRecording())
+	// 	ui->recordButton->setChecked(false);
 }
 
 void OBSBasic::RecordStopping()
 {
-	ui->recordButton->setText(QTStr("Basic.Main.StoppingRecording"));
+  // NOTE LUDO: #165 Remove button recording
+	// ui->recordButton->setText(QTStr("Basic.Main.StoppingRecording"));
 
-	if (sysTrayRecord)
-		sysTrayRecord->setText(ui->recordButton->text());
+	// if (sysTrayRecord)
+	// 	sysTrayRecord->setText(ui->recordButton->text());
 
 	recordingStopping = true;
 	if (api)
@@ -5354,11 +5419,12 @@ void OBSBasic::StopRecording()
 void OBSBasic::RecordingStart()
 {
 	ui->statusbar->RecordingStarted(outputHandler->fileOutput);
-	ui->recordButton->setText(QTStr("Basic.Main.StopRecording"));
-	ui->recordButton->setChecked(true);
+  // NOTE LUDO: #165 Remove button recording
+	// ui->recordButton->setText(QTStr("Basic.Main.StopRecording"));
+	// ui->recordButton->setChecked(true);
 
-	if (sysTrayRecord)
-		sysTrayRecord->setText(ui->recordButton->text());
+	// if (sysTrayRecord)
+	// 	sysTrayRecord->setText(ui->recordButton->text());
 
 	recordingStopping = false;
 	if (api)
@@ -5373,11 +5439,12 @@ void OBSBasic::RecordingStart()
 void OBSBasic::RecordingStop(int code, QString last_error)
 {
 	ui->statusbar->RecordingStopped();
-	ui->recordButton->setText(QTStr("Basic.Main.StartRecording"));
-	ui->recordButton->setChecked(false);
+  // NOTE LUDO: #165 Remove button recording
+	// ui->recordButton->setText(QTStr("Basic.Main.StartRecording"));
+	// ui->recordButton->setChecked(false);
 
-	if (sysTrayRecord)
-		sysTrayRecord->setText(ui->recordButton->text());
+	// if (sysTrayRecord)
+	// 	sysTrayRecord->setText(ui->recordButton->text());
 
 	blog(LOG_INFO, RECORDING_STOP);
 
@@ -5715,14 +5782,16 @@ void OBSBasic::on_recordButton_clicked()
 					QTStr("ConfirmStopRecord.Text"));
 
 			if (button == QMessageBox::No) {
-				ui->recordButton->setChecked(true);
+        // NOTE LUDO: #165 Remove button recording
+				// ui->recordButton->setChecked(true);
 				return;
 			}
 		}
 		StopRecording();
 	} else {
 		if (!NoSourcesConfirmation()) {
-			ui->recordButton->setChecked(false);
+      // NOTE LUDO: #165 Remove button recording
+			// ui->recordButton->setChecked(false);
 			return;
 		}
 
@@ -6157,21 +6226,7 @@ static bool CenterAlignSelectedItems(obs_scene_t *scene, obs_sceneitem_t *item,
 	if (!obs_sceneitem_selected(item))
 		return true;
 
-	obs_video_info ovi;
-	obs_get_video_info(&ovi);
-
-	obs_transform_info itemInfo;
-	vec2_set(&itemInfo.pos, 0.0f, 0.0f);
-	vec2_set(&itemInfo.scale, 1.0f, 1.0f);
-	itemInfo.alignment = OBS_ALIGN_LEFT | OBS_ALIGN_TOP;
-	itemInfo.rot = 0.0f;
-
-	vec2_set(&itemInfo.bounds, float(ovi.base_width),
-		 float(ovi.base_height));
-	itemInfo.bounds_type = boundsType;
-	itemInfo.bounds_alignment = OBS_ALIGN_CENTER;
-
-	obs_sceneitem_set_info(item, &itemInfo);
+	CenterAlignSceneItem(item, boundsType);
 
 	UNUSED_PARAMETER(scene);
 	return true;
@@ -6561,13 +6616,20 @@ void OBSBasic::UpdateTitleBar()
 	const char *sceneCollection = config_get_string(
 		App()->GlobalConfig(), "Basic", "SceneCollection");
 
-	name << "OBS ";
+	name << "EBS ";
 	if (previewProgramMode)
 		name << "Studio ";
 
 	name << App()->GetVersionString();
 	if (App()->IsPortableMode())
 		name << " - Portable Mode";
+
+	name << " OBS " << OBS_BASE_VERSION;
+    name << " webRTC " << WEBRTC_VERSION;
+
+	if (TESTING_OUTPUT_ENABLED) {
+		name << " - TEST BUILD - NOT FOR GENERAL USE";
+	}
 
 	name << " - " << Str("TitleBar.Profile") << ": " << profile;
 	name << " - " << Str("TitleBar.Scenes") << ": " << sceneCollection;
@@ -6844,7 +6906,7 @@ void OBSBasic::SystemTrayInit()
 	trayIcon.reset(new QSystemTrayIcon(
 		QIcon::fromTheme("obs-tray", QIcon(":/res/images/obs.png")),
 		this));
-	trayIcon->setToolTip("OBS Studio");
+	trayIcon->setToolTip("EBS");
 
 	showHide = new QAction(QTStr("Basic.SystemTray.Show"), trayIcon.data());
 	sysTrayStream = new QAction(QTStr("Basic.Main.StartStreaming"),
@@ -6908,7 +6970,7 @@ void OBSBasic::SysTrayNotify(const QString &text,
 	if (trayIcon && QSystemTrayIcon::supportsMessages()) {
 		QSystemTrayIcon::MessageIcon icon =
 			QSystemTrayIcon::MessageIcon(n);
-		trayIcon->showMessage("OBS Studio", text, icon, 10000);
+		trayIcon->showMessage("EBS", text, icon, 10000);
 	}
 }
 
@@ -7491,7 +7553,8 @@ void OBSBasic::UpdatePause(bool activate)
 				   QVariant(QStringLiteral("pauseIconSmall")));
 		connect(pause.data(), &QAbstractButton::clicked, this,
 			&OBSBasic::PauseToggled);
-		ui->recordingLayout->addWidget(pause.data());
+    // NOTE LUDO: #165 Remove button recording
+		// ui->recordingLayout->addWidget(pause.data());
 	} else {
 		pause.reset();
 	}

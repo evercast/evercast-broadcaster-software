@@ -16,7 +16,9 @@ OBSAbout::OBSAbout(QWidget *parent) : QDialog(parent), ui(new Ui::OBSAbout)
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
 	QString bitness;
-	QString ver;
+	QString ebsVer;
+    QString obsVer;
+    QString webrtcVer;
 
 	if (sizeof(void *) == 4)
 		bitness = " (32 bit)";
@@ -24,13 +26,17 @@ OBSAbout::OBSAbout(QWidget *parent) : QDialog(parent), ui(new Ui::OBSAbout)
 		bitness = " (64 bit)";
 
 #ifdef HAVE_OBSCONFIG_H
-	ver += OBS_VERSION;
+	ebsVer += EBS_VERSION;
+	obsVer += OBS_BASE_VERSION;
+	webrtcVer += WEBRTC_VERSION;
 #else
-	ver += LIBOBS_API_MAJOR_VER + "." + LIBOBS_API_MINOR_VER + "." +
+	obsVer += LIBOBS_API_MAJOR_VER + "." + LIBOBS_API_MINOR_VER + "." +
 	       LIBOBS_API_PATCH_VER;
 #endif
 
-	ui->version->setText(ver + bitness);
+	ui->version->setText("Version " + ebsVer);
+	ui->obs_version->setText("OBS " + obsVer + bitness);
+    ui->webrtc_version->setText("WebRTC " + webrtcVer);
 
 	ui->contribute->setText(QTStr("About.Contribute"));
 	ui->donate->setText(
@@ -51,6 +57,8 @@ OBSAbout::OBSAbout(QWidget *parent) : QDialog(parent), ui(new Ui::OBSAbout)
 
 	ui->name->setProperty("themeID", "aboutName");
 	ui->version->setProperty("themeID", "aboutVersion");
+    ui->obs_version->setProperty("themeID", "aboutVersion");
+    ui->webrtc_version->setProperty("themeID", "aboutLastVersion");
 	ui->about->setProperty("themeID", "aboutHLayout");
 	ui->authors->setProperty("themeID", "aboutHLayout");
 	ui->license->setProperty("themeID", "aboutHLayout");
