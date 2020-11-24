@@ -4556,7 +4556,7 @@ void OBSBasic::on_scenes_itemDoubleClicked(QListWidgetItem *witem)
 
 void OBSBasic::on_watermarkButton_clicked()
 {
-	AddSource("text_ft2_source");
+	AddSource("text_ft2_source", "Watermark", SourceSetting::Watermark);
 }
 
 void OBSBasic::on_logoButton_clicked()
@@ -4564,14 +4564,41 @@ void OBSBasic::on_logoButton_clicked()
 	AddSource("image_source");
 }
 
-void OBSBasic::AddSource(const char *id)
+void OBSBasic::AddSource(const char *id, const char *defaultText, SourceSetting setting)
 {
 	if (id && *id) {
-		OBSBasicSourceSelect sourceSelect(this, id);
+		OBSBasicSourceSelect sourceSelect(this, id, defaultText);
 		sourceSelect.exec();
-		if (sourceSelect.newSource && strcmp(id, "group") != 0)
+		if (sourceSelect.newSource && strcmp(id, "group") != 0) {
+                        PresetSourceData(sourceSelect.newSource, setting);
 			CreatePropertiesWindow(sourceSelect.newSource);
+		}
+
 	}
+}
+
+void OBSBasic::PresetSourceData(obs_source_t *source, SourceSetting setting)
+{
+
+	if(setting == SourceSetting::None)
+		return;
+
+	obs_data_t *settings = obs_source_get_settings(source);
+
+	switch(setting) {
+
+	case SourceSetting::Watermark:
+                obs_data_set_int(settings, "color1", 0x7FFFFFFF);
+                obs_data_set_int(settings, "color2", 0x7FFFFFFF);
+		break;
+
+	default: // do nothing;
+		break;
+	}
+
+        obs_source_update(source, settings);
+        obs_data_release(settings);
+
 }
 
 QMenu *OBSBasic::CreateAddSourcePopupMenu()
