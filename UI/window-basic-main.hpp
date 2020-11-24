@@ -138,6 +138,11 @@ class OBSBasic : public OBSMainWindow {
 		DropType_Html,
 	};
 
+	enum class SourceSetting {
+		None,
+		Watermark
+	};
+
 private:
 	obs_frontend_callbacks *api = nullptr;
 
@@ -245,7 +250,7 @@ private:
 
 	void SetupEncoders();
 
-	void CreateFirstRunSources();
+	// NOTE: The firstStart parameter is no longer used, but is preserved for API compatibility with other parts of EBS
 	void CreateDefaultScene(bool firstStart);
 
 	void UpdateVolumeControlsDecayRate();
@@ -571,7 +576,8 @@ private:
 
 	void ResizePreview(uint32_t cx, uint32_t cy);
 
-	void AddSource(const char *id);
+	void AddSource(const char *id, const char* defaultText = nullptr, SourceSetting setting = SourceSetting::None);
+	void PresetSourceData(obs_source_t *source, SourceSetting setting);
 	QMenu *CreateAddSourcePopupMenu();
 	void AddSourcePopupMenu(const QPoint &pos);
 	void copyActionsDynamicProperties();
@@ -738,6 +744,8 @@ private slots:
 	void on_streamButton_clicked();
 	void on_recordButton_clicked();
 	void on_settingsButton_clicked();
+	void on_watermarkButton_clicked();
+	void on_logoButton_clicked();
 
 	void on_actionHelpPortal_triggered();
 	void on_actionWebsite_triggered();

@@ -31,12 +31,13 @@ bool obs_module_load(void)
 	WSAStartup(MAKEWORD(2, 2), &wsad);
 #endif
 
-	obs_register_output(&rtmp_output_info);
-	obs_register_output(&null_output_info);
-	obs_register_output(&flv_output_info);
-	obs_register_output(&janus_output_info);
-	obs_register_output(&wowza_output_info);
-	obs_register_output(&millicast_output_info);
+  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
+	// obs_register_output(&rtmp_output_info);
+	// obs_register_output(&null_output_info);
+	// obs_register_output(&flv_output_info);
+	// obs_register_output(&janus_output_info);
+	// obs_register_output(&wowza_output_info);
+	// obs_register_output(&millicast_output_info);
 	obs_register_output(&evercast_output_info);
 #if COMPILE_FTL
 	obs_register_output(&ftl_output_info);
