@@ -138,6 +138,11 @@ class OBSBasic : public OBSMainWindow {
 		DropType_Html,
 	};
 
+	enum class SourceSetting {
+		None,
+		Watermark
+	};
+
 private:
 	obs_frontend_callbacks *api = nullptr;
 
@@ -571,7 +576,8 @@ private:
 
 	void ResizePreview(uint32_t cx, uint32_t cy);
 
-	void AddSource(const char *id);
+	void AddSource(const char *id, const char* defaultText = nullptr, SourceSetting setting = SourceSetting::None);
+	void PresetSourceData(obs_source_t *source, SourceSetting setting);
 	QMenu *CreateAddSourcePopupMenu();
 	void AddSourcePopupMenu(const QPoint &pos);
 	void copyActionsDynamicProperties();
