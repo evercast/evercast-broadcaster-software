@@ -7,7 +7,6 @@ cmake \
 -DDepsPath=~/obsdeps \
 -DCMAKE_BUILD_TYPE=RELEASE \
 -DCMAKE_INSTALL_PREFIX=/opt/ebs \
--DVLCPath=~/vlc-3.0.4 \
 -DQTDIR=/usr/local/Cellar/qt/5.14.1 \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 \
@@ -17,4 +16,5 @@ cmake \
 -DOBS_VERSION_OVERRIDE=$EBS_VERSION \
 -DOBS_BASE_VERSION=23.2.0 \
 -DWEBRTC_VERSION=73.0.0 \
+-DENABLE_VLC=ON \
 ..

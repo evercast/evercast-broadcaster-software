@@ -5,6 +5,10 @@ if(DISABLE_VLC)
 	return()
 endif()
 
+if(NOT VLCPath)
+	set(VLCPath ${CMAKE_CURRENT_SOURCE_DIR}/vlc)
+endif()
+
 find_package(LibVLC QUIET)
 
 if(NOT LIBVLC_INCLUDES_FOUND AND ENABLE_VLC)
