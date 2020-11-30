@@ -7,7 +7,7 @@ mkdir EBS.app/Contents/PlugIns
 mkdir EBS.app/Contents/Resources
 
 #BUILD_CONFIG=RELEASE
-BUILD_CONFIG=RelWithDebInfo
+BUILD_CONFIG=RELEASE
 QT_VERSION=5.14.1
 cp -r rundir/$BUILD_CONFIG/bin/ ./EBS.app/Contents/MacOS
 cp -r rundir/$BUILD_CONFIG/data ./EBS.app/Contents/Resources
