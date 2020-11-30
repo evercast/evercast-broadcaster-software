@@ -52,7 +52,7 @@ struct gs_exports {
 	gs_texture_t *(*device_voltexture_create)(
 		gs_device_t *device, uint32_t width, uint32_t height,
 		uint32_t depth, enum gs_color_format color_format,
-		uint32_t levels, const uint8_t **data, uint32_t flags);
+		uint32_t levels, const uint8_t *const *data, uint32_t flags);
 	gs_zstencil_t *(*device_zstencil_create)(
 		gs_device_t *device, uint32_t width, uint32_t height,
 		enum gs_zstencil_format format);
@@ -114,6 +114,7 @@ struct gs_exports {
 					   uint32_t src_w, uint32_t src_h);
 	void (*device_stage_texture)(gs_device_t *device, gs_stagesurf_t *dst,
 				     gs_texture_t *src);
+	void (*device_begin_frame)(gs_device_t *device);
 	void (*device_begin_scene)(gs_device_t *device);
 	void (*device_draw)(gs_device_t *device, enum gs_draw_mode draw_mode,
 			    uint32_t start_vert, uint32_t num_verts);

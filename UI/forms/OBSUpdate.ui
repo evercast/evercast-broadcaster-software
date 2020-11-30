@@ -19,6 +19,19 @@
      <property name="text">
       <string>Updater.Text</string>
      </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="installInstructionsLabel">
+     <property name="text">
+      <string>Updater.InstallInstructions</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item>

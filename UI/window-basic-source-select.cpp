@@ -259,7 +259,7 @@ template<typename T> static inline T GetOBSRef(QListWidgetItem *item)
 	return item->data(static_cast<int>(QtDataRole::OBSRef)).value<T>();
 }
 
-OBSBasicSourceSelect::OBSBasicSourceSelect(OBSBasic *parent, const char *id_)
+OBSBasicSourceSelect::OBSBasicSourceSelect(OBSBasic *parent, const char *id_, const char *defaultText)
 	: QDialog(parent), ui(new Ui::OBSBasicSourceSelect), id(id_)
 {
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -278,7 +278,11 @@ OBSBasicSourceSelect::OBSBasicSourceSelect(OBSBasic *parent, const char *id_)
 		text = QString("%1 %2").arg(placeHolderText).arg(i++);
 	}
 
-	ui->sourceName->setText(text);
+	if(defaultText) {
+                ui->sourceName->setText(QT_UTF8(defaultText));
+	} else {
+		ui->sourceName->setText(text);
+	}
 	ui->sourceName->setFocus(); //Fixes deselect of text.
 	ui->sourceName->selectAll();
 

@@ -894,6 +894,11 @@ FocusList::item {
 
 * [themeID="aboutVersion"] {
 	font-size: 16px;
+	padding: 0;
+}
+
+* [themeID="aboutLastVersion"] {
+	font-size: 16px;
 	margin-bottom: 20px;
 	padding: 0;
 }

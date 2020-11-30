@@ -27,7 +27,7 @@
    <string>.MainWindow</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="obs.qrc">
+   <iconset>
     <normaloff>:/res/images/obs.png</normaloff>:/res/images/obs.png</iconset>
   </property>
   <property name="styleSheet">
@@ -195,9 +195,6 @@
     <property name="title">
      <string>Basic.MainMenu.File</string>
     </property>
-    <addaction name="actionShow_Recordings"/>
-    <addaction name="actionRemux"/>
-    <addaction name="separator"/>
     <addaction name="action_Settings"/>
     <addaction name="actionShowSettingsFolder"/>
     <addaction name="actionShowProfileFolder"/>
@@ -245,6 +242,12 @@
      <property name="title">
       <string>Basic.MainMenu.Edit.Transform</string>
      </property>
+     <addaction name="actionFitToScreen"/>
+     <addaction name="actionStretchToScreen"/>
+     <addaction name="actionCenterToScreen"/>
+     <addaction name="actionVerticalCenter"/>
+     <addaction name="actionHorizontalCenter"/>
+     <addaction name="separator"/>
      <addaction name="actionEditTransform"/>
      <addaction name="actionCopyTransform"/>
      <addaction name="actionPasteTransform"/>
@@ -256,12 +259,6 @@
      <addaction name="separator"/>
      <addaction name="actionFlipHorizontal"/>
      <addaction name="actionFlipVertical"/>
-     <addaction name="separator"/>
-     <addaction name="actionFitToScreen"/>
-     <addaction name="actionStretchToScreen"/>
-     <addaction name="actionCenterToScreen"/>
-     <addaction name="actionVerticalCenter"/>
-     <addaction name="actionHorizontalCenter"/>
     </widget>
     <widget class="QMenu" name="orderMenu">
      <property name="title">
@@ -728,7 +725,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>64</width>
+           <width>87</width>
            <height>16</height>
           </rect>
          </property>
@@ -1103,62 +1100,12 @@
        <property name="text">
         <string>Basic.Main.StartStreaming</string>
        </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
       </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="recordingLayout">
-       <property name="spacing">
-        <number>2</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="RecordButton" name="recordButton">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>130</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Basic.Main.StartRecording</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
      </item>
      <item>
       <widget class="QPushButton" name="modeSwitch">
        <property name="text">
         <string>Basic.TogglePreviewProgramMode</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -1172,6 +1119,32 @@
        </property>
        <property name="text">
         <string>Settings</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="logoButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Basic.Main.CustomLogo</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="watermarkButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Basic.Main.Watermark</string>
        </property>
       </widget>
      </item>
@@ -1513,6 +1486,9 @@
    <property name="text">
     <string>Basic.MainMenu.Help.CheckForUpdates</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionInteract">
    <property name="text">
@@ -1527,6 +1503,9 @@
   <action name="actionWebsite">
    <property name="text">
     <string>Basic.MainMenu.Help.Website</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionNewSceneCollection">
@@ -1675,6 +1654,9 @@
    <property name="text">
     <string>Basic.AutoConfig</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="stats">
    <property name="text">
@@ -1756,6 +1738,9 @@
    <property name="text">
     <string>Basic.MainMenu.Help.HelpPortal</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionShowCrashLogs">
    <property name="text">
@@ -1770,6 +1755,9 @@
   <action name="actionDiscord">
    <property name="text">
     <string>Basic.MainMenu.Help.Discord</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="toggleStats">
@@ -1786,6 +1774,9 @@
   <action name="actionShowAbout">
    <property name="text">
     <string>Basic.MainMenu.Help.About</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
  </widget>
@@ -1823,11 +1814,6 @@
    <extends>QDockWidget</extends>
    <header>window-dock.hpp</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>RecordButton</class>
-   <extends>QPushButton</extends>
-   <header>record-button.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>
