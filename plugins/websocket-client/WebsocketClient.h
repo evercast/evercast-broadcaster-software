@@ -50,6 +50,7 @@ public:
             const std::string & sdp,
             const std::string & video_codec,
             const std::string & audio_codec,
+            int video_profile,
             const std::string & username) = 0;
     virtual bool trickle(
             const std::string & mid,

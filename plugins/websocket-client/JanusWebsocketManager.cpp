@@ -119,12 +119,12 @@ bool JanusWebsocketManager::connect(const std::string& raw_url, const std::strin
 }
 
 bool JanusWebsocketManager::open(const std::string &sdp, const std::string &video_codec,
-	  const std::string &audio_codec,
+	  const std::string &audio_codec, int video_profile,
 	  const std::string & /* Id */)
 {
     bool result;
     try {
-	result = this->messageProcessor->sendOpenMessage(sdp, video_codec, audio_codec);
+		result = this->messageProcessor->sendOpenMessage(sdp, video_codec, audio_codec, video_profile);
     } catch (const websocketpp::exception & e) {
         warn("open exception: %s", e.what());
     }

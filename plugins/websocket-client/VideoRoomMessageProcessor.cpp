@@ -221,7 +221,7 @@ bool VideoRoomMessageProcessor::sendTrickleMessage(
 
 bool VideoRoomMessageProcessor::sendOpenMessage(
 	const string &sdp, const string &video_codec,
-	const string &audio_codec)
+	const string &audio_codec, int video_profile)
 {
 	// This can get kicked off before the login/join process has completed, so synchronize
 	if (!awaitState(VideoRoomState::Joined, 5)) {
@@ -238,7 +238,7 @@ bool VideoRoomMessageProcessor::sendOpenMessage(
             { "request", "configure" },
             { "videocodec", video_codec },
             { "audiocodec", audio_codec },
-            { "vp9_profile", 1 },
+            { "vp9_profile", video_profile },
             { "muted", false },
             { "video", true },
             { "audio", true }

@@ -189,6 +189,7 @@ bool MillicastWebsocketClientImpl::open(
         const std::string & sdp,
         const std::string & video_codec,
         const std::string & audio_codec,
+        int /* video_profile */,
         const std::string & stream_name)
 {
     info("WS-OPEN: stream_name: %s", stream_name.c_str());

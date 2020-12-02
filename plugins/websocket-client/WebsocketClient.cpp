@@ -2,7 +2,7 @@
 #include <openssl/opensslv.h>
 #include "WowzaWebsocketClientImpl.h"
 #include "MillicastWebsocketClientImpl.h"
-#include "JanusWebsocketManager.h"
+#include "JanusWebSocketManager.h"
 #include "EvercastMessageProcessor.h"
 
 OBS_DECLARE_MODULE()

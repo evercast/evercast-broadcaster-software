@@ -40,7 +40,7 @@ public:
 	void processServerMessage(json &msg) override;
 	bool sendKeepAliveMessage() override;
 	bool sendTrickleMessage(const string &mid, int index, const string &candidate, bool last) override;
-	bool sendOpenMessage(const string &sdp, const string &video_codec, const string &audio_codec) override;
+	bool sendOpenMessage(const string &sdp, const string &video_codec, const string &audio_codec, int video_profile) override;
 	bool onWebsocketOpened() override;
 	bool sendLoginMessage() override;
 	bool sendAttachMessage() override;
