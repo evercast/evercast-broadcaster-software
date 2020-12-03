@@ -3,7 +3,7 @@
 
 #include "media-io/video-io.h"
 
-// #include "opus_audio_encoder_factory.h"
+#include "opus_audio_encoder_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
@@ -105,7 +105,7 @@ WebRTCStream::WebRTCStream(obs_output_t *output)
             worker.get(),
             signaling.get(),
             adm,
-            webrtc::CreateBuiltinAudioEncoderFactory(),
+            webrtc::CreateOpusAudioEncoderFactory(),
             webrtc::CreateBuiltinAudioDecoderFactory(),
             webrtc::CreateBuiltinVideoEncoderFactory(),
             webrtc::CreateBuiltinVideoDecoderFactory(),

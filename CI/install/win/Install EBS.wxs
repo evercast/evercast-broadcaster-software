@@ -4,7 +4,7 @@
 	xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 	<Bundle
 	      Version="2.6.0"
-	      UpgradeCode="01234567-89AB-CDEF-0123-456789ABCDEF"
+	      UpgradeCode="44c72510-2e8e-489c-8bc0-2011a9631b0b"
 	      Manufacturer="Evercast"
 	      IconSourceFile=".\ebs.ico"
 	      Name="EBS"
