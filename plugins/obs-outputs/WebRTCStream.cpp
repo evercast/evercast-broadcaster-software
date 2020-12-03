@@ -14,7 +14,6 @@
 #include "common_video/libyuv/include/webrtc_libyuv.h"
 #include "pc/rtc_stats_collector.h"
 #include "rtc_base/checks.h"
-#include "rtc_base/synchronization/mutex.h"
 #include <libyuv.h>
 #include "Evercast.h"
 #include "EvercastSessionData.h"
@@ -293,9 +292,12 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
+            mutex_.Lock();
             if (!this->connection_invalidated) {
+                this->connection_invalidated = true;
                 recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
             }
+            mutex_.Unlock();
 			return false;
 		}
 
@@ -617,7 +619,18 @@ void WebRTCStream::onDisconnected()
 void WebRTCStream::onLoggedError(int code)
 {
     info("WebRTCStream::onLoggedError [code: %d]", code);
+    // We have already given up on the connection.	
+    mutex_.Lock();	
+    if (this->connection_invalidated) {	
+        mutex_.Unlock();	
+        return;	
+    }	
+
     this->connection_invalidated = true;
+    if (client) {	
+        client->disconnect(false);	
+    }	
+    mutex_.Unlock();	
 
     // Close Peer Connection
     const char *error;
