@@ -292,12 +292,11 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
-            mutex_.Lock();
+            webrtc::MutexLock lock(&mutex_);
             if (!this->connection_invalidated) {
                 this->connection_invalidated = true;
                 recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
             }
-            mutex_.Unlock();
 			return false;
 		}
 
@@ -620,9 +619,8 @@ void WebRTCStream::onLoggedError(int code)
 {
     info("WebRTCStream::onLoggedError [code: %d]", code);
     // We have already given up on the connection.	
-    mutex_.Lock();	
+    webrtc::MutexLock lock(&mutex_);
     if (this->connection_invalidated) {	
-        mutex_.Unlock();	
         return;	
     }	
 
@@ -630,7 +628,6 @@ void WebRTCStream::onLoggedError(int code)
     if (client) {	
         client->disconnect(false);	
     }	
-    mutex_.Unlock();	
 
     // Close Peer Connection
     const char *error;
@@ -895,12 +892,11 @@ void WebRTCStream::getStats()
 
 rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 {
-    mutex_.Lock();
+    webrtc::MutexLock lock(&mutex_);
 
     if (nullptr == pc)
     {
-	mutex_.Unlock();
-	return nullptr;
+        return nullptr;
     }
 
     rtc::scoped_refptr<StatsCallback> stats_callback =
@@ -912,6 +908,5 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
         std::this_thread::sleep_for(std::chrono::microseconds(1));
 
     rtc::scoped_refptr<const webrtc::RTCStatsReport> result = stats_callback->report();
-    mutex_.Unlock();
     return result;
 }
