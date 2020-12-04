@@ -11,7 +11,7 @@ public:
 	virtual void processServerMessage(json &msg) = 0;
 	virtual bool sendKeepAliveMessage() = 0;
 	virtual bool sendTrickleMessage(const std::string &mid, int index, const std::string &candidate, bool last) = 0;
-	virtual bool sendOpenMessage(const std::string &sdp, const std::string &video_codec, const std::string &audio_codec) = 0;
+	virtual bool sendOpenMessage(const std::string &sdp, const std::string &video_codec, const std::string &audio_codec, int video_profile) = 0;
 	virtual bool onWebsocketOpened() = 0;
 	virtual bool sendLoginMessage() = 0;
 	virtual bool sendAttachMessage() = 0;

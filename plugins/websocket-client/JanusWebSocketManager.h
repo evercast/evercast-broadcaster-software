@@ -53,6 +53,7 @@ public:
             const std::string & sdp,
             const std::string & video_codec,
             const std::string & audio_codec,
+            int video_profile,
             const std::string & /* Id */) override;
     bool trickle(
             const std::string & mid,

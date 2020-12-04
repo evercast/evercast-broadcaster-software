@@ -85,7 +85,7 @@ bool WowzaWebsocketClientImpl::connect(
             int status = msg["status"].get<int>();
             if (status == 200) {
                 if (msg.find("sdp") != msg.end())
-                    sdp = msg["sdp"]["sdp"];
+                    // sdp = msg["sdp"]["sdp"];
                 if (msg.find("iceCandidates") != msg.end()) {
                     candidateFound = true;
                     sdpData = msg["iceCandidates"];
@@ -165,6 +165,7 @@ bool WowzaWebsocketClientImpl::open(
         const std::string & sdp,
         const std::string & /* video_codec */,
         const std::string & /* audio_codec */,
+        int /* video_profile */,
         const std::string & stream_name)
 {
     json offer = {
