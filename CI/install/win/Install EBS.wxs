@@ -3,7 +3,7 @@
 	xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
 	xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 	<Bundle
-	      Version="2.6.0"
+	      Version="2.6.1"
 	      UpgradeCode="44c72510-2e8e-489c-8bc0-2011a9631b0b"
 	      Manufacturer="Evercast"
 	      IconSourceFile=".\ebs.ico"
@@ -42,7 +42,7 @@
 				RepairCommand="/q ACTION=Repair /hideconsole"
 				Permanent="yes"
 				Vital="no"/>
-			<MsiPackage SourceFile=".\ebs-x64-2.6.0.msi" />
+			<MsiPackage SourceFile=".\ebs-x64-2.6.1.msi" />
 		</Chain>
 	</Bundle>
 </Wix>
