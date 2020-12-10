@@ -354,10 +354,12 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	HookWidget(ui->authPw,               EDIT_CHANGED,   STREAM1_CHANGED);
   // NOTE LUDO: #172 codecs list of radio buttons
 	// HookWidget(ui->codec,                COMBO_CHANGED,  STREAM1_CHANGED);
+	#ifndef _WIN32
 	HookWidget(ui->h264RadioButton,      CHECK_CHANGED,  STREAM1_CHANGED);
+	HookWidget(ui->h264RadioButton,      CHECK_CHANGED,  PROTOCOL_CHANGED);
+	#endif
 	HookWidget(ui->vp8RadioButton,       CHECK_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->vp9RadioButton,       CHECK_CHANGED,  STREAM1_CHANGED);
-	HookWidget(ui->h264RadioButton,      CHECK_CHANGED,  PROTOCOL_CHANGED);
 	HookWidget(ui->vp8RadioButton,       CHECK_CHANGED,  PROTOCOL_CHANGED);
 	HookWidget(ui->vp9RadioButton,       CHECK_CHANGED,  VP9_CHANGED);
 	HookWidget(ui->streamProtocol,       COMBO_CHANGED,  STREAM1_CHANGED);
@@ -750,9 +752,14 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	// 		this, SLOT(SimpleRecordingEncoderChanged()));
 
   // NOTE LUDO: #172 codecs list of radio buttons
-  ui->codecButtonGroup->setId(ui->h264RadioButton, 0);
-  ui->codecButtonGroup->setId(ui->vp8RadioButton,  1);
-  ui->codecButtonGroup->setId(ui->vp9RadioButton,  2);
+  int codecIndex = 0;
+  #ifndef _WIN32
+  ui->codecButtonGroup->setId(ui->h264RadioButton, codecIndex++);
+  #else
+  ui->h264RadioButton->setVisible(false);
+  #endif
+  ui->codecButtonGroup->setId(ui->vp8RadioButton,  codecIndex++);
+  ui->codecButtonGroup->setId(ui->vp9RadioButton,  codecIndex++);
   ui->vp9WarnLabel->setVisible(false);
 
   // NOTE LUDO: #173 replace Settings/Stream service Evercast combo box by a radio button
@@ -934,17 +941,19 @@ void OBSBasicSettings::LoadEncoderTypes()
 		if (obs_get_encoder_type(type) != OBS_ENCODER_VIDEO)
 			continue;
 
+		bool is_streaming_codec = false;
+		#ifndef _WIN32 
 		const char *streaming_codecs[] = {
 			"h264",
 			//"hevc",
 		};
-		bool is_streaming_codec = false;
 		for (const char *test_codec : streaming_codecs) {
 			if (strcmp(codec, test_codec) == 0) {
 				is_streaming_codec = true;
 				break;
 			}
 		}
+		#endif
 		if ((caps & OBS_ENCODER_CAP_DEPRECATED) != 0)
 			continue;
 
