@@ -1,5 +1,6 @@
 #include "update-helpers.hpp"
 #include "update-window.hpp"
+#include "new-version-window.hpp"
 #include "remote-text.hpp"
 #include "qt-wrappers.hpp"
 #include "update.hpp"
@@ -97,6 +98,12 @@ void AutoUpdateThread::infoMsg(const QString& title, const QString& text)
 	OBSMessageBox::information(App()->GetMainWindow(), title, text);
 }
 
+void AutoUpdateThread::newVersionMsg(const QString& releaseNotes)
+{
+	EBSNewVersion newVersion(App()->GetMainWindow(), releaseNotes);
+	newVersion.exec();
+}
+
 void AutoUpdateThread::info(const QString& title, const QString& text)
 {
 	QMetaObject::invokeMethod(this, "infoMsg", Qt::BlockingQueuedConnection,
@@ -130,6 +137,7 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string& str, std:
 	const char* query = "{\"query\": \"{  fetchActiveEbsVersion(currentVersion: \\\"" EBS_VERSION "\\\") {    edges { node { upgradeAvailable    beta    version    releaseNotes  } } } } \", \"variables\": null}";
 
 	config_set_default_string(GetGlobalConfig(), "General", "SkipUpdateVersion", "");
+	config_set_default_string(GetGlobalConfig(), "General", "LastVersionNotified", "1.0.0");
 	config_set_default_string(GetGlobalConfig(), "General", "EBSUpdateUrl", EBS_DEFAULT_UPDATE_URL);
 	string updateUrl = config_get_string(GetGlobalConfig(), "General", "EBSUpdateUrl");
 
@@ -151,6 +159,16 @@ bool AutoUpdateThread::EBSVersionQuery(bool manualUpdate, std::string& str, std:
 	ParseEBSVersionResponse(str, updatesAvailable, isBeta, notes, version);
 
 	if (!(*updatesAvailable)) {
+		/* ----------------------------------- *
+		 * See if the user has heard the good news            */
+		string lastVersionNotified = config_get_string(GetGlobalConfig(), "General", "LastVersionNotified");
+		if (version != lastVersionNotified) {
+			QString releaseNotes = QString(notes.c_str());
+			QMetaObject::invokeMethod(this, "newVersionMsg", Qt::BlockingQueuedConnection, Q_ARG(QString, releaseNotes));
+			config_set_string(GetGlobalConfig(), "General", "LastVersionNotified", version.c_str());
+			return false;
+		}
+
 		if (manualUpdate)
 			info(QTStr("Updater.NoUpdatesAvailable.Title"),
 				QTStr("Updater.NoUpdatesAvailable.Text"));

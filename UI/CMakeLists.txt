@@ -226,6 +226,7 @@ set(obs_SOURCES
 	window-log-reply.cpp
 	window-projector.cpp
 	window-remux.cpp
+	update/new-version-window.cpp
 	update/update-window.cpp
 	update/update.cpp
 	update/update-helpers.cpp
@@ -280,6 +281,7 @@ set(obs_HEADERS
 	window-log-reply.hpp
 	window-projector.hpp
 	window-remux.hpp
+	update/new-version-window.hpp
 	update/update-window.hpp
 	update/update.hpp
 	update/update-helpers.hpp
@@ -324,6 +326,7 @@ set(obs_UI
 	forms/AutoConfigStreamPage.ui
 	forms/AutoConfigTestPage.ui
 	forms/ColorSelect.ui
+	forms/EBSNewVersion.ui
 	forms/OBSLogReply.ui
 	forms/OBSBasic.ui
 	forms/OBSBasicTransform.ui
