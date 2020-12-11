@@ -26,10 +26,19 @@ static void webrtc_evercast_update(void *data, obs_data_t *settings)
   bfree(service->codec);
   bfree(service->output);
 
+  #ifdef _WIN32
+  const char *raw_codec = obs_data_get_string(settings, "codec");
+  if (strncmp("h264", raw_codec, 4) == 0) {
+	  raw_codec = "vp9";
+  }
+  #else
+  const char *raw_codec = obs_data_get_string(settings, "codec");
+  #endif
+
   service->server = bstrdup(obs_data_get_string(settings, "server"));
   service->room = bstrdup(obs_data_get_string(settings, "room"));
   service->password = bstrdup(obs_data_get_string(settings, "password"));
-  service->codec = bstrdup(obs_data_get_string(settings, "codec"));
+  service->codec = bstrdup(raw_codec);
   service->output = bstrdup("evercast_output");
 }
 

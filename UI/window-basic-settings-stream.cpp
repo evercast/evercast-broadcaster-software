@@ -31,6 +31,7 @@ enum class Section : int {
 	StreamKey,
 };
 
+#define CODEC_NAME_H264 "h264"
 #define CODEC_NAME_VP9 "vp9"
 
 // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
@@ -142,9 +143,13 @@ void OBSBasicSettings::LoadStream1Settings()
 
 		tmpString = obs_data_get_string(settings, "codec");
 		const char *codec =
-                // NOTE LUDO: #172 codecs list of radio buttons
-		// 	strcmp("", tmpString) == 0 ? "Automatic" : tmpString;
-			strcmp("", tmpString) == 0 ? CODEC_NAME_VP9 : tmpString;
+			strcmp("", tmpString) == 0 ? CODEC_NAME_VP9 :
+			#ifdef _WIN32
+				strcmp(CODEC_NAME_H264, tmpString) == 0 ? CODEC_NAME_VP9 : tmpString
+			#else
+				tmpString
+			#endif 
+			;
 
 		tmpString = obs_data_get_string(settings, "protocol");
 		const char *protocol =
