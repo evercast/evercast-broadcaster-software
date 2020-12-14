@@ -2042,6 +2042,10 @@ void OBSBasic::InitHotkeys()
 
 void OBSBasic::ProcessHotkey(obs_hotkey_id id, bool pressed)
 {
+	if (QApplication::activeWindow() == nullptr) {
+		return;
+	}
+
 	obs_hotkey_trigger_routed_callback(id, pressed);
 }
 
