@@ -167,6 +167,8 @@ bool JanusWebsocketManager::disconnect(const bool wait)
 			     ec.message().c_str());
 		// Don't wait for connection close
 		client.stop();
+		// Stop the message queue
+                messageQueue.close();
 		// Remove handlers
 		client.set_open_handler([](...) {});
 		client.set_close_handler([](...) {});
