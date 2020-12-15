@@ -16,6 +16,7 @@ class AutoUpdateThread : public QThread {
 
 private slots:
 	void infoMsg(const QString &title, const QString &text);
+	void newVersionMsg(const QString& releaseNotes);
 	int queryUpdateSlot(bool manualUpdate, const QString &text);
 
 	bool EBSVersionQuery(bool manualUpdate, std::string &str, std::string &error, long *responseCode, bool *updatesAvailable, bool *isBeta, std::string &version, std::string &notes);
