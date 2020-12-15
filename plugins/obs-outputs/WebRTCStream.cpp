@@ -186,7 +186,7 @@ bool WebRTCStream::start(WebRTCStream::Type type)
         obs_output_set_last_error(
             output,
             "You have not added any EBS keys. For more information please visit "
-            "<a href=\"https://support.evercast.us/adding/updating-ebs-stream-settings\">this link</a>.");
+            "<a href=\"https://guides.evercast.us/troubleshooting/evercast/adding-updating-ebs-stream-settings\">this link</a>.");
         obs_output_signal_stop(output, OBS_OUTPUT_CONNECT_FAILED);
         return false;
     }
@@ -498,7 +498,7 @@ void WebRTCStream::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceCon
                 obs_output_set_last_error(
                         output,
                         "Evercast found your room, but streaming failed.  Are you behind a firewall?\n\n"
-                        "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.");
+                        "Visit Evercast's <a href=\"https://guides.evercast.us/troubleshooting/security-and-data/security-whitelisting\">security whitelisting page</a> for firewall configuration help.");
 
                 // Disconnect, this will call stop on main thread
                 obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
@@ -641,7 +641,7 @@ void WebRTCStream::onLoggedError(int code)
         break;
     default:
         error = "Evercast is having trouble connecting to your room.  Are you behind a firewall?\n\n"
-        "Visit Evercast's <a href=\"https://support.evercast.us/security-whitelisting\">security whitelisting page</a> for firewall configuration help.";
+        "Visit Evercast's <a href=\"https://guides.evercast.us/troubleshooting/security-and-data/security-whitelisting\">security whitelisting page</a> for firewall configuration help.";
     }
 
     obs_output_set_last_error(output, error);
