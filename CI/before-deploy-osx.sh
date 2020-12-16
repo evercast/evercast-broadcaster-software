@@ -30,13 +30,13 @@ hr "Fixing OBS outputs"
 cp /usr/local/opt/mbedtls/lib/libmbedtls.12.dylib ./EBS.app/Contents/Frameworks/
 cp /usr/local/opt/mbedtls/lib/libmbedcrypto.3.dylib ./EBS.app/Contents/Frameworks/
 cp /usr/local/opt/mbedtls/lib/libmbedx509.0.dylib ./EBS.app/Contents/Frameworks/
-cp /usr/local/Cellar/curl/7.74.0/lib/libcurl.4.dylib ./EBS.app/Contents/Frameworks/
+cp /usr/local/opt/curl/lib/libcurl.4.dylib ./EBS.app/Contents/Frameworks/
 install_name_tool -change /usr/local/opt/mbedtls/lib/libmbedtls.12.dylib @executable_path/../Frameworks/libmbedtls.12.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/local/opt/mbedtls/lib/libmbedcrypto.3.dylib @executable_path/../Frameworks/libmbedcrypto.3.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/local/opt/mbedtls/lib/libmbedx509.0.dylib @executable_path/../Frameworks/libmbedx509.0.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/local/opt/openssl@1.1/lib/libssl.1.1.dylib @executable_path/../Frameworks/libssl.1.1.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/local/opt/openssl@1.1/lib/libcrypto.1.1.dylib @executable_path/../Frameworks/libcrypto.1.1.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
-# install_name_tool -change /usr/local/Cellar/curl/7.74.0/lib/libcurl.4.dylib @executable_path/../Frameworks/libcurl.4.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
+install_name_tool -change /usr/local/opt/curl/lib/libcurl.4.dylib @executable_path/../Frameworks/libcurl.4.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/lib/libcurl.4.dylib @executable_path/../Frameworks/libcurl.4.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change @rpath/libobs.0.dylib @executable_path/../Frameworks/libobs.0.dylib ./EBS.app/Contents/Plugins/obs-outputs.so
 install_name_tool -change /usr/local/opt/qt/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Plugins/obs-outputs.so
