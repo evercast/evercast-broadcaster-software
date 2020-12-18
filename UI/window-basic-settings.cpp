@@ -34,6 +34,7 @@
 #include <QScreen>
 #include <QStandardItemModel>
 #include <QSpacerItem>
+#include <QWindow>
 
 #include "audio-encoders.hpp"
 #include "hotkey-edit.hpp"
@@ -291,6 +292,12 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	ui->setupUi(this);
 
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+#ifdef _WIN32
+	QScreen *screen = App()->GetMainWindow()->windowHandle()->screen();
+	const int screenHeight = screen->availableGeometry().height();
+	setMaximumHeight(screenHeight * 0.9); // QT itself is not very reliable on the subject of "available size"
+#endif
 
 	main->EnableOutputs(false);
 
