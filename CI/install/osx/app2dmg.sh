@@ -2,6 +2,7 @@ xattr -rc ./EBS.app
 rm -rf ./EBS.app/Contents/Frameworks/Qt*.framework/Headers
 codesign --deep --options runtime -vfs 'Developer ID Application: Evercast LLC' './EBS.app' --keychain 'login.keychain' --entitlements ./EBS.app/Contents/entitlements.plist
 mkdir /tmp/installebs
+rm -rf /tmp/installebs/EBS.app
 cp -R "./EBS.app" /tmp/installebs
 cp $NDI_RUNTIME /tmp/installebs
 hdiutil create /tmp/tmp.dmg -ov -volname "EBS_""$EBS_VERSION""_Install" -fs HFS+ -srcfolder /tmp/installebs # "./EBS.app"
