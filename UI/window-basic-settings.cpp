@@ -2858,6 +2858,8 @@ void OBSBasicSettings::LoadSettings(bool changedOnly)
 		LoadGeneralSettings();
 	if (!changedOnly || stream1Changed)
 		LoadStream1Settings();
+        if (!changedOnly)
+                LoadAuthSettings();
 	if (!changedOnly || outputsChanged)
 		LoadOutputSettings();
 	if (!changedOnly || audioChanged)

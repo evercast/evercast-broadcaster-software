@@ -29,6 +29,7 @@
 #include <obs.hpp>
 
 #include "auth-base.hpp"
+#include "auth-evercast.hpp"
 
 class OBSBasic;
 class QAbstractButton;
@@ -99,6 +100,7 @@ private:
 	std::unique_ptr<Ui::OBSBasicSettings> ui;
 
 	std::shared_ptr<Auth> auth;
+	EvercastAuth evercastAuth;
 
 	bool generalChanged = false;
 	bool stream1Changed = false;
@@ -203,6 +205,7 @@ private:
 
 	void LoadGeneralSettings();
 	void LoadStream1Settings();
+	void LoadAuthSettings();
 	void LoadOutputSettings();
 	void LoadAudioSettings();
 	void LoadVideoSettings();
@@ -236,6 +239,8 @@ private slots:
 	void on_disconnectAccount_clicked();
 	void on_useStreamKey_clicked();
 	void on_useAuth_toggled();
+
+	void on_loginButton_clicked();
 
 private:
 	/* output */
@@ -317,6 +322,7 @@ private slots:
 	void SpeakerLayoutChanged(int idx);
 	void OutputsChanged();
 	void Stream1Changed();
+        void AuthChanged();
 	void VideoChanged();
 	void VideoChangedResolution();
 	void VideoChangedRestart();
