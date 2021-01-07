@@ -191,7 +191,7 @@
      <item>
       <widget class="QStackedWidget" name="settingsPages">
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="generalPage">
         <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -959,9 +959,6 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="serverName"/>
-             </item>
              <item row="1" column="0">
               <widget class="QLabel" name="streamKeyLabel">
                <property name="text">
@@ -1089,23 +1086,19 @@
               </widget>
              </item>
              <item row="6" column="0">
-              <widget class="QLabel" name="label_7">
-               <property name="text">
-                <string>Email</string>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="1">
-              <widget class="QLineEdit" name="userEmail"/>
-             </item>
-             <item row="10" column="0">
               <widget class="QLabel" name="roomLabel">
                <property name="text">
                 <string>Room</string>
                </property>
+               <property name="buddy">
+                <cstring>room</cstring>
+               </property>
               </widget>
              </item>
-             <item row="11" column="0">
+             <item row="6" column="1">
+              <widget class="QLineEdit" name="room"/>
+             </item>
+             <item row="7" column="0">
               <widget class="QLabel" name="authUsernameLabel">
                <property name="text">
                 <string>Basic.Settings.Stream.Custom.Username</string>
@@ -1115,10 +1108,10 @@
                </property>
               </widget>
              </item>
-             <item row="11" column="1">
+             <item row="7" column="1">
               <widget class="QLineEdit" name="authUsername"/>
              </item>
-             <item row="12" column="0">
+             <item row="8" column="0">
               <widget class="QLabel" name="authPwLabel">
                <property name="text">
                 <string>Basic.Settings.Stream.Custom.Password</string>
@@ -1128,7 +1121,7 @@
                </property>
               </widget>
              </item>
-             <item row="12" column="1">
+             <item row="8" column="1">
               <widget class="QWidget" name="authPwWidget" native="true">
                <layout class="QHBoxLayout" name="horizontalLayout_25">
                 <property name="leftMargin">
@@ -1160,14 +1153,7 @@
                </layout>
               </widget>
              </item>
-             <item row="13" column="0">
-              <widget class="QLabel" name="codecLabel">
-               <property name="text">
-                <string>Codec</string>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="1">
+             <item row="9" column="1">
               <widget class="QGroupBox" name="codecGroupBox">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1256,7 +1242,7 @@
                </widget>
               </widget>
              </item>
-             <item row="14" column="0">
+             <item row="10" column="0">
               <widget class="QLabel" name="streamProtocolLabel">
                <property name="text">
                 <string>Protocol</string>
@@ -1266,7 +1252,7 @@
                </property>
               </widget>
              </item>
-             <item row="14" column="1">
+             <item row="10" column="1">
               <widget class="QComboBox" name="streamProtocol">
                <property name="currentIndex">
                 <number>0</number>
@@ -1288,68 +1274,15 @@
                </item>
               </widget>
              </item>
-             <item row="7" column="1">
-              <widget class="QWidget" name="authPwWidget_2" native="true">
-               <layout class="QHBoxLayout" name="horizontalLayout_27">
-                <property name="leftMargin">
-                 <number>0</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QLineEdit" name="userPasword">
-                  <property name="echoMode">
-                   <enum>QLineEdit::Password</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="userPaswordShow">
-                  <property name="text">
-                   <string>Show</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="7" column="0">
-              <widget class="QLabel" name="label_18">
+             <item row="9" column="0">
+              <widget class="QLabel" name="codecLabel">
                <property name="text">
-                <string>Password</string>
+                <string>Codec</string>
                </property>
               </widget>
              </item>
-             <item row="8" column="1">
-              <widget class="QPushButton" name="loginButton">
-               <property name="text">
-                <string>Login</string>
-               </property>
-               <property name="default">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="1">
-              <widget class="Line" name="line">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="1">
-              <widget class="QComboBox" name="room">
-               <property name="editable">
-                <bool>true</bool>
-               </property>
-              </widget>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="serverName"/>
              </item>
             </layout>
            </widget>
@@ -1387,7 +1320,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>740</width>
+              <width>753</width>
               <height>717</height>
              </rect>
             </property>
@@ -3571,8 +3504,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>691</width>
-              <height>601</height>
+              <width>753</width>
+              <height>632</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -5094,6 +5027,7 @@
   <tabstop>show</tabstop>
   <tabstop>connectAccount2</tabstop>
   <tabstop>disconnectAccount</tabstop>
+  <tabstop>room</tabstop>
   <tabstop>useAuth</tabstop>
   <tabstop>authUsername</tabstop>
   <tabstop>authPw</tabstop>
@@ -5599,9 +5533,9 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="basicSettingsButtonGroup"/>
+  <buttongroup name="serviceButtonGroup"/>
   <buttongroup name="outputModeButtonGroup"/>
   <buttongroup name="codecButtonGroup"/>
-  <buttongroup name="serviceButtonGroup"/>
-  <buttongroup name="basicSettingsButtonGroup"/>
  </buttongroups>
 </ui>

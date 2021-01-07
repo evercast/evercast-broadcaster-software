@@ -8,6 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <unordered_map>
 
 class EvercastAuth {
 public:
@@ -18,82 +19,85 @@ public:
 		std::string trackingId;
 	};
 
-	struct RoomInfo {
+        struct Token {
+
+                std::string token;
+                std::string nonce;
+
+		bool empty() const {
+			return token.empty() || nonce.empty();
+		}
+
+        };
+
+	struct Room {
 		std::string id;
 		std::string name;
 	};
 
-	struct AuthInfo {
-		bool success = false;
-                std::string streamKey;
-		std::vector<RoomInfo> rooms;
+	struct Rooms {
+                std::vector<Room> ordered;
+		std::unordered_map<std::string, Room> byName;
 	};
-
-private:
-        struct TokenInfo {
-                std::string token;
-                std::string nonce;
-        };
 
 private:
 
         static void skipChar(const std::string& text, int& pos, char c);
         static bool findChar(const std::string& text, int& pos, char c);
         static std::string parseValue(const std::string& text,  const std::string& key);
-        static TokenInfo getTokenInfoFromCookies(const httplib::Headers& headers);
+        static Token getTokenInfoFromCookies(const httplib::Headers& headers);
 
 private:
 
-        static nlohmann::json createLoginQuery(const std::string& email, const std::string& password, const std::string& trackingId);
+        static nlohmann::json createLoginQuery(const Credentials& credentials);
         static nlohmann::json createStreamKeyQuery();
         static nlohmann::json createRoomsQuery();
 
+        static Token obtainToken(const Credentials& credentials);
+        static std::string obtainStreamKey(const Token& token);
+        static Rooms obtainRooms(const Token& token);
+
+	void updateState();
+
 private:
+        std::mutex m_mutex;
         Credentials m_credentials;
-	AuthInfo m_authInfo;
-	std::mutex m_mutex;
+	Token m_token;
+	std::string m_streamKey;
+	Rooms m_rooms;
 public:
 
+        void loadState(obs_data_t *settings);
+	void saveState(obs_data_t *settings);
 
-        static Credentials loadCredentials(obs_data_t *settings);
-	static void saveCredentials(const Credentials& creds, obs_data_t *settings);
-
-        static AuthInfo getAuthInfo(const std::string& email, const std::string& password, const std::string& trackingId);
+	void clearCurrentState();
 
 	template<typename Callback>
-	void login(Callback callback) {
+	void updateState(Callback callback) {
 
                 std::thread t([this, callback]{
-
-			const auto& creds = getCredentials();
-			const auto& authInfo = getAuthInfo(creds.email, creds.password, creds.trackingId);
-
-			{
-				std::lock_guard<std::mutex> lock(m_mutex);
-				m_authInfo = authInfo;
-			}
-
+			updateState();
 			callback();
-
 		});
 
 		t.detach();
 
 	}
 
-	void setCredentials(const Credentials& credentials) {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                m_credentials = credentials;
-	}
+	void setCredentials(const Credentials& credentials);
 
-	Credentials getCredentials() {
-                std::lock_guard<std::mutex> lock(m_mutex);
-		return m_credentials;
-	}
+	Credentials getCredentials();
 
-	AuthInfo getAuthInfo() {
-                std::lock_guard<std::mutex> lock(m_mutex);
-		return m_authInfo;
-	}
+	void setToken(const Token& token);
+
+        Token getToken();
+
+	void setStreamKey(const std::string& key);
+
+	std::string getStreamKey();
+
+	void setRooms(const Rooms& rooms);
+
+	Rooms getRooms();
 
 };

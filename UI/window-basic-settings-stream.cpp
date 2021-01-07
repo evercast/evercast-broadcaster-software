@@ -162,28 +162,12 @@ void OBSBasicSettings::LoadStream1Settings()
 				break;
 			}
 
-                blog(LOG_INFO, "Loading creds!");
-
-                const auto& creds = EvercastAuth::loadCredentials(settings);
-                evercastAuth.setCredentials(creds);
-
-                ui->userEmail->setText(creds.email.c_str());
-                ui->userPasword->setText(creds.password.c_str());
-
-                ui->loginButton->setEnabled(false);
-                ui->userEmail->setEnabled(false);
-                ui->userPasword->setEnabled(false);
-
-                evercastAuth.login([this] {
-                        QMetaObject::invokeMethod(this, "AuthChanged", Qt::QueuedConnection);
-                });
-
     // NOTE LUDO: #173 replace Settings/Stream service Evercast combo box by a radio button
 		// ui->service->setCurrentIndex(idx);
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->customServer->setText(server);
     ui->serverName->setText(server);
-		ui->room->setCurrentText(QT_UTF8(room));
+		ui->room->setText(QT_UTF8(room));
 		ui->authUsername->setText(QT_UTF8(username));
 		ui->authPw->setText(QT_UTF8(password));
 		bool use_auth = true;
@@ -237,60 +221,6 @@ void OBSBasicSettings::LoadStream1Settings()
 	loading = false;
 }
 
-void OBSBasicSettings::LoadAuthSettings()
-{
-//        blog(LOG_INFO, "OBSBasicSettings::LoadAuthSettings()");
-//
-//        obs_service_t *service_obj = main->GetService();
-//        obs_data_t *settings = obs_service_get_settings(service_obj);
-//
-//	const auto& creds = EvercastAuth::loadCredentials(settings);
-//	evercastAuth.setCredentials(creds);
-//
-//        ui->userEmail->setText(creds.email.c_str());
-//        ui->userPasword->setText(creds.password.c_str());
-//
-//        evercastAuth.login([this] {
-//                QMetaObject::invokeMethod(this, "AuthChanged", Qt::QueuedConnection);
-//        });
-
-}
-
-void OBSBasicSettings::AuthChanged() {
-
-	blog(LOG_INFO, "OBSBasicSettings::AuthChanged()");
-
-	ui->loginButton->setEnabled(true);
-        ui->userEmail->setEnabled(true);
-        ui->userPasword->setEnabled(true);
-
-        const auto& authInfo = evercastAuth.getAuthInfo();
-
-        if(authInfo.success) {
-
-                ui->authPw->setText(QT_UTF8(authInfo.streamKey.c_str()));
-                ui->room->clear();
-
-                blog(LOG_INFO, "CALLBACK - streamKey='%s'", authInfo.streamKey.c_str());
-
-                for(auto& r : authInfo.rooms) {
-                        blog(LOG_INFO, "room='%s', name='%s'", r.id.c_str(), r.name.c_str());
-                        ui->room->addItem(QT_UTF8(r.id.c_str()));
-                }
-
-        } else {
-                blog(LOG_INFO, "CALLBACK - Auth - FAIL");
-                ui->authPw->setText(QT_UTF8(""));
-                ui->room->setCurrentText(QT_UTF8(""));
-                ui->room->clear();
-        }
-
-        if (!loading) {
-		stream1Changed = true;
-	}
-
-}
-
 void OBSBasicSettings::SaveStream1Settings()
 {
 	bool customServer = IsCustomService();
@@ -332,7 +262,7 @@ void OBSBasicSettings::SaveStream1Settings()
 				// QT_TO_UTF8(ui->customServer->text()));
         QT_TO_UTF8(ui->serverName->text()));
 		obs_data_set_string(settings, "room",
-				QT_TO_UTF8(ui->room->currentText()));
+				QT_TO_UTF8(ui->room->text()));
 		obs_data_set_string(settings, "username",
 				QT_TO_UTF8(ui->authUsername->text()));
 		obs_data_set_string(settings, "password",
@@ -342,12 +272,6 @@ void OBSBasicSettings::SaveStream1Settings()
 				QT_TO_UTF8(ui->codecButtonGroup->checkedButton()->text()));
 		obs_data_set_string(settings, "protocol",
 				QT_TO_UTF8(ui->streamProtocol->currentText()));
-
-                blog(LOG_INFO, "Saving creds!!! 1");
-
-                const auto& credentials = evercastAuth.getCredentials();
-                EvercastAuth::saveCredentials(credentials, settings);
-
 	}
 
 	obs_data_set_bool(settings, "bwtest",
@@ -880,21 +804,4 @@ void OBSBasicSettings::on_useAuth_toggled()
 	ui->authUsername->setVisible(use_auth);
 	ui->authPwLabel->setVisible(use_auth);
 	ui->authPwWidget->setVisible(use_auth);
-}
-
-void OBSBasicSettings::on_loginButton_clicked() {
-
-        blog(LOG_INFO, "OBSBasicSettings::on_loginButton_clicked()");
-	std::string email = QT_TO_UTF8(ui->userEmail->text());
-	std::string passw = QT_TO_UTF8(ui->userPasword->text());
-
-        ui->loginButton->setEnabled(false);
-        ui->userEmail->setEnabled(false);
-        ui->userPasword->setEnabled(false);
-
-	evercastAuth.setCredentials({email, passw,"de66eff5-1896-4d11-9097-4d6fed6d9f0a"});
-        evercastAuth.login([this] {
-                QMetaObject::invokeMethod(this, "AuthChanged", Qt::QueuedConnection);
-	});
-
 }

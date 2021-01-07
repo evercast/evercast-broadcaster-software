@@ -51,9 +51,9 @@ std::string EvercastAuth::parseValue(const std::string& text,  const std::string
 
 }
 
-EvercastAuth::TokenInfo EvercastAuth::getTokenInfoFromCookies(const httplib::Headers& headers) {
+EvercastAuth::Token EvercastAuth::getTokenInfoFromCookies(const httplib::Headers& headers) {
 
-        TokenInfo result;
+        Token result;
 
         const auto& map = headers;
         auto itlow = map.lower_bound("Set-Cookie");
@@ -73,16 +73,16 @@ EvercastAuth::TokenInfo EvercastAuth::getTokenInfoFromCookies(const httplib::Hea
 
 }
 
-nlohmann::json EvercastAuth::createLoginQuery(const std::string& email, const std::string& password, const std::string& trackingId) {
+nlohmann::json EvercastAuth::createLoginQuery(const Credentials& credentials) {
 
         nlohmann::json j;
         j["query"] = "mutation authenticateMutation($input: AuthenticateInput!) {authenticate(input: $input) {clientMutationId}}";
         j["variables"] = {
                 {"input",
                         {
-                                { "email", email },
-                                { "password", password },
-                                { "trackingId", trackingId }
+                                { "email", credentials.email },
+                                { "password", credentials.password },
+                                { "trackingId", credentials.trackingId }
                         }
                 }
         };
@@ -163,96 +163,192 @@ nlohmann::json EvercastAuth::createRoomsQuery() {
 
 }
 
-EvercastAuth::AuthInfo EvercastAuth::getAuthInfo(const std::string& email, const std::string& password, const std::string& trackingId) {
+EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
-	TokenInfo tokenInfo;
-        AuthInfo authInfo;
+	httplib::Client client("https://v2.evercast.us");
+
+        auto query = createLoginQuery(credentials);
+
+        auto res = client.Post("/api/graphql", query.dump(), "application/json");
+
+        if (res) {
+                return getTokenInfoFromCookies(res->headers);
+        }
+
+	return {};
+
+}
+
+std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
         httplib::Client client("https://v2.evercast.us");
 
-	{
-		auto query = createLoginQuery(email, password, trackingId);
+        auto query = createStreamKeyQuery();
 
-		auto res = client.Post("/api/graphql", query.dump(), "application/json");
+        httplib::Headers headers({
+                                         {"X-Double-Submit", token.nonce},
+                                         {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
+                                 });
 
-		if (!res) {
-			return authInfo;
-		}
+        auto res = client.Post("/api/graphql", headers, query.dump(), "application/json");
 
-                tokenInfo = getTokenInfoFromCookies(res->headers);
-		if(tokenInfo.nonce.empty() || tokenInfo.token.empty()) {
-			return authInfo;
-		}
-	}
-
-        {
-
-                auto query = createStreamKeyQuery();
-
-                httplib::Headers headers({
-                                                 {"X-Double-Submit", tokenInfo.nonce},
-                                                 {"cookie", "__Host-nonce=" + tokenInfo.nonce + "; __Host-jwt=" + tokenInfo.token}
-                                         });
-
-                auto res = client.Post("/api/graphql", headers, query.dump(), "application/json");
-
-                if (!res) {
-                        return authInfo;
-                }
-
+        if (res) {
                 auto j = nlohmann::json::parse(res->body);
-                authInfo.streamKey = j["data"]["getStreamKey"]["uuid"];
-
+                return j["data"]["getStreamKey"]["uuid"];
         }
 
-        {
+	return "";
 
-                auto query = createRoomsQuery();
+}
 
-                httplib::Headers headers({
-                                                 {"X-Double-Submit", tokenInfo.nonce},
-                                                 {"cookie", "__Host-nonce=" + tokenInfo.nonce + "; __Host-jwt=" + tokenInfo.token}
-                                         });
+EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
-                auto res = client.Post("/api/graphql", headers, query.dump(), "application/json");
+        httplib::Client client("https://v2.evercast.us");
 
-                if (!res) {
-                        return authInfo;
-                }
+        auto query = createRoomsQuery();
 
+        httplib::Headers headers({
+                                         {"X-Double-Submit", token.nonce},
+                                         {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
+                                 });
+
+        auto res = client.Post("/api/graphql", headers, query.dump(), "application/json");
+
+        if (res) {
+
+		Rooms rooms;
                 auto j = nlohmann::json::parse(res->body);
 
                 for(auto& room : j["data"]["currentProfile"]["recentRooms"]["nodes"].items()) {
 
-			auto jId = room.value()["liveroomByRoomId"]["id"];
-			auto jName = room.value()["liveroomByRoomId"]["displayName"];
+                        auto jId = room.value()["liveroomByRoomId"]["id"];
+                        auto jName = room.value()["liveroomByRoomId"]["displayName"];
 
-			if(!jId.empty() && !jName.empty()) {
-				RoomInfo roomInfo;
-				roomInfo.id = room.value()["liveroomByRoomId"]["id"].get<std::string>();
-				roomInfo.name = room.value()["liveroomByRoomId"]["displayName"].get<std::string>();
-				authInfo.rooms.push_back(roomInfo);
-			}
+                        if(!jId.empty() && !jName.empty()) {
+                                Room r;
+                                r.id = room.value()["liveroomByRoomId"]["id"].get<std::string>();
+                                r.name = room.value()["liveroomByRoomId"]["displayName"].get<std::string>();
+                                rooms.ordered.push_back(r);
+				rooms.byName.insert({r.name, r});
+                        }
                 }
+
+		return rooms;
 
         }
 
-	authInfo.success = true;
-
-	return authInfo;
+        return {};
 
 }
 
-EvercastAuth::Credentials EvercastAuth::loadCredentials(obs_data_t *settings) {
-        Credentials creds;
-        creds.email = obs_data_get_string(settings, "evercast_auth_email");
-	creds.password = obs_data_get_string(settings, "evercast_auth_password");
-        creds.trackingId = obs_data_get_string(settings, "evercast_auth_tracking_id");
-	return creds;
+void EvercastAuth::updateState() {
+
+	auto token = getToken();
+	if(token.empty()) {
+		/* get token if it's empty */
+                token = obtainToken(getCredentials());
+		setToken(token);
+                if(token.empty()) {
+                        return;
+                }
+	}
+
+	auto streamKey = obtainStreamKey(token);
+	if(streamKey.empty()) {
+		/* get a new token, old one was revoked */
+                token = obtainToken(getCredentials());
+                setToken(token);
+		if(token.empty()) {
+			return;
+		}
+		streamKey = obtainStreamKey(token);
+	}
+        setStreamKey(streamKey);
+        if(streamKey.empty()) {
+                return;
+        }
+
+	setRooms(obtainRooms(token));
+
 }
 
-void EvercastAuth::saveCredentials(const Credentials& creds, obs_data_t *settings) {
-        obs_data_set_string(settings, "evercast_auth_email", creds.email.c_str());
-        obs_data_set_string(settings, "evercast_auth_password", creds.password.c_str());
-        obs_data_set_string(settings, "evercast_auth_tracking_id", creds.trackingId.c_str());
+void EvercastAuth::loadState(obs_data_t *settings) {
+
+	Credentials credentials;
+        credentials.email = obs_data_get_string(settings, "evercast_auth_email");
+        credentials.trackingId = obs_data_get_string(settings, "evercast_auth_tracking_id");
+
+	Token token;
+	token.token = obs_data_get_string(settings, "evercast_auth_token");
+	token.nonce = obs_data_get_string(settings, "evercast_auth_token_nonce");
+
+	std::string streamKey;
+	streamKey = obs_data_get_string(settings, "evercast_auth_stream_key");
+
+	setCredentials(credentials);
+	setToken(token);
+	setStreamKey(streamKey);
+}
+
+void EvercastAuth::saveState(obs_data_t *settings) {
+
+	const auto& credentials = getCredentials();
+        const auto& token = getToken();
+        const auto& streamKey = getStreamKey();
+
+        obs_data_set_string(settings, "evercast_auth_email", credentials.email.c_str());
+        obs_data_set_string(settings, "evercast_auth_tracking_id", credentials.trackingId.c_str());
+
+        obs_data_set_string(settings, "evercast_auth_token", token.token.c_str());
+        obs_data_set_string(settings, "evercast_auth_token_nonce", token.nonce.c_str());
+
+        obs_data_set_string(settings, "evercast_auth_stream_key", streamKey.c_str());
+
+}
+
+void EvercastAuth::clearCurrentState() {
+	setCredentials({getCredentials().email, "", getCredentials().trackingId});
+	setToken({});
+	setStreamKey("");
+	setRooms({});
+}
+
+void EvercastAuth::setCredentials(const Credentials& credentials) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_credentials = credentials;
+}
+
+EvercastAuth::Credentials EvercastAuth::getCredentials() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_credentials;
+}
+
+void EvercastAuth::setToken(const Token& token) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_token = token;
+}
+
+EvercastAuth::Token EvercastAuth::getToken() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_token;
+}
+
+void EvercastAuth::setStreamKey(const std::string& key) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_streamKey = key;
+}
+
+std::string EvercastAuth::getStreamKey() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_streamKey;
+}
+
+void EvercastAuth::setRooms(const Rooms& rooms) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_rooms = rooms;
+}
+
+EvercastAuth::Rooms EvercastAuth::getRooms() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_rooms;
 }

@@ -206,6 +206,7 @@ set(obs_SOURCES
 	obs-app.cpp
 	window-dock.cpp
 	api-interface.cpp
+	window-basic-login.cpp
 	window-basic-main.cpp
 	window-basic-stats.cpp
 	window-basic-filters.cpp
@@ -271,6 +272,7 @@ set(obs_HEADERS
 	platform.hpp
 	window-dock.hpp
 	window-main.hpp
+	window-basic-login.hpp
 	window-basic-main.hpp
 	window-basic-stats.hpp
 	window-basic-filters.hpp
@@ -343,6 +345,7 @@ set(obs_UI
 	forms/OBSBasicSettings.ui
 	forms/OBSBasicSourceSelect.ui
 	forms/OBSBasicInteraction.ui
+	forms/OBSBasicLogin.ui
 	forms/OBSExtraBrowsers.ui
 	forms/OBSUpdate.ui
 	forms/OBSRemux.ui

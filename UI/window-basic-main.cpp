@@ -39,6 +39,7 @@
 #include "platform.hpp"
 #include "visibility-item-widget.hpp"
 #include "item-widget-helpers.hpp"
+#include "window-basic-login.hpp"
 #include "window-basic-settings.hpp"
 #include "window-namedialog.hpp"
 #include "window-basic-auto-config.hpp"
@@ -212,6 +213,12 @@ OBSBasic::OBSBasic(QWidget *parent)
 
 	ui->setupUi(this);
 	ui->previewDisabledWidget->setVisible(false);
+
+        ui->loginButton->setEnabled(true);
+        ui->loginButton->setVisible(true);
+        ui->evercastAccountWidget->setVisible(false);
+
+
 
 	startingDockLayout = saveState();
 
@@ -1087,6 +1094,15 @@ bool OBSBasic::LoadService()
 
 	obs_data_t *settings = obs_data_get_obj(data, "settings");
 	obs_data_t *hotkey_data = obs_data_get_obj(data, "hotkeys");
+
+	evercastAuth.loadState(settings);
+	if(!evercastAuth.getToken().empty()) {
+		evercastAuth.updateState([this] {
+			QMetaObject::invokeMethod(this, "EvercastLoginCallback", Qt::QueuedConnection);
+		});
+	} else {
+		QMetaObject::invokeMethod(this, "EvercastResetAccount", Qt::QueuedConnection);
+	}
 
 	service = obs_service_create(type, "default_service", settings,
 				     hotkey_data);
@@ -7562,4 +7578,96 @@ void OBSBasic::UpdatePause(bool activate)
 	} else {
 		pause.reset();
 	}
+}
+
+void OBSBasic::EvercastResetAccount() {
+
+	ui->loginButton->setEnabled(true);
+        ui->loginButton->setVisible(true);
+        ui->evercastAccountWidget->setVisible(false);
+
+	evercastAuth.clearCurrentState();
+
+        OBSData settings = obs_data_create();
+
+        obs_data_set_string(settings, "room", "");
+        obs_data_set_string(settings, "password", "");
+
+	evercastAuth.saveState(settings);
+
+        obs_service_update(GetService(), settings);
+        obs_data_release(settings);
+        SaveService();
+
+}
+
+void OBSBasic::EvercastLoginCallback() {
+
+        const auto& streamKey = evercastAuth.getStreamKey();
+
+        if(!streamKey.empty()) {
+
+                ui->loginButton->setVisible(false);
+                ui->evercastAccountWidget->setVisible(true);
+                ui->evercastAccountEmail->setText(QT_UTF8(evercastAuth.getCredentials().email.c_str()));
+
+                const auto& rooms = evercastAuth.getRooms();
+
+                ui->evercastRooms->clear();
+                for(auto& r : rooms.ordered) {
+                        ui->evercastRooms->addItem(QT_UTF8(r.name.c_str()));
+                }
+
+        } else {
+                EvercastResetAccount();
+                QMetaObject::invokeMethod(this, "on_loginButton_clicked", Qt::QueuedConnection);
+        }
+
+        OBSData settings = obs_data_create();
+        evercastAuth.saveState(settings);
+        obs_service_update(GetService(), settings);
+        obs_data_release(settings);
+        SaveService();
+
+}
+
+void OBSBasic::on_loginButton_clicked() {
+
+	evercastAuth.setToken({});
+	evercastAuth.setStreamKey("");
+
+        OBSBasicLogin dialog(this, evercastAuth.getCredentials());
+        dialog.exec();
+
+	if(dialog.accepted) {
+                ui->loginButton->setEnabled(false);
+		evercastAuth.setCredentials(dialog.credentials);
+		evercastAuth.updateState([this] {
+			QMetaObject::invokeMethod(this, "EvercastLoginCallback", Qt::QueuedConnection);
+		});
+	}
+
+}
+
+void OBSBasic::on_logoutButton_clicked() {
+        EvercastResetAccount();
+}
+
+void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
+        blog(LOG_INFO, "Room Index=%d", index);
+
+	const auto& rooms = evercastAuth.getRooms();
+	if(index < rooms.ordered.size()) {
+
+		const auto& room = rooms.ordered[index];
+
+		OBSData settings = obs_data_create();
+		obs_data_set_string(settings, "room",room.id.c_str());
+                obs_data_set_string(settings, "password",evercastAuth.getStreamKey().c_str());
+
+                obs_service_update(GetService(), settings);
+		obs_data_release(settings);
+                SaveService();
+	}
+
 }
