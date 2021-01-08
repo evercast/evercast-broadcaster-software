@@ -192,6 +192,7 @@ private:
 	gs_vertbuffer_t *boxBottom = nullptr;
 	gs_vertbuffer_t *circle = nullptr;
 
+        bool sceneNameEditing = false;
 	bool sceneChanging = false;
 	bool ignoreSelectionUpdate = false;
 
