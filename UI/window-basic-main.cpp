@@ -3995,12 +3995,17 @@ void OBSBasic::on_scenes_currentItemChanged(QListWidgetItem *current,
 
 void OBSBasic::EditSceneName()
 {
-	QListWidgetItem *item = ui->scenes->currentItem();
-	Qt::ItemFlags flags = item->flags();
+	if(!sceneNameEditing) {
 
-	item->setFlags(flags | Qt::ItemIsEditable);
-	ui->scenes->editItem(item);
-	item->setFlags(flags);
+                sceneNameEditing = true;
+
+		QListWidgetItem *item = ui->scenes->currentItem();
+		Qt::ItemFlags flags = item->flags();
+
+		item->setFlags(flags | Qt::ItemIsEditable);
+		ui->scenes->editItem(item);
+		item->setFlags(flags);
+	}
 }
 
 static void AddProjectorMenuMonitors(QMenu *parent, QObject *target,
@@ -4972,6 +4977,9 @@ static void RenameListItem(OBSBasic *parent, QListWidget *listWidget,
 void OBSBasic::SceneNameEdited(QWidget *editor,
 			       QAbstractItemDelegate::EndEditHint endHint)
 {
+
+        sceneNameEditing = false;
+
 	OBSScene scene = GetCurrentScene();
 	QLineEdit *edit = qobject_cast<QLineEdit *>(editor);
 	string text = QT_TO_UTF8(edit->text().trimmed());
