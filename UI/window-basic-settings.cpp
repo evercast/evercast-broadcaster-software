@@ -312,6 +312,8 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	/* clang-format off */
 	HookWidget(ui->language,             COMBO_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->theme, 		     COMBO_CHANGED,  GENERAL_CHANGED);
+        HookWidget(ui->evercastGraphApiUrl,  EDIT_CHANGED, GENERAL_CHANGED);
+        HookWidget(ui->evercastWebsocketApiUrl,  EDIT_CHANGED, GENERAL_CHANGED);
 	HookWidget(ui->enableAutoUpdates,    CHECK_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->openStatsOnStartup,   CHECK_CHANGED,  GENERAL_CHANGED);
     HookWidget(ui->showAdvancedOptionsCheckBox,   CHECK_CHANGED,  GENERAL_CHANGED);
@@ -1187,12 +1189,23 @@ void OBSBasicSettings::CheckAdvancedOptions()
 	ui->simpleOutRecEncoderLabel_2->setHidden(!showAdvancedOptions);
 }
 
+void OBSBasicSettings::LoadEvercastSettings() {
+
+	auto graphApiUrl = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_WebSocket");
+
+	ui->evercastGraphApiUrl->setText(QT_UTF8(graphApiUrl));
+	ui->evercastWebsocketApiUrl->setText(QT_UTF8(websocketApiUrl));
+
+}
+
 void OBSBasicSettings::LoadGeneralSettings()
 {
 	loading = true;
 
 	LoadLanguageList();
 	LoadThemeList();
+        LoadEvercastSettings();
 
 #if defined(_WIN32) || defined(__APPLE__)
 	bool enableAutoUpdates = config_get_bool(GetGlobalConfig(), "General",
@@ -2870,6 +2883,15 @@ void OBSBasicSettings::LoadSettings(bool changedOnly)
 		LoadAdvancedSettings();
 }
 
+void OBSBasicSettings::SaveEvercastSettings() {
+
+        config_set_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL",
+			  QT_TO_UTF8(ui->evercastGraphApiUrl->text()));
+        config_set_string(GetGlobalConfig(), "General", "Evercasst_URL_WebSocket",
+                          QT_TO_UTF8(ui->evercastWebsocketApiUrl->text()));
+
+}
+
 void OBSBasicSettings::SaveGeneralSettings()
 {
 	int languageIndex = ui->language->currentIndex();
@@ -2896,6 +2918,8 @@ void OBSBasicSettings::SaveGeneralSettings()
 
 		App()->SetTheme(themeData.toUtf8().constData());
 	}
+
+        SaveEvercastSettings();
 
 #if defined(_WIN32) || defined(__APPLE__)
 	if (WidgetChanged(ui->enableAutoUpdates))

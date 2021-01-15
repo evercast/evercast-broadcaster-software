@@ -368,6 +368,12 @@ static void do_log(int log_level, const char *msg, va_list args, void *param)
 
 bool OBSApp::InitGlobalConfigDefaults()
 {
+
+        config_set_default_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL",
+				  "https://v2.evercast.us");
+        config_set_default_string(GetGlobalConfig(), "General", "Evercasst_URL_WebSocket",
+				  "wss://v2.evercast.us/websockets");
+
 	config_set_default_string(globalConfig, "General", "Language",
 				  DEFAULT_LANG);
 	config_set_default_uint(globalConfig, "General", "MaxLogs", 10);

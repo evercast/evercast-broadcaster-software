@@ -1,6 +1,31 @@
 
 #include "auth-evercast.hpp"
 
+#include "obs-app.hpp"
+
+EvercastAuth::BaseUrlAndPath EvercastAuth::parseUrlComponents(const std::string& url) {
+
+	BaseUrlAndPath result;
+
+        int pos = -1;
+        for(unsigned int i = 1; i < url.length(); i++) {
+                if(url[i] == '/' && url[i - 1] != ':' && url[i - 1] != '/') {
+                        pos = i;
+                        break;
+                }
+        }
+
+        if(pos == -1) {
+                result.baseUrl = url;
+                result.path = "/";
+        } else {
+                result.baseUrl = url.substr(0, pos);
+                result.path = url.substr(pos, url.length());
+        }
+
+	return result;
+}
+
 void EvercastAuth::skipChar(const std::string& text, int& pos, char c) {
         while(pos < text.length() && text[pos] == c) {
                 pos ++;
@@ -165,11 +190,15 @@ nlohmann::json EvercastAuth::createRoomsQuery() {
 
 EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
-	httplib::Client client("https://v2.evercast.us");
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
+        const auto& urlComponents = parseUrlComponents(apiURL);
+
+	httplib::Client client(urlComponents.baseUrl.c_str());
 
         auto query = createLoginQuery(credentials);
 
-        auto res = client.Post("/api/graphql", query.dump(), "application/json");
+        auto res = client.Post(urlComponents.path.c_str(), query.dump(), "application/json");
 
         if (res) {
                 return getTokenInfoFromCookies(res->headers);
@@ -181,7 +210,11 @@ EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
 std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
-        httplib::Client client("https://v2.evercast.us");
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
+        const auto& urlComponents = parseUrlComponents(apiURL);
+
+        httplib::Client client(urlComponents.baseUrl.c_str());
 
         auto query = createStreamKeyQuery();
 
@@ -190,7 +223,7 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
                                          {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
                                  });
 
-        auto res = client.Post("/api/graphql", headers, query.dump(), "application/json");
+        auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
 
         if (res) {
                 auto j = nlohmann::json::parse(res->body);
@@ -203,7 +236,11 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
 EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
-        httplib::Client client("https://v2.evercast.us");
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
+        const auto& urlComponents = parseUrlComponents(apiURL);
+
+        httplib::Client client(urlComponents.baseUrl.c_str());
 
         auto query = createRoomsQuery();
 
@@ -212,7 +249,7 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
                                          {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
                                  });
 
-        auto res = client.Post("/api/graphql", headers, query.dump(), "application/json");
+        auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
 
         if (res) {
 

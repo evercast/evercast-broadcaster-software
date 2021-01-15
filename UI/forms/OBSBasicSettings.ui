@@ -224,7 +224,7 @@
               <x>0</x>
               <y>0</y>
               <width>753</width>
-              <height>943</height>
+              <height>1054</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -321,6 +321,47 @@
                     <widget class="QCheckBox" name="showAdvancedOptionsCheckBox">
                      <property name="text">
                       <string>Basic.Settings.General.ShowAdvancedOptions</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QGroupBox" name="groupBox_6">
+                  <property name="title">
+                   <string>Evercast Service</string>
+                  </property>
+                  <layout class="QFormLayout" name="formLayout_6">
+                   <property name="fieldGrowthPolicy">
+                    <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+                   </property>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="evercastGraphApiUrl"/>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QLineEdit" name="evercastWebsocketApiUrl"/>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_7">
+                     <property name="minimumSize">
+                      <size>
+                       <width>170</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>GraphQL API URL</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_18">
+                     <property name="text">
+                      <string>WebSocket API URL</string>
                      </property>
                     </widget>
                    </item>
@@ -1320,7 +1361,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
+              <width>740</width>
               <height>717</height>
              </rect>
             </property>
@@ -3504,8 +3545,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>632</height>
+              <width>691</width>
+              <height>601</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -5533,8 +5574,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="serviceButtonGroup"/>
+  <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="outputModeButtonGroup"/>
   <buttongroup name="codecButtonGroup"/>
  </buttongroups>

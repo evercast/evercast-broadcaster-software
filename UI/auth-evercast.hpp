@@ -13,6 +13,11 @@
 class EvercastAuth {
 public:
 
+	struct BaseUrlAndPath {
+		std::string baseUrl;
+		std::string path;
+	};
+
 	struct Credentials {
                 std::string email;
 		std::string password;
@@ -42,6 +47,7 @@ public:
 
 private:
 
+        static BaseUrlAndPath parseUrlComponents(const std::string& url);
         static void skipChar(const std::string& text, int& pos, char c);
         static bool findChar(const std::string& text, int& pos, char c);
         static std::string parseValue(const std::string& text,  const std::string& key);
