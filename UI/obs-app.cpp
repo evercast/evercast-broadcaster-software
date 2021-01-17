@@ -57,6 +57,14 @@
 
 #include "ui-config.h"
 
+#ifndef EBS_DEFAULT_GRAPH_API_URL
+#define EBS_DEFAULT_GRAPH_API_URL "https://v2.evercast.us/api/graphql"
+#endif
+
+#ifndef EBS_DEFAULT_WEBSOCKET_API_URL
+#define EBS_DEFAULT_WEBSOCKET_API_URL "wss://v2.evercast.us/websockets"
+#endif
+
 using namespace std;
 
 static log_handler_t def_log_handler;
@@ -369,10 +377,10 @@ static void do_log(int log_level, const char *msg, va_list args, void *param)
 bool OBSApp::InitGlobalConfigDefaults()
 {
 
-        config_set_default_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL",
-				  "https://v2.evercast.us");
-        config_set_default_string(GetGlobalConfig(), "General", "Evercasst_URL_WebSocket",
-				  "wss://v2.evercast.us/websockets");
+        config_set_default_string(GetGlobalConfig(), "General", "evercast_url_graphql",
+                                  EBS_DEFAULT_GRAPH_API_URL);
+        config_set_default_string(GetGlobalConfig(), "General", "evercast_url_websocket",
+                                  EBS_DEFAULT_WEBSOCKET_API_URL);
 
 	config_set_default_string(globalConfig, "General", "Language",
 				  DEFAULT_LANG);

@@ -103,7 +103,7 @@ void OBSBasicSettings::LoadStream1Settings()
 
   // NOTE LUDO: #173 replace Settings/Stream service Evercast combo box by a radio button
 	// const char *service = obs_data_get_string(settings, "service");
-	const char *server = obs_data_get_string(settings, "server");
+	//const char *server = obs_data_get_string(settings, "server");
 	const char *key = obs_data_get_string(settings, "key");
 
 	if (strcmp(type, "rtmp_custom") == 0) {
@@ -166,7 +166,7 @@ void OBSBasicSettings::LoadStream1Settings()
 		// ui->service->setCurrentIndex(idx);
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->customServer->setText(server);
-    ui->serverName->setText(server);
+    //ui->serverName->setText(server);
 		ui->room->setText(QT_UTF8(room));
 		ui->authUsername->setText(QT_UTF8(username));
 		ui->authPw->setText(QT_UTF8(password));
@@ -257,10 +257,8 @@ void OBSBasicSettings::SaveStream1Settings()
 					    QT_TO_UTF8(ui->authPw->text()));
 		}
 	} else if (webrtc > 0) {
-		obs_data_set_string(settings, "server",
-        // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
-				// QT_TO_UTF8(ui->customServer->text()));
-        QT_TO_UTF8(ui->serverName->text()));
+//		obs_data_set_string(settings, "server",
+//                                QT_TO_UTF8(ui->serverName->text()));
 		obs_data_set_string(settings, "room",
 				QT_TO_UTF8(ui->room->text()));
 		obs_data_set_string(settings, "username",
@@ -466,7 +464,7 @@ void OBSBasicSettings::on_service_currentIndexChanged(int)
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->serverStackedWidget->setCurrentIndex(1);
 		// ui->serverStackedWidget->setVisible(true);
-		ui->serverLabel->setVisible(true);
+		ui->serverLabel->setVisible(false);
 		ui->streamKeyLabel->setVisible(true);
 		ui->streamKeyWidget->setVisible(true);
 		ui->roomLabel->setVisible(false);
@@ -482,8 +480,8 @@ void OBSBasicSettings::on_service_currentIndexChanged(int)
 		ui->streamKeyWidget->setVisible(false);
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->serverStackedWidget->setCurrentIndex(1);
-		ui->serverLabel->setVisible(true);
-    ui->serverName->setVisible(true);
+		ui->serverLabel->setVisible(false);
+    ui->serverName->setVisible(false);
 		// ui->serverStackedWidget->setVisible(true);
     // NOTE LUDO: #173 replace Settings/Stream service Evercast combo box by a radio button
 		// obs_properties_t *props = obs_get_service_properties(webrtc_services[(int)webrtc - 3].c_str());
@@ -532,10 +530,10 @@ void OBSBasicSettings::on_service_currentIndexChanged(int)
 							   ui->streamProtocol);
 			min_idx++;
 		}
-		ui->serverLabel->setVisible(obs_property_visible(server));
+		//ui->serverLabel->setVisible(obs_property_visible(server));
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->serverStackedWidget->setVisible(obs_property_visible(server));
-    ui->serverName->setVisible(obs_property_visible(server));
+		//ui->serverName->setVisible(obs_property_visible(server));
 		ui->roomLabel->setVisible(obs_property_visible(room));
 		ui->room->setVisible(obs_property_visible(room));
 		ui->authUsernameLabel->setVisible(obs_property_visible(username));
@@ -569,7 +567,7 @@ void OBSBasicSettings::on_service_currentIndexChanged(int)
 							ui->streamProtocol);
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->serverStackedWidget->setCurrentIndex(0);
-		ui->serverLabel->setVisible(true);
+		ui->serverLabel->setVisible(false);
     // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
 		// ui->serverStackedWidget->setVisible(true);
 		ui->streamKeyLabel->setVisible(true);
@@ -672,18 +670,9 @@ OBSService OBSBasicSettings::SpawnTempService()
     // NOTE LUDO: #173 replace Settings/Stream service Evercast combo box by a radio button
 		obs_data_set_string(settings, "service",
 				    // QT_TO_UTF8(ui->service->currentText()));
-            QT_TO_UTF8(ui->serviceButtonGroup->checkedButton()->text()));
-		obs_data_set_string(
-			settings, "server",
-      // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
-			// QT_TO_UTF8(ui->server->currentData().toString()));
-      QT_TO_UTF8(ui->serverName->text()));
-	} else {
-		obs_data_set_string(settings, "server",
-            // NOTE LUDO: #185 Settings/Stream replace server name QStackedWidget by a QLineEdit
-				    // QT_TO_UTF8(ui->customServer->text()));
-            QT_TO_UTF8(ui->serverName->text()));
+                QT_TO_UTF8(ui->serviceButtonGroup->checkedButton()->text()));
 	}
+        //obs_data_set_string(settings, "server", QT_TO_UTF8(ui->serverName->text()));
 	obs_data_set_string(settings, "key", QT_TO_UTF8(ui->key->text()));
 
 	OBSService newService = obs_service_create(service_id, "temp_service",

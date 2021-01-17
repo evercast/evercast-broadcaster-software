@@ -1191,8 +1191,8 @@ void OBSBasicSettings::CheckAdvancedOptions()
 
 void OBSBasicSettings::LoadEvercastSettings() {
 
-	auto graphApiUrl = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
-        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_WebSocket");
+	auto graphApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
+        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_websocket");
 
 	ui->evercastGraphApiUrl->setText(QT_UTF8(graphApiUrl));
 	ui->evercastWebsocketApiUrl->setText(QT_UTF8(websocketApiUrl));
@@ -2885,9 +2885,9 @@ void OBSBasicSettings::LoadSettings(bool changedOnly)
 
 void OBSBasicSettings::SaveEvercastSettings() {
 
-        config_set_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL",
+        config_set_string(GetGlobalConfig(), "General", "evercast_url_graphql",
 			  QT_TO_UTF8(ui->evercastGraphApiUrl->text()));
-        config_set_string(GetGlobalConfig(), "General", "Evercasst_URL_WebSocket",
+        config_set_string(GetGlobalConfig(), "General", "evercast_url_websocket",
                           QT_TO_UTF8(ui->evercastWebsocketApiUrl->text()));
 
 }

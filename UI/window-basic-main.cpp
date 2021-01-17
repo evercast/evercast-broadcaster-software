@@ -5043,6 +5043,12 @@ void OBSBasic::StartStreaming()
 	if (api)
 		api->on_event(OBS_FRONTEND_EVENT_STREAMING_STARTING);
 
+        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_websocket");
+        OBSData settings = obs_data_create();
+        obs_data_set_string(settings, "server", websocketApiUrl);
+        obs_service_update(GetService(), settings);
+        obs_data_release(settings);
+
 	SaveProject();
 
 	ui->streamButton->setEnabled(false);

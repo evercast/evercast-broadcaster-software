@@ -190,7 +190,7 @@ nlohmann::json EvercastAuth::createRoomsQuery() {
 
 EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
         blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
         const auto& urlComponents = parseUrlComponents(apiURL);
 
@@ -210,7 +210,7 @@ EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
 std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
         blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
         const auto& urlComponents = parseUrlComponents(apiURL);
 
@@ -236,7 +236,7 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
 EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "Evercasst_URL_GraphQL");
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
         blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
         const auto& urlComponents = parseUrlComponents(apiURL);
 
