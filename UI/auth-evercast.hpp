@@ -42,7 +42,6 @@ public:
 
 	struct Rooms {
                 std::vector<Room> ordered;
-		std::unordered_map<std::string, Room> byName;
 	};
 
 private:

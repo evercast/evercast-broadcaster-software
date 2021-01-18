@@ -253,22 +253,45 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
         if (res) {
 
-		Rooms rooms;
                 auto j = nlohmann::json::parse(res->body);
+                std::unordered_map<std::string, Room> allRooms;
 
                 for(auto& room : j["data"]["currentProfile"]["recentRooms"]["nodes"].items()) {
-
                         auto jId = room.value()["liveroomByRoomId"]["id"];
                         auto jName = room.value()["liveroomByRoomId"]["displayName"];
-
                         if(!jId.empty() && !jName.empty()) {
-                                Room r;
-                                r.id = room.value()["liveroomByRoomId"]["id"].get<std::string>();
-                                r.name = room.value()["liveroomByRoomId"]["displayName"].get<std::string>();
-                                rooms.ordered.push_back(r);
-				rooms.byName.insert({r.name, r});
+                                Room r = {jId.get<std::string>(), jName.get<std::string>()};
+                                allRooms.insert({jId.get<std::string>(), r});
                         }
                 }
+
+                for(auto& room : j["data"]["currentProfile"]["invites"]["nodes"].items()) {
+                        auto jId = room.value()["liveroomByRoomId"]["id"];
+                        auto jName = room.value()["liveroomByRoomId"]["displayName"];
+                        if(!jId.empty() && !jName.empty()) {
+                                Room r = {jId.get<std::string>(), jName.get<std::string>()};
+                                allRooms.insert({jId.get<std::string>(), r});
+                        }
+                }
+
+                for(auto& room : j["data"]["currentProfile"]["rooms"]["nodes"].items()) {
+                        auto jId = room.value()["id"];
+                        auto jName = room.value()["displayName"];
+                        if(!jId.empty() && !jName.empty()) {
+                                Room r = {jId.get<std::string>(), jName.get<std::string>()};
+                                allRooms.insert({jId.get<std::string>(), r});
+                        }
+                }
+
+                Rooms rooms;
+
+                for(auto& pair : allRooms) {
+                        rooms.ordered.push_back(pair.second);
+                }
+
+                sort(rooms.ordered.begin(), rooms.ordered.end(), []( const Room& r1, const Room& r2 ) {
+			return r1.name < r2.name;
+		});
 
 		return rooms;
 
