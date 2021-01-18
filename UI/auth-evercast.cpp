@@ -226,8 +226,12 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
         auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
 
         if (res) {
-                auto j = nlohmann::json::parse(res->body);
-                return j["data"]["getStreamKey"]["uuid"];
+		try {
+			auto j = nlohmann::json::parse(res->body);
+			return j["data"]["getStreamKey"]["uuid"];
+		} catch (nlohmann::json::exception e) {
+                        blog(LOG_ERROR, "[EvercastAuth::obtainStreamKey]: '%s'", e.what());
+		}
         }
 
 	return "";
@@ -253,34 +257,41 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
         if (res) {
 
-                auto j = nlohmann::json::parse(res->body);
                 std::unordered_map<std::string, Room> allRooms;
 
-                for(auto& room : j["data"]["currentProfile"]["recentRooms"]["nodes"].items()) {
-                        auto jId = room.value()["liveroomByRoomId"]["id"];
-                        auto jName = room.value()["liveroomByRoomId"]["displayName"];
-                        if(!jId.empty() && !jName.empty()) {
-                                Room r = {jId.get<std::string>(), jName.get<std::string>()};
-                                allRooms.insert({jId.get<std::string>(), r});
-                        }
-                }
+		try {
 
-                for(auto& room : j["data"]["currentProfile"]["invites"]["nodes"].items()) {
-                        auto jId = room.value()["liveroomByRoomId"]["id"];
-                        auto jName = room.value()["liveroomByRoomId"]["displayName"];
-                        if(!jId.empty() && !jName.empty()) {
-                                Room r = {jId.get<std::string>(), jName.get<std::string>()};
-                                allRooms.insert({jId.get<std::string>(), r});
-                        }
-                }
+			auto j = nlohmann::json::parse(res->body);
 
-                for(auto& room : j["data"]["currentProfile"]["rooms"]["nodes"].items()) {
-                        auto jId = room.value()["id"];
-                        auto jName = room.value()["displayName"];
-                        if(!jId.empty() && !jName.empty()) {
-                                Room r = {jId.get<std::string>(), jName.get<std::string>()};
-                                allRooms.insert({jId.get<std::string>(), r});
-                        }
+			for (auto &room : j["data"]["currentProfile"]["recentRooms"]["nodes"].items()) {
+				auto jId =room.value()["liveroomByRoomId"]["id"];
+				auto jName = room.value()["liveroomByRoomId"]["displayName"];
+				if (!jId.empty() && !jName.empty()) {
+					Room r = {jId.get<std::string>(),jName.get<std::string>()};
+					allRooms.insert({jId.get<std::string>(), r});
+				}
+			}
+
+			for (auto &room : j["data"]["currentProfile"]["invites"]["nodes"].items()) {
+				auto jId =room.value()["liveroomByRoomId"]["id"];
+				auto jName = room.value()["liveroomByRoomId"]["displayName"];
+				if (!jId.empty() && !jName.empty()) {
+					Room r = {jId.get<std::string>(),jName.get<std::string>()};
+					allRooms.insert({jId.get<std::string>(), r});
+				}
+			}
+
+			for (auto &room : j["data"]["currentProfile"]["rooms"]["nodes"] .items()) {
+				auto jId = room.value()["id"];
+				auto jName = room.value()["displayName"];
+				if (!jId.empty() && !jName.empty()) {
+					Room r = {jId.get<std::string>(),jName.get<std::string>()};
+					allRooms.insert({jId.get<std::string>(), r});
+				}
+			}
+
+		} catch (nlohmann::json::exception e) {
+                        blog(LOG_ERROR, "[EvercastAuth::obtainRooms]: '%s'", e.what());
                 }
 
                 Rooms rooms;
@@ -319,6 +330,7 @@ void EvercastAuth::updateState() {
                 token = obtainToken(getCredentials());
                 setToken(token);
 		if(token.empty()) {
+                        setStreamKey("");
 			return;
 		}
 		streamKey = obtainStreamKey(token);
