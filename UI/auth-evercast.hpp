@@ -13,6 +13,11 @@
 class EvercastAuth {
 public:
 
+	struct BaseUrlAndPath {
+		std::string baseUrl;
+		std::string path;
+	};
+
 	struct Credentials {
                 std::string email;
 		std::string password;
@@ -25,7 +30,7 @@ public:
                 std::string nonce;
 
 		bool empty() const {
-			return token.empty() || nonce.empty();
+			return token.empty();
 		}
 
         };
@@ -37,11 +42,11 @@ public:
 
 	struct Rooms {
                 std::vector<Room> ordered;
-		std::unordered_map<std::string, Room> byName;
 	};
 
 private:
 
+        static BaseUrlAndPath parseUrlComponents(const std::string& url);
         static void skipChar(const std::string& text, int& pos, char c);
         static bool findChar(const std::string& text, int& pos, char c);
         static std::string parseValue(const std::string& text,  const std::string& key);

@@ -80,6 +80,9 @@ using namespace std;
 
 #include "ui-config.h"
 
+#define CODEC_NAME_H264 "h264"
+#define CODEC_NAME_VP9 "vp9"
+
 struct QCef;
 struct QCefCookieManager;
 
@@ -5033,6 +5036,35 @@ void OBSBasic::OpenSceneFilters()
 #define STREAMING_STOP \
 	"==== Streaming Stop ================================================"
 
+
+void OBSBasic::PrepareStreaming()
+{
+
+        OBSData currSettings = obs_service_get_settings(GetService());
+
+        auto tmpString = obs_data_get_string(currSettings, "codec");
+        const char *codec =
+                strcmp("", tmpString) == 0 ? CODEC_NAME_VP9 :
+                #ifdef _WIN32
+                        strcmp(CODEC_NAME_H264, tmpString) == 0 ? CODEC_NAME_VP9 : tmpString
+                #else
+                        tmpString
+                #endif
+		;
+
+        obs_data_release(currSettings);
+
+        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_websocket");
+
+        OBSData settings = obs_data_create();
+        obs_data_set_string(settings, "server", websocketApiUrl);
+        obs_data_set_string(settings, "codec", codec);
+
+        obs_service_update(GetService(), settings);
+        obs_data_release(settings);
+
+}
+
 void OBSBasic::StartStreaming()
 {
 	if (outputHandler->StreamingActive())
@@ -5042,6 +5074,8 @@ void OBSBasic::StartStreaming()
 
 	if (api)
 		api->on_event(OBS_FRONTEND_EVENT_STREAMING_STARTING);
+
+        PrepareStreaming();
 
 	SaveProject();
 
@@ -7599,6 +7633,8 @@ void OBSBasic::EvercastResetAccount() {
         obs_data_release(settings);
         SaveService();
 
+        evercastCurrRoomIndex = -1;
+
 }
 
 void OBSBasic::EvercastLoginCallback() {
@@ -7650,11 +7686,44 @@ void OBSBasic::on_loginButton_clicked() {
 }
 
 void OBSBasic::on_logoutButton_clicked() {
+        if (outputHandler->StreamingActive()) {
+		if (isVisible()) {
+			QMessageBox::StandardButton button =
+				OBSMessageBox::question(
+					this, QTStr("ConfirmStop.Title"),
+					QTStr("ConfirmStop.Text.Logout"));
+
+			if (button == QMessageBox::No) {
+				ui->streamButton->setChecked(true);
+				return;
+			}
+		}
+
+		StopStreaming();
+	}
         EvercastResetAccount();
 }
 
 void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
-        blog(LOG_INFO, "Room Index=%d", index);
+
+	if(index == evercastCurrRoomIndex) return;
+
+        if (outputHandler->StreamingActive()) {
+                if (isVisible()) {
+                        QMessageBox::StandardButton button =
+                                OBSMessageBox::question(
+                                        this, QTStr("ConfirmStop.Title"),
+                                        QTStr("ConfirmStop.Text.ChangeRoom"));
+
+                        if (button == QMessageBox::No) {
+                                ui->streamButton->setChecked(true);
+				ui->evercastRooms->setCurrentIndex(evercastCurrRoomIndex);
+                                return;
+                        }
+                }
+
+                StopStreaming();
+        }
 
 	const auto& rooms = evercastAuth.getRooms();
 	if(index < rooms.ordered.size()) {
@@ -7669,5 +7738,7 @@ void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
 		obs_data_release(settings);
                 SaveService();
 	}
+
+        evercastCurrRoomIndex = index;
 
 }
