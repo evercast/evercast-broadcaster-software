@@ -30,7 +30,7 @@ public:
                 std::string nonce;
 
 		bool empty() const {
-			return token.empty() || nonce.empty();
+			return token.empty();
 		}
 
         };

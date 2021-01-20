@@ -149,6 +149,7 @@ private:
 
 	std::shared_ptr<Auth> auth;
         EvercastAuth evercastAuth;
+	int evercastCurrRoomIndex = -1;
 
 	std::vector<VolControl *> volumes;
 
@@ -448,6 +449,7 @@ public slots:
 	void DeferSaveEnd();
 
 	void StartStreaming();
+	void PrepareStreaming();
 	void StopStreaming();
 	void ForceStopStreaming();
 
