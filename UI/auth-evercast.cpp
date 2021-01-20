@@ -119,9 +119,11 @@ nlohmann::json EvercastAuth::createLoginQuery(const Credentials& credentials) {
 nlohmann::json EvercastAuth::createStreamKeyQuery() {
 
         nlohmann::json j;
+	// The below strange construct is needed because some compilers on runner-up operating systems resolve {} to null
+	nlohmann::json input = nlohmann::ordered_map<std::string, std::string>();
         j["query"] = "mutation getStreamKeyMutation(\n  $input: GetStreamKeyInput!\n) {\n  getStreamKey(input: $input) {\n    uuid\n  }\n}\n";
         j["variables"] = {
-                {"input", {}}
+                {"input", input}
         };
         return j;
 

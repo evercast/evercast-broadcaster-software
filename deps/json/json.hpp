@@ -7223,7 +7223,7 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+            const auto x = (long long)std::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
             JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
