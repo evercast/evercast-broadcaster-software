@@ -201,6 +201,8 @@ private:
 	void LoadFormats();
 	void ReloadCodecs(const ff_format_desc *formatDesc);
 
+	void LoadEvercastSettings();
+
 	void LoadGeneralSettings();
 	void LoadStream1Settings();
 	void LoadOutputSettings();
@@ -262,6 +264,8 @@ private:
 	void LoadDownscaleFilters();
 	void LoadResolutionLists();
 	void LoadFPSData();
+
+        void SaveEvercastSettings();
 
 	void SaveGeneralSettings();
 	void SaveStream1Settings();

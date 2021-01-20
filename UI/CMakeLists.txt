@@ -79,13 +79,18 @@ if(NOT Qt5Widgets_FOUND)
 	endif()
 endif()
 
-
 include_directories(${FFMPEG_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(SYSTEM "obs-frontend-api")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libobs")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/libff")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json11")
+
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/http")
+add_definitions(-DCPPHTTPLIB_OPENSSL_SUPPORT=1)
+
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json")
+
 if(BROWSER_AVAILABLE_INTERNAL)
 	include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/plugins/obs-browser/panel")
 endif()
@@ -201,6 +206,7 @@ set(obs_SOURCES
 	obs-app.cpp
 	window-dock.cpp
 	api-interface.cpp
+	window-basic-login.cpp
 	window-basic-main.cpp
 	window-basic-stats.cpp
 	window-basic-filters.cpp
@@ -231,6 +237,7 @@ set(obs_SOURCES
 	update/update.cpp
 	update/update-helpers.cpp
 	auth-base.cpp
+	auth-evercast.cpp
 	source-tree.cpp
 	properties-view.cpp
 	focus-list.cpp
@@ -259,10 +266,13 @@ set(obs_HEADERS
 	${obs_PLATFORM_HEADERS}
 	${obs_libffutil_HEADERS}
 	../deps/json11/json11.hpp
+	../deps/json/json.hpp
+	../deps/http/httplib.h
 	obs-app.hpp
 	platform.hpp
 	window-dock.hpp
 	window-main.hpp
+	window-basic-login.hpp
 	window-basic-main.hpp
 	window-basic-stats.hpp
 	window-basic-filters.hpp
@@ -286,6 +296,7 @@ set(obs_HEADERS
 	update/update.hpp
 	update/update-helpers.hpp
 	auth-base.hpp
+	auth-evercast.hpp
 	source-tree.hpp
 	properties-view.hpp
 	properties-view.moc.hpp
@@ -334,6 +345,7 @@ set(obs_UI
 	forms/OBSBasicSettings.ui
 	forms/OBSBasicSourceSelect.ui
 	forms/OBSBasicInteraction.ui
+	forms/OBSBasicLogin.ui
 	forms/OBSExtraBrowsers.ui
 	forms/OBSUpdate.ui
 	forms/OBSRemux.ui
@@ -367,6 +379,8 @@ if(WIN32)
 	target_compile_options(${_gui_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")
 endif()
 
+find_package(OpenSSL 1.1 REQUIRED)
+
 target_link_libraries(${_gui_name}
 	libobs
 	Qt5::Widgets
@@ -374,7 +388,10 @@ target_link_libraries(${_gui_name}
 	obs-frontend-api
 	${FFMPEG_LIBRARIES}
 	${LIBCURL_LIBRARIES}
-	${obs_PLATFORM_LIBRARIES})
+	${obs_PLATFORM_LIBRARIES}
+	OpenSSL::Crypto
+	OpenSSL::SSL
+)
 
 if (APPLE)
 	target_link_libraries(${_gui_name}

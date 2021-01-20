@@ -34,6 +34,7 @@
 #include "window-projector.hpp"
 #include "window-basic-about.hpp"
 #include "auth-base.hpp"
+#include "auth-evercast.hpp"
 
 #include <obs-frontend-internal.hpp>
 
@@ -147,6 +148,8 @@ private:
 	obs_frontend_callbacks *api = nullptr;
 
 	std::shared_ptr<Auth> auth;
+        EvercastAuth evercastAuth;
+	int evercastCurrRoomIndex = -1;
 
 	std::vector<VolControl *> volumes;
 
@@ -447,6 +450,7 @@ public slots:
 	void DeferSaveEnd();
 
 	void StartStreaming();
+	void PrepareStreaming();
 	void StopStreaming();
 	void ForceStopStreaming();
 
@@ -790,6 +794,14 @@ private slots:
 
 	void on_resetUI_triggered();
 	void on_lockUI_toggled(bool lock);
+
+        void on_loginButton_clicked();
+        void on_logoutButton_clicked();
+
+        void on_evercastRooms_currentIndexChanged(int index);
+
+        void EvercastResetAccount();
+        void EvercastLoginCallback();
 
 	void PauseToggled();
 
