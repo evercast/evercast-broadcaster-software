@@ -56,9 +56,11 @@ private:
 
         static nlohmann::json createLoginQuery(const Credentials& credentials);
         static nlohmann::json createStreamKeyQuery();
+        static nlohmann::json obtainStreamKeyQuery();
         static nlohmann::json createRoomsQuery();
 
         static Token obtainToken(const Credentials& credentials);
+	static std::string createStreamKey(const Token& token);
         static std::string obtainStreamKey(const Token& token);
         static Rooms obtainRooms(const Token& token);
 
