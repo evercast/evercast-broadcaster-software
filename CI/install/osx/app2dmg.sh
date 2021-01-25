@@ -4,7 +4,10 @@ codesign --deep --options runtime -vfs 'Developer ID Application: Evercast LLC' 
 mkdir /tmp/installebs
 rm -rf /tmp/installebs/EBS.app
 cp -R "./EBS.app" /tmp/installebs
+productsign --sign 'Developer ID Installer: Evercast LLC' $NDI_RUNTIME_unsigned.pkg $NDI_RUNTIME
 cp $NDI_RUNTIME /tmp/installebs
+productsign --sign 'Developer ID Installer: Evercast LLC' $NDI_M1_RUNTIME_unsigned.pkg $NDI_M1_RUNTIME
+cp $NDI_M1_RUNTIME /tmp/installebs
 hdiutil create /tmp/tmp.dmg -ov -volname "EBS_""$EBS_VERSION""_Install" -fs HFS+ -srcfolder /tmp/installebs # "./EBS.app"
 cp /tmp/tmp.dmg ./EBS_"$EBS_VERSION"_Install.dmg
 codesign -s "Developer ID Application: Evercast LLC" "EBS_""$EBS_VERSION""_Install.dmg" --options runtime
