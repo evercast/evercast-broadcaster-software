@@ -117,6 +117,16 @@ nlohmann::json EvercastAuth::createLoginQuery(const Credentials& credentials) {
 }
 
 nlohmann::json EvercastAuth::createStreamKeyQuery() {
+	nlohmann::json j;
+	nlohmann::json input = nlohmann::ordered_map<std::string, std::string>();
+	j["query"] = "mutation CreateStreamKeyMutation(\n $input : CreateStreamKeyInput !\n) {\n createStreamKey(input : $input) {\n uuid\n } \n }\n";
+	j["variables"] = {
+		{"input", input}
+	};
+	return j;
+}
+
+nlohmann::json EvercastAuth::obtainStreamKeyQuery() {
 
         nlohmann::json j;
 	// The below strange construct is needed because some compilers on runner-up operating systems resolve {} to null
@@ -218,7 +228,7 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
         httplib::Client client(urlComponents.baseUrl.c_str());
 
-        auto query = createStreamKeyQuery();
+        auto query = obtainStreamKeyQuery();
 
         httplib::Headers headers({
                                          {"X-Double-Submit", token.nonce},
@@ -232,12 +242,40 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
 			auto j = nlohmann::json::parse(res->body);
 			return j["data"]["getStreamKey"]["uuid"];
 		} catch (nlohmann::json::exception e) {
-                        blog(LOG_ERROR, "[EvercastAuth::obtainStreamKey]: '%s'", e.what());
+                        blog(LOG_WARNING, "[EvercastAuth::obtainStreamKey]: '%s'", e.what());
 		}
         }
 
 	return "";
 
+}
+
+std::string EvercastAuth::createStreamKey(const Token& token) {
+	std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
+        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
+        const auto& urlComponents = parseUrlComponents(apiURL);
+
+        httplib::Client client(urlComponents.baseUrl.c_str());
+
+        auto query = createStreamKeyQuery();
+
+        httplib::Headers headers({
+                                         {"X-Double-Submit", token.nonce},
+                                         {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
+                                 });
+
+        auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
+
+        if (res) {
+		try {
+			auto j = nlohmann::json::parse(res->body);
+			return j["data"]["createStreamKey"]["uuid"];
+		} catch (nlohmann::json::exception e) {
+                        blog(LOG_ERROR, "[EvercastAuth::createStreamKey]: '%s'", e.what());
+		}
+        }
+
+	return "";
 }
 
 EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
@@ -336,6 +374,11 @@ void EvercastAuth::updateState() {
 			return;
 		}
 		streamKey = obtainStreamKey(token);
+
+		if (streamKey.empty()) {
+			/* Still no stream key; try creating one */
+			streamKey = createStreamKey(token);
+		}
 	}
         setStreamKey(streamKey);
         if(streamKey.empty()) {
