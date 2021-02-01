@@ -86,8 +86,6 @@ include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libobs")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/libff")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json11")
 
-include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json")
-
 if(BROWSER_AVAILABLE_INTERNAL)
 	include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/plugins/obs-browser/panel")
 endif()
@@ -263,7 +261,6 @@ set(obs_HEADERS
 	${obs_PLATFORM_HEADERS}
 	${obs_libffutil_HEADERS}
 	../deps/json11/json11.hpp
-	../deps/json/json.hpp
 	obs-app.hpp
 	platform.hpp
 	window-dock.hpp

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "json.hpp"
-
 #include <obs-module.h>
+#include <json11.hpp>
 
 #include <thread>
 #include <mutex>
@@ -66,10 +65,10 @@ private:
 
 private:
 
-        static nlohmann::json createLoginQuery(const Credentials& credentials);
-        static nlohmann::json createStreamKeyQuery();
-        static nlohmann::json obtainStreamKeyQuery();
-        static nlohmann::json createRoomsQuery();
+        static json11::Json createLoginQuery(const Credentials& credentials);
+        static json11::Json createStreamKeyQuery();
+        static json11::Json obtainStreamKeyQuery();
+        static json11::Json createRoomsQuery();
 
         static Token obtainToken(const Credentials& credentials);
 	static std::string createStreamKey(const Token& token);
