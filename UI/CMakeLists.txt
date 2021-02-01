@@ -86,9 +86,6 @@ include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/libobs")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/libff")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json11")
 
-include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/http")
-add_definitions(-DCPPHTTPLIB_OPENSSL_SUPPORT=1)
-
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/deps/json")
 
 if(BROWSER_AVAILABLE_INTERNAL)
@@ -267,7 +264,6 @@ set(obs_HEADERS
 	${obs_libffutil_HEADERS}
 	../deps/json11/json11.hpp
 	../deps/json/json.hpp
-	../deps/http/httplib.h
 	obs-app.hpp
 	platform.hpp
 	window-dock.hpp
@@ -379,8 +375,6 @@ if(WIN32)
 	target_compile_options(${_gui_name} PRIVATE "/MD$<$<CONFIG:Debug>:d>")
 endif()
 
-find_package(OpenSSL 1.1 REQUIRED)
-
 target_link_libraries(${_gui_name}
 	libobs
 	Qt5::Widgets
@@ -389,8 +383,6 @@ target_link_libraries(${_gui_name}
 	${FFMPEG_LIBRARIES}
 	${LIBCURL_LIBRARIES}
 	${obs_PLATFORM_LIBRARIES}
-	OpenSSL::Crypto
-	OpenSSL::SSL
 )
 
 if (APPLE)

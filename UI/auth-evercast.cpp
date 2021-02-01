@@ -1,6 +1,6 @@
 
 #include "auth-evercast.hpp"
-
+#include "remote-text.hpp"
 #include "obs-app.hpp"
 
 EvercastAuth::BaseUrlAndPath EvercastAuth::parseUrlComponents(const std::string& url) {
@@ -48,6 +48,10 @@ std::string EvercastAuth::parseValue(const std::string& text,  const std::string
 
         std::string value = "";
 
+        if(findChar(text, pos, ':')) {
+		pos ++;
+	}
+
         while(pos < text.length()) {
                 if(keyPos == -1 && valuePos == -1) {
                         skipChar(text, pos, ' ');
@@ -76,18 +80,14 @@ std::string EvercastAuth::parseValue(const std::string& text,  const std::string
 
 }
 
-EvercastAuth::Token EvercastAuth::getTokenInfoFromCookies(const httplib::Headers& headers) {
+EvercastAuth::Token EvercastAuth::getTokenInfoFromCookies(const std::vector<std::string>& headers) {
 
         Token result;
 
-        const auto& map = headers;
-        auto itlow = map.lower_bound("Set-Cookie");
-        auto itup = map.upper_bound("Set-Cookie");
+        for(auto& h : headers) {
 
-        for(auto it = itlow; it != itup; it ++) {
-
-                auto token = parseValue(it->second, "__Host-jwt");
-                auto nonce = parseValue(it->second, "__Host-nonce");
+                auto token = parseValue(h, "__Host-jwt");
+                auto nonce = parseValue(h, "__Host-nonce");
 
                 if(!token.empty()) result.token = token;
                 if(!nonce.empty()) result.nonce = nonce;
@@ -200,50 +200,63 @@ nlohmann::json EvercastAuth::createRoomsQuery() {
 
 }
 
+EvercastAuth::HttpResponse EvercastAuth::execHttp(const std::string& url,
+						  const std::string& body,
+						  const std::vector<std::string>& headers)
+{
+
+        HttpResponse res;
+
+        GetRemoteFileAndHeaders(url.c_str(), res.body, res.error,
+                                &res.code, "application/json", body.c_str(),
+                                headers, &res.headers, 5);
+
+	return res;
+
+}
+
 EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
         std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
-        const auto& urlComponents = parseUrlComponents(apiURL);
-
-	httplib::Client client(urlComponents.baseUrl.c_str());
+        blog(LOG_INFO, "EvercastAuth::obtainToken(). apiURL='%s'", apiURL.c_str());
 
         auto query = createLoginQuery(credentials);
+        auto res = execHttp(apiURL, query.dump());
 
-        auto res = client.Post(urlComponents.path.c_str(), query.dump(), "application/json");
+        if(!res.error.empty()) {
+                blog(LOG_INFO, "error='%s'", res.error.c_str());
+	}
 
-        if (res) {
-                return getTokenInfoFromCookies(res->headers);
-        }
+	auto tokenInfo = getTokenInfoFromCookies(res.headers);
+        blog(LOG_INFO, "OK: nonce='%s', token='%s'", tokenInfo.nonce.c_str(), tokenInfo.token.c_str());
 
-	return {};
+        return tokenInfo;
 
 }
 
 std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
         std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
-        const auto& urlComponents = parseUrlComponents(apiURL);
-
-        httplib::Client client(urlComponents.baseUrl.c_str());
+        blog(LOG_INFO, "EvercastAuth::obtainStreamKey(). apiURL='%s'", apiURL.c_str());
 
         auto query = obtainStreamKeyQuery();
+        auto res = execHttp(apiURL, query.dump(),
+			    {
+				    "X-Double-Submit: " + token.nonce,
+				    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
+			    });
 
-        httplib::Headers headers({
-                                         {"X-Double-Submit", token.nonce},
-                                         {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
-                                 });
+        if(!res.error.empty()) {
+                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        }
 
-        auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
-
-        if (res) {
-		try {
-			auto j = nlohmann::json::parse(res->body);
-			return j["data"]["getStreamKey"]["uuid"];
-		} catch (nlohmann::json::exception e) {
-                        blog(LOG_WARNING, "[EvercastAuth::obtainStreamKey]: '%s'", e.what());
-		}
+        try {
+                auto j = nlohmann::json::parse(res.body);
+		std::string key = j["data"]["getStreamKey"]["uuid"];
+                blog(LOG_INFO, "streamKey='%s'", key.c_str());
+                return key;
+        } catch (nlohmann::json::exception e) {
+                blog(LOG_WARNING, "[EvercastAuth::obtainStreamKey]: '%s'", e.what());
         }
 
 	return "";
@@ -251,28 +264,28 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
 }
 
 std::string EvercastAuth::createStreamKey(const Token& token) {
-	std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
-        const auto& urlComponents = parseUrlComponents(apiURL);
 
-        httplib::Client client(urlComponents.baseUrl.c_str());
+        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
+        blog(LOG_INFO, "EvercastAuth::createStreamKey(). apiURL='%s'", apiURL.c_str());
 
         auto query = createStreamKeyQuery();
+        auto res = execHttp(apiURL, query.dump(),
+                            {
+                                    "X-Double-Submit: " + token.nonce,
+                                    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
+                            });
 
-        httplib::Headers headers({
-                                         {"X-Double-Submit", token.nonce},
-                                         {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
-                                 });
+        if(!res.error.empty()) {
+                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        }
 
-        auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
-
-        if (res) {
-		try {
-			auto j = nlohmann::json::parse(res->body);
-			return j["data"]["createStreamKey"]["uuid"];
-		} catch (nlohmann::json::exception e) {
-                        blog(LOG_ERROR, "[EvercastAuth::createStreamKey]: '%s'", e.what());
-		}
+        try {
+                auto j = nlohmann::json::parse(res.body);
+                std::string key = j["data"]["createStreamKey"]["uuid"];
+                blog(LOG_INFO, "streamKey='%s'", key.c_str());
+                return key;
+        } catch (nlohmann::json::exception e) {
+                blog(LOG_ERROR, "[EvercastAuth::createStreamKey]: '%s'", e.what());
         }
 
 	return "";
@@ -281,74 +294,67 @@ std::string EvercastAuth::createStreamKey(const Token& token) {
 EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
         std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "apiURL='%s'", apiURL.c_str());
-        const auto& urlComponents = parseUrlComponents(apiURL);
-
-        httplib::Client client(urlComponents.baseUrl.c_str());
+        blog(LOG_INFO, "EvercastAuth::obtainRooms(). apiURL='%s'", apiURL.c_str());
 
         auto query = createRoomsQuery();
+        auto res = execHttp(apiURL, query.dump(),
+                            {
+                                    "X-Double-Submit: " + token.nonce,
+                                    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
+                            });
 
-        httplib::Headers headers({
-                                         {"X-Double-Submit", token.nonce},
-                                         {"cookie", "__Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token}
-                                 });
-
-        auto res = client.Post(urlComponents.path.c_str(), headers, query.dump(), "application/json");
-
-        if (res) {
-
-                std::unordered_map<std::string, Room> allRooms;
-
-		try {
-
-			auto j = nlohmann::json::parse(res->body);
-
-			for (auto &room : j["data"]["currentProfile"]["recentRooms"]["nodes"].items()) {
-				auto jId =room.value()["liveroomByRoomId"]["id"];
-				auto jName = room.value()["liveroomByRoomId"]["displayName"];
-				if (!jId.empty() && !jName.empty()) {
-					Room r = {jId.get<std::string>(),jName.get<std::string>()};
-					allRooms.insert({jId.get<std::string>(), r});
-				}
-			}
-
-			for (auto &room : j["data"]["currentProfile"]["invites"]["nodes"].items()) {
-				auto jId =room.value()["liveroomByRoomId"]["id"];
-				auto jName = room.value()["liveroomByRoomId"]["displayName"];
-				if (!jId.empty() && !jName.empty()) {
-					Room r = {jId.get<std::string>(),jName.get<std::string>()};
-					allRooms.insert({jId.get<std::string>(), r});
-				}
-			}
-
-			for (auto &room : j["data"]["currentProfile"]["rooms"]["nodes"] .items()) {
-				auto jId = room.value()["id"];
-				auto jName = room.value()["displayName"];
-				if (!jId.empty() && !jName.empty()) {
-					Room r = {jId.get<std::string>(),jName.get<std::string>()};
-					allRooms.insert({jId.get<std::string>(), r});
-				}
-			}
-
-		} catch (nlohmann::json::exception e) {
-                        blog(LOG_ERROR, "[EvercastAuth::obtainRooms]: '%s'", e.what());
-                }
-
-                Rooms rooms;
-
-                for(auto& pair : allRooms) {
-                        rooms.ordered.push_back(pair.second);
-                }
-
-                sort(rooms.ordered.begin(), rooms.ordered.end(), []( const Room& r1, const Room& r2 ) {
-			return r1.name < r2.name;
-		});
-
-		return rooms;
-
+        if(!res.error.empty()) {
+                blog(LOG_INFO, "error='%s'", res.error.c_str());
         }
 
-        return {};
+        std::unordered_map<std::string, Room> allRooms;
+
+        try {
+
+                auto j = nlohmann::json::parse(res.body);
+
+                for (auto &room : j["data"]["currentProfile"]["recentRooms"]["nodes"].items()) {
+                        auto jId =room.value()["liveroomByRoomId"]["id"];
+                        auto jName = room.value()["liveroomByRoomId"]["displayName"];
+                        if (!jId.empty() && !jName.empty()) {
+                                Room r = {jId.get<std::string>(),jName.get<std::string>()};
+                                allRooms.insert({jId.get<std::string>(), r});
+                        }
+                }
+
+                for (auto &room : j["data"]["currentProfile"]["invites"]["nodes"].items()) {
+                        auto jId =room.value()["liveroomByRoomId"]["id"];
+                        auto jName = room.value()["liveroomByRoomId"]["displayName"];
+                        if (!jId.empty() && !jName.empty()) {
+                                Room r = {jId.get<std::string>(),jName.get<std::string>()};
+                                allRooms.insert({jId.get<std::string>(), r});
+                        }
+                }
+
+                for (auto &room : j["data"]["currentProfile"]["rooms"]["nodes"] .items()) {
+                        auto jId = room.value()["id"];
+                        auto jName = room.value()["displayName"];
+                        if (!jId.empty() && !jName.empty()) {
+                                Room r = {jId.get<std::string>(),jName.get<std::string>()};
+                                allRooms.insert({jId.get<std::string>(), r});
+                        }
+                }
+
+        } catch (nlohmann::json::exception e) {
+                blog(LOG_ERROR, "[EvercastAuth::obtainRooms]: '%s'", e.what());
+        }
+
+        Rooms rooms;
+
+        for(auto& pair : allRooms) {
+                rooms.ordered.push_back(pair.second);
+        }
+
+        sort(rooms.ordered.begin(), rooms.ordered.end(), []( const Room& r1, const Room& r2 ) {
+                return r1.name < r2.name;
+        });
+
+        return rooms;
 
 }
 
