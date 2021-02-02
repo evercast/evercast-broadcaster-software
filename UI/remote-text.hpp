@@ -63,9 +63,18 @@ public:
 	}
 };
 
+bool GetRemoteFileAndHeaders(
+        const char *url, std::string &str, std::string &error,
+        long *responseCode = nullptr, const char *contentType = nullptr,
+        const char *postData = nullptr,
+        std::vector<std::string> extraHeaders = std::vector<std::string>(),
+        std::vector<std::string> * outHeaders = nullptr,
+        int timeoutSec = 0);
+
 bool GetRemoteFile(
 	const char *url, std::string &str, std::string &error,
 	long *responseCode = nullptr, const char *contentType = nullptr,
 	const char *postData = nullptr,
 	std::vector<std::string> extraHeaders = std::vector<std::string>(),
 	std::string *signature = nullptr, int timeoutSec = 0);
+

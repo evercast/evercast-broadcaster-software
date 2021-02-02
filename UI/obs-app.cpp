@@ -58,11 +58,11 @@
 #include "ui-config.h"
 
 #ifndef EBS_DEFAULT_GRAPH_API_URL
-#define EBS_DEFAULT_GRAPH_API_URL "https://v2.evercast.us/api/graphql"
+#define EBS_DEFAULT_GRAPH_API_URL "https://app.evercast.us/api/graphql"
 #endif
 
 #ifndef EBS_DEFAULT_WEBSOCKET_API_URL
-#define EBS_DEFAULT_WEBSOCKET_API_URL "wss://v2.evercast.us/websockets"
+#define EBS_DEFAULT_WEBSOCKET_API_URL "wss://app.evercast.us/websockets"
 #endif
 
 using namespace std;

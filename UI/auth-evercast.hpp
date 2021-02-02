@@ -1,9 +1,7 @@
 #pragma once
 
-#include "httplib.h"
-#include "json.hpp"
-
 #include <obs-module.h>
+#include <json11.hpp>
 
 #include <thread>
 #include <mutex>
@@ -46,18 +44,31 @@ public:
 
 private:
 
+	struct HttpResponse {
+                long code;
+		std::string body;
+		std::string error;
+		std::vector<std::string> headers;
+	};
+
+private:
+
+	static HttpResponse execHttp(const std::string& url,
+                                     const std::string& body,
+                                     const std::vector<std::string>& headers = std::vector<std::string>({}));
+
         static BaseUrlAndPath parseUrlComponents(const std::string& url);
         static void skipChar(const std::string& text, int& pos, char c);
         static bool findChar(const std::string& text, int& pos, char c);
         static std::string parseValue(const std::string& text,  const std::string& key);
-        static Token getTokenInfoFromCookies(const httplib::Headers& headers);
+        static Token getTokenInfoFromCookies(const std::vector<std::string>& headers);
 
 private:
 
-        static nlohmann::json createLoginQuery(const Credentials& credentials);
-        static nlohmann::json createStreamKeyQuery();
-        static nlohmann::json obtainStreamKeyQuery();
-        static nlohmann::json createRoomsQuery();
+        static json11::Json createLoginQuery(const Credentials& credentials);
+        static json11::Json createStreamKeyQuery();
+        static json11::Json obtainStreamKeyQuery();
+        static json11::Json createRoomsQuery();
 
         static Token obtainToken(const Credentials& credentials);
 	static std::string createStreamKey(const Token& token);

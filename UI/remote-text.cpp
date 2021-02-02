@@ -114,87 +114,108 @@ static size_t header_write(char *ptr, size_t size, size_t nmemb,
 	return total;
 }
 
+bool GetRemoteFileAndHeaders(
+        const char *url, std::string &str, std::string &error,
+        long *responseCode, const char *contentType,
+        const char *postData,
+        std::vector<std::string> extraHeaders,
+        std::vector<std::string>* outHeaders,
+        int timeoutSec)
+{
+
+        char error_in[CURL_ERROR_SIZE];
+        CURLcode code = CURLE_FAILED_INIT;
+
+        error_in[0] = 0;
+
+        string versionString("User-Agent: obs-basic ");
+        versionString += App()->GetVersionString();
+
+        string contentTypeString;
+        if (contentType) {
+                contentTypeString += "Content-Type: ";
+                contentTypeString += contentType;
+        }
+
+        Curl curl{curl_easy_init(), curl_deleter};
+        if (curl) {
+                struct curl_slist *header = nullptr;
+
+                header = curl_slist_append(header, versionString.c_str());
+
+                if (!contentTypeString.empty()) {
+                        header = curl_slist_append(header,
+                                                   contentTypeString.c_str());
+                }
+
+                for (std::string &h : extraHeaders)
+                        header = curl_slist_append(header, h.c_str());
+
+                curl_easy_setopt(curl.get(), CURLOPT_URL, url);
+                curl_easy_setopt(curl.get(), CURLOPT_ACCEPT_ENCODING, "");
+                curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, header);
+                curl_easy_setopt(curl.get(), CURLOPT_ERRORBUFFER, error_in);
+                curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION,
+                                 string_write);
+                curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &str);
+
+		if(outHeaders) {
+			curl_easy_setopt(curl.get(), CURLOPT_HEADERFUNCTION,
+					 header_write);
+			curl_easy_setopt(curl.get(), CURLOPT_HEADERDATA,
+					 outHeaders);
+		}
+
+                if (timeoutSec)
+                        curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT,
+                                         timeoutSec);
+
+#if LIBCURL_VERSION_NUM >= 0x072400
+                // A lot of servers don't yet support ALPN
+		curl_easy_setopt(curl.get(), CURLOPT_SSL_ENABLE_ALPN, 0);
+#endif
+
+                if (postData) {
+                        curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS,
+                                         postData);
+                }
+
+                code = curl_easy_perform(curl.get());
+                if (responseCode)
+                        curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE,
+                                          responseCode);
+
+                if (code != CURLE_OK) {
+                        error = error_in;
+                }
+
+                curl_slist_free_all(header);
+        }
+
+        return code == CURLE_OK;
+
+}
+
 bool GetRemoteFile(const char *url, std::string &str, std::string &error,
 		   long *responseCode, const char *contentType,
 		   const char *postData, std::vector<std::string> extraHeaders,
 		   std::string *signature, int timeoutSec)
 {
-	vector<string> header_in_list;
-	char error_in[CURL_ERROR_SIZE];
-	CURLcode code = CURLE_FAILED_INIT;
 
-	error_in[0] = 0;
+        std::vector<std::string> outHeaders;
+	bool res = GetRemoteFileAndHeaders( url, str, error, responseCode, contentType, postData,
+					   extraHeaders, &outHeaders, timeoutSec);
 
-	string versionString("User-Agent: obs-basic ");
-	versionString += App()->GetVersionString();
+        if (res && signature) {
+                for (string &h : outHeaders) {
+                        string name = h.substr(0, 13);
+                        if (name == "X-Signature: ") {
+                                *signature = h.substr(13);
+                                break;
+                        }
+                }
+        }
 
-	string contentTypeString;
-	if (contentType) {
-		contentTypeString += "Content-Type: ";
-		contentTypeString += contentType;
-	}
+	return res;
 
-	Curl curl{curl_easy_init(), curl_deleter};
-	if (curl) {
-		struct curl_slist *header = nullptr;
-
-		header = curl_slist_append(header, versionString.c_str());
-
-		if (!contentTypeString.empty()) {
-			header = curl_slist_append(header,
-						   contentTypeString.c_str());
-		}
-
-		for (std::string &h : extraHeaders)
-			header = curl_slist_append(header, h.c_str());
-
-		curl_easy_setopt(curl.get(), CURLOPT_URL, url);
-		curl_easy_setopt(curl.get(), CURLOPT_ACCEPT_ENCODING, "");
-		curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, header);
-		curl_easy_setopt(curl.get(), CURLOPT_ERRORBUFFER, error_in);
-		curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION,
-				 string_write);
-		curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &str);
-		if (signature) {
-			curl_easy_setopt(curl.get(), CURLOPT_HEADERFUNCTION,
-					 header_write);
-			curl_easy_setopt(curl.get(), CURLOPT_HEADERDATA,
-					 &header_in_list);
-		}
-
-		if (timeoutSec)
-			curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT,
-					 timeoutSec);
-
-#if LIBCURL_VERSION_NUM >= 0x072400
-		// A lot of servers don't yet support ALPN
-		curl_easy_setopt(curl.get(), CURLOPT_SSL_ENABLE_ALPN, 0);
-#endif
-
-		if (postData) {
-			curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS,
-					 postData);
-		}
-
-		code = curl_easy_perform(curl.get());
-		if (responseCode)
-			curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE,
-					  responseCode);
-
-		if (code != CURLE_OK) {
-			error = error_in;
-		} else if (signature) {
-			for (string &h : header_in_list) {
-				string name = h.substr(0, 13);
-				if (name == "X-Signature: ") {
-					*signature = h.substr(13);
-					break;
-				}
-			}
-		}
-
-		curl_slist_free_all(header);
-	}
-
-	return code == CURLE_OK;
 }
