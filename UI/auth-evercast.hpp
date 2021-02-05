@@ -11,11 +11,6 @@
 class EvercastAuth {
 public:
 
-	struct BaseUrlAndPath {
-		std::string baseUrl;
-		std::string path;
-	};
-
 	struct Credentials {
                 std::string email;
 		std::string password;
@@ -57,7 +52,6 @@ private:
                                      const std::string& body,
                                      const std::vector<std::string>& headers = std::vector<std::string>({}));
 
-        static BaseUrlAndPath parseUrlComponents(const std::string& url);
         static void skipChar(const std::string& text, int& pos, char c);
         static bool findChar(const std::string& text, int& pos, char c);
         static std::string parseValue(const std::string& text,  const std::string& key);
@@ -70,12 +64,12 @@ private:
         static json11::Json obtainStreamKeyQuery();
         static json11::Json createRoomsQuery();
 
-        static Token obtainToken(const Credentials& credentials);
-	static std::string createStreamKey(const Token& token);
-        static std::string obtainStreamKey(const Token& token);
-        static Rooms obtainRooms(const Token& token);
+        static Token obtainToken(const Credentials& credentials, const std::string& apiUrl);
+	static std::string createStreamKey(const Token& token, const std::string& apiUrl);
+        static std::string obtainStreamKey(const Token& token, const std::string& apiUrl);
+        static Rooms obtainRooms(const Token& token, const std::string& apiUrl);
 
-	void updateState();
+	void updateState(std::string apiUrl);
 
 private:
         std::mutex m_mutex;
@@ -91,10 +85,10 @@ public:
 	void clearCurrentState();
 
 	template<typename Callback>
-	void updateState(Callback callback) {
+	void updateState(Callback callback, const std::string& apiUrl = "") {
 
-                std::thread t([this, callback]{
-			updateState();
+                std::thread t([this, callback, apiUrl]{
+			updateState(apiUrl);
 			callback();
 		});
 

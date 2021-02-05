@@ -21,9 +21,12 @@ private slots:
         void on_buttonBox_rejected();
 
 public:
-        OBSBasicLogin(OBSBasic *parent, const EvercastAuth::Credentials& creds);
+        OBSBasicLogin(OBSBasic *parent,
+		      const EvercastAuth::Credentials& creds,
+		      const std::string& wantedRoomUrl = "");
 
         EvercastAuth::Credentials credentials;
+	std::string roomUrl;
 	bool accepted = false;
 
 };

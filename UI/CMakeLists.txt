@@ -233,6 +233,7 @@ set(obs_SOURCES
 	update/update-helpers.cpp
 	auth-base.cpp
 	auth-evercast.cpp
+	evercast-utils.cpp
 	source-tree.cpp
 	properties-view.cpp
 	focus-list.cpp
@@ -290,6 +291,7 @@ set(obs_HEADERS
 	update/update-helpers.hpp
 	auth-base.hpp
 	auth-evercast.hpp
+	evercast-utils.hpp
 	source-tree.hpp
 	properties-view.hpp
 	properties-view.moc.hpp

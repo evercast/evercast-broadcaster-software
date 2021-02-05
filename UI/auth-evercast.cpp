@@ -1,30 +1,7 @@
 
 #include "auth-evercast.hpp"
+#include "evercast-utils.hpp"
 #include "remote-text.hpp"
-#include "obs-app.hpp"
-
-EvercastAuth::BaseUrlAndPath EvercastAuth::parseUrlComponents(const std::string& url) {
-
-	BaseUrlAndPath result;
-
-        int pos = -1;
-        for(unsigned int i = 1; i < url.length(); i++) {
-                if(url[i] == '/' && url[i - 1] != ':' && url[i - 1] != '/') {
-                        pos = i;
-                        break;
-                }
-        }
-
-        if(pos == -1) {
-                result.baseUrl = url;
-                result.path = "/";
-        } else {
-                result.baseUrl = url.substr(0, pos);
-                result.path = url.substr(pos, url.length());
-        }
-
-	return result;
-}
 
 void EvercastAuth::skipChar(const std::string& text, int& pos, char c) {
         while(pos < text.length() && text[pos] == c) {
@@ -226,13 +203,12 @@ EvercastAuth::HttpResponse EvercastAuth::execHttp(const std::string& url,
 
 }
 
-EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
+EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials, const std::string& apiUrl) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "EvercastAuth::obtainToken(). apiURL='%s'", apiURL.c_str());
+        blog(LOG_INFO, "EvercastAuth::obtainToken(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createLoginQuery(credentials);
-        auto res = execHttp(apiURL, query.dump());
+        auto res = execHttp(apiUrl, query.dump());
 
         if(!res.error.empty()) {
                 blog(LOG_INFO, "error='%s'", res.error.c_str());
@@ -246,13 +222,12 @@ EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials) {
 
 }
 
-std::string EvercastAuth::obtainStreamKey(const Token& token) {
+std::string EvercastAuth::obtainStreamKey(const Token& token, const std::string& apiUrl) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "EvercastAuth::obtainStreamKey(). apiURL='%s'", apiURL.c_str());
+        blog(LOG_INFO, "EvercastAuth::obtainStreamKey(). apiURL='%s'", apiUrl.c_str());
 
         auto query = obtainStreamKeyQuery();
-        auto res = execHttp(apiURL, query.dump(),
+        auto res = execHttp(apiUrl, query.dump(),
 			    {
 				    "X-Double-Submit: " + token.nonce,
 				    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
@@ -277,13 +252,12 @@ std::string EvercastAuth::obtainStreamKey(const Token& token) {
 
 }
 
-std::string EvercastAuth::createStreamKey(const Token& token) {
+std::string EvercastAuth::createStreamKey(const Token& token, const std::string& apiUrl) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "EvercastAuth::createStreamKey(). apiURL='%s'", apiURL.c_str());
+        blog(LOG_INFO, "EvercastAuth::createStreamKey(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createStreamKeyQuery();
-        auto res = execHttp(apiURL, query.dump(),
+        auto res = execHttp(apiUrl, query.dump(),
                             {
                                     "X-Double-Submit: " + token.nonce,
                                     "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
@@ -306,13 +280,13 @@ std::string EvercastAuth::createStreamKey(const Token& token) {
         return key;
 }
 
-EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
+EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::string& apiUrl) {
 
-        std::string apiURL = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        blog(LOG_INFO, "EvercastAuth::obtainRooms(). apiURL='%s'", apiURL.c_str());
+        std::string apiURL = EvercastUtils::getGraphApiUrl();
+        blog(LOG_INFO, "EvercastAuth::obtainRooms(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createRoomsQuery();
-        auto res = execHttp(apiURL, query.dump(),
+        auto res = execHttp(apiUrl, query.dump(),
                             {
                                     "X-Double-Submit: " + token.nonce,
                                     "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
@@ -372,32 +346,36 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token) {
 
 }
 
-void EvercastAuth::updateState() {
+void EvercastAuth::updateState(std::string apiUrl) {
+
+	if(apiUrl.empty()) {
+		apiUrl = EvercastUtils::getGraphApiUrl();
+	}
 
 	auto token = getToken();
 	if(token.empty()) {
 		/* get token if it's empty */
-                token = obtainToken(getCredentials());
+                token = obtainToken(getCredentials(), apiUrl);
 		setToken(token);
                 if(token.empty()) {
                         return;
                 }
 	}
 
-	auto streamKey = obtainStreamKey(token);
+	auto streamKey = obtainStreamKey(token, apiUrl);
 	if(streamKey.empty()) {
 		/* get a new token, old one was revoked */
-                token = obtainToken(getCredentials());
+                token = obtainToken(getCredentials(), apiUrl);
                 setToken(token);
 		if(token.empty()) {
                         setStreamKey("");
 			return;
 		}
-		streamKey = obtainStreamKey(token);
+		streamKey = obtainStreamKey(token, apiUrl);
 
 		if (streamKey.empty()) {
 			/* Still no stream key; try creating one */
-			streamKey = createStreamKey(token);
+			streamKey = createStreamKey(token, apiUrl);
 		}
 	}
         setStreamKey(streamKey);
@@ -405,7 +383,7 @@ void EvercastAuth::updateState() {
                 return;
         }
 
-	setRooms(obtainRooms(token));
+	setRooms(obtainRooms(token, apiUrl));
 
 }
 

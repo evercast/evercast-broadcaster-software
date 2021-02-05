@@ -35,6 +35,7 @@
 #include <util/profiler.hpp>
 #include <util/dstr.hpp>
 
+#include "evercast-utils.hpp"
 #include "obs-app.hpp"
 #include "platform.hpp"
 #include "visibility-item-widget.hpp"
@@ -220,6 +221,8 @@ OBSBasic::OBSBasic(QWidget *parent)
         ui->loginButton->setEnabled(true);
         ui->loginButton->setVisible(true);
         ui->evercastAccountWidget->setVisible(false);
+        ui->evercastRoomsLabel->setVisible(false);
+	ui->evercastRoomsTabsWidget->setVisible(false);
 
 
 
@@ -5062,10 +5065,9 @@ void OBSBasic::PrepareStreaming()
 
         obs_data_release(currSettings);
 
-        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_websocket");
-
         OBSData settings = obs_data_create();
-        obs_data_set_string(settings, "server", websocketApiUrl);
+	std::string wsApiUrl = EvercastUtils::getWSApiUrl();
+        obs_data_set_string(settings, "server", wsApiUrl.c_str());
         obs_data_set_string(settings, "codec", codec);
 
         obs_service_update(GetService(), settings);
@@ -5793,6 +5795,11 @@ void OBSBasic::on_streamButton_clicked()
 
 		StopStreaming();
 	} else {
+
+		if (!EvercastCheckRoom()) {
+			return;
+		}
+
 		if (!NoSourcesConfirmation()) {
 			ui->streamButton->setChecked(false);
 			return;
@@ -7627,6 +7634,8 @@ void OBSBasic::EvercastResetAccount() {
 	ui->loginButton->setEnabled(true);
         ui->loginButton->setVisible(true);
         ui->evercastAccountWidget->setVisible(false);
+	ui->evercastRoomsLabel->setVisible(false);
+	ui->evercastRoomsTabsWidget->setVisible(false);
 
 	evercastAuth.clearCurrentState();
 
@@ -7651,9 +7660,28 @@ void OBSBasic::EvercastLoginCallback() {
 
         if(!streamKey.empty()) {
 
+                if(!wantedRoomUrl.empty()) {
+                        auto urlComponents = EvercastUtils::parseUrlComponents(wantedRoomUrl);
+
+			auto newGraphApiUrl = EvercastUtils::getGraphApiUrlForDomain(urlComponents.domain);
+                        auto newWSApiUrl = EvercastUtils::getWSApiUrlForDomain(urlComponents.domain);
+
+			EvercastUtils::setGraphApiUrl(newGraphApiUrl);
+                        EvercastUtils::setWSApiUrl(newWSApiUrl);
+
+                        ui->evercastEditRoomURL->setText(QT_UTF8(wantedRoomUrl.c_str()));
+                        ui->evercastRoomsTabsWidget->setCurrentIndex(1);
+
+                        wantedRoomUrl = "";
+                }
+
+
                 ui->loginButton->setVisible(false);
                 ui->evercastAccountWidget->setVisible(true);
                 ui->evercastAccountEmail->setText(QT_UTF8(evercastAuth.getCredentials().email.c_str()));
+
+                ui->evercastRoomsLabel->setVisible(true);
+                ui->evercastRoomsTabsWidget->setVisible(true);
 
                 const auto& rooms = evercastAuth.getRooms();
 
@@ -7661,6 +7689,10 @@ void OBSBasic::EvercastLoginCallback() {
                 for(auto& r : rooms.ordered) {
                         ui->evercastRooms->addItem(QT_UTF8(r.name.c_str()));
                 }
+
+                blog(LOG_INFO, "LoggedIn. GraphURL='%s', WSURL='%s'",
+                     EvercastUtils::getGraphApiUrl().c_str(),
+                     EvercastUtils::getWSApiUrl().c_str());
 
         } else {
                 EvercastResetAccount();
@@ -7680,15 +7712,25 @@ void OBSBasic::on_loginButton_clicked() {
 	evercastAuth.setToken({});
 	evercastAuth.setStreamKey("");
 
-        OBSBasicLogin dialog(this, evercastAuth.getCredentials());
+        OBSBasicLogin dialog(this, evercastAuth.getCredentials(), wantedRoomUrl);
         dialog.exec();
 
 	if(dialog.accepted) {
+
                 ui->loginButton->setEnabled(false);
 		evercastAuth.setCredentials(dialog.credentials);
+
+		std::string apiUrl;
+                wantedRoomUrl = dialog.roomUrl;
+
+		if(!wantedRoomUrl.empty()) {
+			auto urlComponents = EvercastUtils::parseUrlComponents(wantedRoomUrl);
+			apiUrl = EvercastUtils::getGraphApiUrlForDomain(urlComponents.domain);
+		}
+
 		evercastAuth.updateState([this] {
 			QMetaObject::invokeMethod(this, "EvercastLoginCallback", Qt::QueuedConnection);
-		});
+		}, apiUrl);
 	}
 
 }
@@ -7739,14 +7781,78 @@ void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
 		const auto& room = rooms.ordered[index];
 
 		OBSData settings = obs_data_create();
-		obs_data_set_string(settings, "room",room.id.c_str());
+		obs_data_set_string(settings, "room", room.id.c_str());
                 obs_data_set_string(settings, "password",evercastAuth.getStreamKey().c_str());
 
                 obs_service_update(GetService(), settings);
 		obs_data_release(settings);
                 SaveService();
+
+		auto roomUrl = EvercastUtils::getRoomUrl(room.id);
+		ui->evercastRoomURLShare->setText(QT_UTF8(roomUrl.c_str()));
+
 	}
 
         evercastCurrRoomIndex = index;
+
+}
+
+bool OBSBasic::EvercastCheckRoom() {
+
+	if(ui->evercastAccountWidget->isVisible() && ui->evercastRoomsTabsWidget->currentIndex() == 1) {
+
+		std::string roomUrl = QT_TO_UTF8(ui->evercastEditRoomURL->text());
+
+		if(roomUrl.empty()) {
+                        OBSMessageBox::information(
+                                        this, QTStr("Info.Title.NoRoomUrl"),
+                                        QTStr("Info.Text.NoRoomUrl"));
+
+                        return false;
+		}
+
+		std::string apiUrl = EvercastUtils::getGraphApiUrl();
+
+		auto roomUrlComponents = EvercastUtils::parseUrlComponents(roomUrl);
+                auto apiUrlComponents = EvercastUtils::parseUrlComponents(apiUrl);
+
+                blog(LOG_INFO, "roomUrl domain='%s', apiUrl domain='%s'",
+		     roomUrlComponents.domain.c_str(),
+                     apiUrlComponents.domain.c_str());
+
+		if(roomUrlComponents.domain == apiUrlComponents.domain) {
+
+			auto roomId = EvercastUtils::parseRoomIdFromUrl(roomUrl);
+                        blog(LOG_INFO, "roomId is now set set to '%s'", roomId.c_str());
+
+                        OBSData settings = obs_data_create();
+
+                        obs_data_set_string(settings, "room", roomId.c_str());
+
+                        obs_service_update(GetService(), settings);
+                        obs_data_release(settings);
+
+			return true;
+
+		} else {
+
+                        QMessageBox::StandardButton button =
+                                OBSMessageBox::question(
+                                        this, QTStr("Question.Title.RoomUrlDomainIsDifferent"),
+                                        QTStr("Question.Text.RoomUrlDomainIsDifferent"));
+
+                        if (button == QMessageBox::Yes) {
+                                wantedRoomUrl = roomUrl;
+				on_logoutButton_clicked();
+                                on_loginButton_clicked();
+                        }
+
+		}
+
+                return false;
+
+	}
+
+	return true;
 
 }

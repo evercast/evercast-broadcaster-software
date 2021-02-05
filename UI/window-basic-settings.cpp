@@ -48,6 +48,8 @@
 #include "window-basic-main-outputs.hpp"
 #include "window-projector.hpp"
 
+#include "evercast-utils.hpp"
+
 #include <util/platform.h>
 #include "ui-config.h"
 
@@ -1191,11 +1193,11 @@ void OBSBasicSettings::CheckAdvancedOptions()
 
 void OBSBasicSettings::LoadEvercastSettings() {
 
-	auto graphApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_graphql");
-        auto websocketApiUrl = config_get_string(GetGlobalConfig(), "General", "evercast_url_websocket");
+	auto graphApiUrl = EvercastUtils::getGraphApiUrl();
+        auto websocketApiUrl = EvercastUtils::getWSApiUrl();
 
-	ui->evercastGraphApiUrl->setText(QT_UTF8(graphApiUrl));
-	ui->evercastWebsocketApiUrl->setText(QT_UTF8(websocketApiUrl));
+	ui->evercastGraphApiUrl->setText(QT_UTF8(graphApiUrl.c_str()));
+	ui->evercastWebsocketApiUrl->setText(QT_UTF8(websocketApiUrl.c_str()));
 
 }
 
@@ -2884,12 +2886,8 @@ void OBSBasicSettings::LoadSettings(bool changedOnly)
 }
 
 void OBSBasicSettings::SaveEvercastSettings() {
-
-        config_set_string(GetGlobalConfig(), "General", "evercast_url_graphql",
-			  QT_TO_UTF8(ui->evercastGraphApiUrl->text()));
-        config_set_string(GetGlobalConfig(), "General", "evercast_url_websocket",
-                          QT_TO_UTF8(ui->evercastWebsocketApiUrl->text()));
-
+	EvercastUtils::setGraphApiUrl(QT_TO_UTF8(ui->evercastGraphApiUrl->text()));
+	EvercastUtils::setWSApiUrl(QT_TO_UTF8(ui->evercastWebsocketApiUrl->text()));
 }
 
 void OBSBasicSettings::SaveGeneralSettings()
