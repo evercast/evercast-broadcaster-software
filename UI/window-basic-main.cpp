@@ -7836,10 +7836,13 @@ bool OBSBasic::EvercastCheckRoom() {
 
 		} else {
 
+			auto message = QTStr("Question.Text.RoomUrlDomainIsDifferent")
+				.arg(QTStr(apiUrlComponents.domain.c_str()))
+				.arg(QTStr(roomUrlComponents.domain.c_str()));
                         QMessageBox::StandardButton button =
                                 OBSMessageBox::question(
                                         this, QTStr("Question.Title.RoomUrlDomainIsDifferent"),
-                                        QTStr("Question.Text.RoomUrlDomainIsDifferent"));
+                                        message);
 
                         if (button == QMessageBox::Yes) {
                                 wantedRoomUrl = roomUrl;
