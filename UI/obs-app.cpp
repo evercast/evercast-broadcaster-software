@@ -56,14 +56,7 @@
 #include <iostream>
 
 #include "ui-config.h"
-
-#ifndef EBS_DEFAULT_GRAPH_API_URL
-#define EBS_DEFAULT_GRAPH_API_URL "https://app.evercast.us/api/graphql"
-#endif
-
-#ifndef EBS_DEFAULT_WEBSOCKET_API_URL
-#define EBS_DEFAULT_WEBSOCKET_API_URL "wss://app.evercast.us/websockets"
-#endif
+#include "evercast-utils.hpp"
 
 using namespace std;
 
@@ -377,10 +370,7 @@ static void do_log(int log_level, const char *msg, va_list args, void *param)
 bool OBSApp::InitGlobalConfigDefaults()
 {
 
-        config_set_default_string(GetGlobalConfig(), "General", "evercast_url_graphql",
-                                  EBS_DEFAULT_GRAPH_API_URL);
-        config_set_default_string(GetGlobalConfig(), "General", "evercast_url_websocket",
-                                  EBS_DEFAULT_WEBSOCKET_API_URL);
+	EvercastUtils::initDefaults();
 
 	config_set_default_string(globalConfig, "General", "Language",
 				  DEFAULT_LANG);

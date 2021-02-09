@@ -150,6 +150,7 @@ private:
 	std::shared_ptr<Auth> auth;
         EvercastAuth evercastAuth;
 	int evercastCurrRoomIndex = -1;
+        std::string wantedRoomUrl;
 
 	std::vector<VolControl *> volumes;
 
@@ -802,6 +803,7 @@ private slots:
 
         void EvercastResetAccount();
         void EvercastLoginCallback();
+        bool EvercastCheckRoom();
 
 	void PauseToggled();
 
