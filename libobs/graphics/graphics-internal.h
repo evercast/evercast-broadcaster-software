@@ -34,6 +34,7 @@ struct gs_exports {
 	void (*device_destroy)(gs_device_t *device);
 	void (*device_enter_context)(gs_device_t *device);
 	void (*device_leave_context)(gs_device_t *device);
+	void *(*device_get_device_obj)(gs_device_t *device);
 	gs_swapchain_t *(*device_swapchain_create)(
 		gs_device_t *device, const struct gs_init_data *data);
 	void (*device_resize)(gs_device_t *device, uint32_t x, uint32_t y);
@@ -270,8 +271,11 @@ struct gs_exports {
 	/* OSX/Cocoa specific functions */
 	gs_texture_t *(*device_texture_create_from_iosurface)(gs_device_t *dev,
 							      void *iosurf);
+	gs_texture_t *(*device_texture_open_shared)(gs_device_t *dev,
+						    uint32_t *handle);
 	bool (*gs_texture_rebind_iosurface)(gs_texture_t *texture,
 					    void *iosurf);
+	bool (*device_shared_texture_available)(void);
 
 #elif _WIN32
 	bool (*device_gdi_texture_available)(void);
@@ -298,6 +302,8 @@ struct gs_exports {
 	gs_texture_t *(*device_texture_open_shared)(gs_device_t *device,
 						    uint32_t handle);
 	uint32_t (*device_texture_get_shared_handle)(gs_texture_t *tex);
+	gs_texture_t *(*device_texture_wrap_obj)(gs_device_t *device,
+						 void *obj);
 	int (*device_texture_acquire_sync)(gs_texture_t *tex, uint64_t key,
 					   uint32_t ms);
 	int (*device_texture_release_sync)(gs_texture_t *tex, uint64_t key);
@@ -310,6 +316,12 @@ struct gs_exports {
 	gs_stagesurf_t *(*device_stagesurface_create_nv12)(gs_device_t *device,
 							   uint32_t width,
 							   uint32_t height);
+
+	void (*device_register_loss_callbacks)(
+		gs_device_t *device, const struct gs_device_loss *callbacks);
+	void (*device_unregister_loss_callbacks)(gs_device_t *device,
+						 void *data);
+
 #endif
 };
 

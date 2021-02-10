@@ -65,7 +65,7 @@ void add_default_module_paths(void)
 			[NSRunningApplication currentApplication];
 		NSURL *bundleURL = [app bundleURL];
 		NSURL *pluginsURL = [bundleURL
-			URLByAppendingPathComponent:@"Contents/Plugins"];
+			URLByAppendingPathComponent:@"Contents/PlugIns"];
 		NSURL *dataURL = [bundleURL
 			URLByAppendingPathComponent:
 				@"Contents/Resources/data/obs-plugins/%module%"];
@@ -175,6 +175,8 @@ static void log_os_name(id pi, SEL UTF8StringSel)
 	blog(LOG_INFO, "OS Name: %s", name ? name : "Unknown");
 }
 
+static bool using_10_15_or_above = true;
+
 static void log_os_version(id pi, SEL UTF8StringSel)
 {
 	typedef id (*version_func)(id, SEL);
@@ -186,6 +188,16 @@ static void log_os_version(id pi, SEL UTF8StringSel)
 	const char *version = UTF8String(vs, UTF8StringSel);
 
 	blog(LOG_INFO, "OS Version: %s", version ? version : "Unknown");
+
+	if (version) {
+		int major;
+		int minor;
+
+		int count = sscanf(version, "Version %d.%d", &major, &minor);
+		if (count == 2 && major == 10) {
+			using_10_15_or_above = minor >= 15;
+		}
+	}
 }
 
 static void log_os(void)
@@ -239,6 +251,7 @@ static bool dstr_from_cfstring(struct dstr *str, CFStringRef ref)
 
 struct obs_hotkeys_platform {
 	volatile long refs;
+	bool secure_input_activated;
 	TISInputSourceRef tis;
 	CFDataRef layout_data;
 	UCKeyboardLayout *layout;
@@ -1749,10 +1762,27 @@ bool obs_hotkeys_platform_is_pressed(obs_hotkeys_platform_t *plat,
 	if (key >= OBS_KEY_LAST_VALUE)
 		return false;
 
+	/* if secure input is activated, kill hotkeys.
+	 *
+	 * TODO: rewrite all mac hotkey code, suspect there's a bug in 10.15
+	 * causing the crash internally.  */
+	if (plat->secure_input_activated) {
+		return false;
+	}
+
 	for (size_t i = 0; i < plat->keys[key].num;) {
 		IOHIDElementRef element = plat->keys[key].array[i];
 		IOHIDValueRef value = 0;
 		IOHIDDeviceRef device = IOHIDElementGetDevice(element);
+
+		if (device == NULL) {
+			continue;
+		}
+
+		if (using_10_15_or_above && IsSecureEventInputEnabled()) {
+			plat->secure_input_activated = true;
+			return false;
+		}
 
 		if (IOHIDDeviceGetValue(device, element, &value) !=
 		    kIOReturnSuccess) {
@@ -1774,3 +1804,18 @@ bool obs_hotkeys_platform_is_pressed(obs_hotkeys_platform_t *plat,
 
 	return false;
 }
+
+void *obs_graphics_thread_autorelease(void *param)
+{
+	@autoreleasepool {
+		return obs_graphics_thread(param);
+	}
+}
+
+bool obs_graphics_thread_loop_autorelease(struct obs_graphics_context *context)
+{
+	@autoreleasepool {
+		return obs_graphics_thread_loop(context);
+	}
+}
+
