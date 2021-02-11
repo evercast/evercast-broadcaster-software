@@ -23,10 +23,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/sysctl.h>
 #endif
+#if !defined(__OpenBSD__)
 #include <sys/sysinfo.h>
+#endif
 #include <sys/utsname.h>
 #include <xcb/xcb.h>
 #if USE_XINPUT
@@ -35,6 +37,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xlib-xcb.h>
+#include <X11/XF86keysym.h>
+#include <X11/Sunkeysym.h>
 #include <inttypes.h>
 
 const char *get_module_extension(void)
@@ -153,9 +157,11 @@ static void log_processor_info(void)
 	dstr_free(&proc_speed);
 	free(line);
 }
-#elif defined(__FreeBSD__)
+
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 static void log_processor_speed(void)
 {
+#ifndef __OpenBSD__
 	char *line = NULL;
 	size_t linecap = 0;
 	FILE *fp;
@@ -185,6 +191,9 @@ static void log_processor_speed(void)
 	fclose(fp);
 	dstr_free(&proc_speed);
 	free(line);
+
+#endif
+
 }
 
 static void log_processor_name(void)
@@ -216,6 +225,19 @@ static void log_processor_info(void)
 
 static void log_memory_info(void)
 {
+#if defined(__OpenBSD__)
+	int mib[2];
+	size_t len;
+	int64_t mem;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM64;
+	len = sizeof(mem);
+
+	if (sysctl(mib, 2, &mem, &len, NULL, 0) >= 0)
+		blog(LOG_INFO, "Physical Memory: %" PRIi64 "MB Total",
+		     mem / 1024 / 1024);
+#else
 	struct sysinfo info;
 	if (sysinfo(&info) < 0)
 		return;
@@ -225,6 +247,9 @@ static void log_memory_info(void)
 	     (uint64_t)info.totalram * info.mem_unit / 1024 / 1024,
 	     ((uint64_t)info.freeram + (uint64_t)info.bufferram) *
 		     info.mem_unit / 1024 / 1024);
+
+#endif
+
 }
 
 static void log_kernel_version(void)
@@ -310,6 +335,14 @@ static void log_distribution_info(void)
 	dstr_free(&distro);
 	free(line);
 }
+
+static void log_desktop_session_info(void)
+{
+	char *session_ptr = getenv("XDG_SESSION_TYPE");
+	if (session_ptr) {
+		blog(LOG_INFO, "Session Type: %s", session_ptr);
+	}
+}
 #endif
 
 void log_system_info(void)
@@ -322,6 +355,7 @@ void log_system_info(void)
 	log_kernel_version();
 #if defined(__linux__)
 	log_distribution_info();
+	log_desktop_session_info();
 #endif
 	log_x_info();
 }
@@ -501,8 +535,29 @@ static int get_keysym(obs_key_t key)
 		return XK_Hyper_R;
 	case OBS_KEY_HELP:
 		return XK_Help;
+	case OBS_KEY_CANCEL:
+		return XK_Cancel;
+	case OBS_KEY_FIND:
+		return XK_Find;
+	case OBS_KEY_REDO:
+		return XK_Redo;
+	case OBS_KEY_UNDO:
+		return XK_Undo;
 	case OBS_KEY_SPACE:
 		return XK_space;
+
+	case OBS_KEY_COPY:
+		return XF86XK_Copy;
+	case OBS_KEY_CUT:
+		return XF86XK_Cut;
+	case OBS_KEY_OPEN:
+		return XF86XK_Open;
+	case OBS_KEY_PASTE:
+		return XF86XK_Paste;
+	case OBS_KEY_FRONT:
+		return SunXK_Front;
+	case OBS_KEY_PROPS:
+		return SunXK_Props;
 
 	case OBS_KEY_EXCLAM:
 		return XK_exclam;

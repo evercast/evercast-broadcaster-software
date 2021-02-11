@@ -288,6 +288,15 @@ graphics_t *gs_get_context(void)
 	return thread_graphics;
 }
 
+void *gs_get_device_obj(void)
+{
+	if (!gs_valid("gs_get_device_obj"))
+		return NULL;
+
+	return thread_graphics->exports.device_get_device_obj(
+		thread_graphics->device);
+}
+
 const char *gs_get_device_name(void)
 {
 	return gs_valid("gs_get_device_name")
@@ -1134,33 +1143,38 @@ void gs_texture_set_image(gs_texture_t *tex, const uint8_t *data,
 {
 	uint8_t *ptr;
 	uint32_t linesize_out;
-	uint32_t row_copy;
-	int32_t height;
-	int32_t y;
+	size_t row_copy;
+	size_t height;
 
 	if (!gs_valid_p2("gs_texture_set_image", tex, data))
 		return;
-
-	height = (int32_t)gs_texture_get_height(tex);
 
 	if (!gs_texture_map(tex, &ptr, &linesize_out))
 		return;
 
 	row_copy = (linesize < linesize_out) ? linesize : linesize_out;
 
+	height = gs_texture_get_height(tex);
+
 	if (flip) {
-		for (y = height - 1; y >= 0; y--)
-			memcpy(ptr + (uint32_t)y * linesize_out,
-			       data + (uint32_t)(height - y - 1) * linesize,
-			       row_copy);
+		uint8_t *const end = ptr + height * linesize_out;
+		data += (height - 1) * linesize;
+		while (ptr < end) {
+			memcpy(ptr, data, row_copy);
+			ptr += linesize_out;
+			data -= linesize;
+		}
 
 	} else if (linesize == linesize_out) {
 		memcpy(ptr, data, row_copy * height);
 
 	} else {
-		for (y = 0; y < height; y++)
-			memcpy(ptr + (uint32_t)y * linesize_out,
-			       data + (uint32_t)y * linesize, row_copy);
+		uint8_t *const end = ptr + height * linesize_out;
+		while (ptr < end) {
+			memcpy(ptr, data, row_copy);
+			ptr += linesize_out;
+			data += linesize;
+		}
 	}
 
 	gs_texture_unmap(tex);
@@ -2742,6 +2756,26 @@ bool gs_texture_rebind_iosurface(gs_texture_t *texture, void *iosurf)
 	return graphics->exports.gs_texture_rebind_iosurface(texture, iosurf);
 }
 
+bool gs_shared_texture_available(void)
+{
+	if (!gs_valid("gs_shared_texture_available"))
+		return false;
+
+	return thread_graphics->exports.device_shared_texture_available();
+}
+
+gs_texture_t *gs_texture_open_shared(uint32_t handle)
+{
+	graphics_t *graphics = thread_graphics;
+	if (!gs_valid("gs_texture_open_shared"))
+		return NULL;
+
+	if (graphics->exports.device_texture_open_shared)
+		return graphics->exports.device_texture_open_shared(
+			graphics->device, handle);
+	return NULL;
+}
+
 #elif _WIN32
 
 bool gs_gdi_texture_available(void)
@@ -2871,6 +2905,18 @@ uint32_t gs_texture_get_shared_handle(gs_texture_t *tex)
 	return GS_INVALID_HANDLE;
 }
 
+gs_texture_t *gs_texture_wrap_obj(void *obj)
+{
+	graphics_t *graphics = thread_graphics;
+	if (!gs_valid("gs_texture_wrap_obj"))
+		return NULL;
+
+	if (graphics->exports.device_texture_wrap_obj)
+		return graphics->exports.device_texture_wrap_obj(
+			graphics->device, obj);
+	return NULL;
+}
+
 int gs_texture_acquire_sync(gs_texture_t *tex, uint64_t key, uint32_t ms)
 {
 	graphics_t *graphics = thread_graphics;
@@ -2951,6 +2997,30 @@ gs_stagesurf_t *gs_stagesurface_create_nv12(uint32_t width, uint32_t height)
 			graphics->device, width, height);
 
 	return NULL;
+}
+
+void gs_register_loss_callbacks(const struct gs_device_loss *callbacks)
+{
+	graphics_t *graphics = thread_graphics;
+
+	if (!gs_valid("gs_register_loss_callbacks"))
+		return;
+
+	if (graphics->exports.device_register_loss_callbacks)
+		graphics->exports.device_register_loss_callbacks(
+			graphics->device, callbacks);
+}
+
+void gs_unregister_loss_callbacks(void *data)
+{
+	graphics_t *graphics = thread_graphics;
+
+	if (!gs_valid("gs_unregister_loss_callbacks"))
+		return;
+
+	if (graphics->exports.device_unregister_loss_callbacks)
+		graphics->exports.device_unregister_loss_callbacks(
+			graphics->device, data);
 }
 
 #endif

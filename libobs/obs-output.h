@@ -59,9 +59,9 @@ struct obs_output_info {
 
 	void (*unused1)(void *data);
 
-  void (*get_stats)(void *data);
+        void (*get_stats)(void *data);
 
-  const char* (*get_stats_list)(void *data);
+        const char* (*get_stats_list)(void *data);
 
 	uint64_t (*get_total_bytes)(void *data);
 
