@@ -105,7 +105,6 @@ void gs_texture_3d::InitTexture(const uint8_t *const *data)
 
 	if (isRenderTarget)
 		td.BindFlags |= D3D11_BIND_RENDER_TARGET;
-
 	if ((flags & GS_SHARED_KM_TEX) != 0)
 		td.MiscFlags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 	else if ((flags & GS_SHARED_TEX) != 0)
