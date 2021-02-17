@@ -188,16 +188,37 @@ json11::Json EvercastAuth::createRoomsQuery() {
 
 }
 
+json11::Json EvercastAuth::createOneRoomQuery(const std::string& roomHash) {
+
+	std::string query = "query roomQuery($hash: UUID!) {\n"
+			    "    room: liveroomByHash(hash: $hash) {\n"
+			    "        hash\n"
+			    "        id\n"
+			    "    }\n"
+			    "}\n";
+
+        json11::Json j = json11::Json::object{
+                {"query", query},
+                {"variables", json11::Json::object {
+                        {"hash", roomHash}
+                }}
+        };
+
+        return j;
+
+}
+
 EvercastAuth::HttpResponse EvercastAuth::execHttp(const std::string& url,
 						  const std::string& body,
-						  const std::vector<std::string>& headers)
+						  const std::vector<std::string>& headers,
+                                                  int timeoutSec)
 {
 
         HttpResponse res;
 
         GetRemoteFileAndHeaders(url.c_str(), res.body, res.error,
                                 &res.code, "application/json", body.c_str(),
-                                headers, &res.headers, 5);
+                                headers, &res.headers, timeoutSec);
 
 	return res;
 
@@ -308,8 +329,9 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::str
         for (auto &room : j["data"]["currentProfile"]["recentRooms"]["nodes"].array_items()) {
                 auto jId =room["liveroomByRoomId"]["id"].string_value();
                 auto jName = room["liveroomByRoomId"]["displayName"].string_value();
+                auto jHash = room["liveroomByRoomId"]["hash"].string_value();
                 if (!jId.empty() && !jName.empty()) {
-                        Room r = {jId, jName};
+                        Room r = {jId, jName, jHash};
                         allRooms.insert({jId, r});
                 }
         }
@@ -317,8 +339,9 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::str
         for (auto &room : j["data"]["currentProfile"]["invites"]["nodes"].array_items()) {
                 auto jId =room["liveroomByRoomId"]["id"].string_value();
                 auto jName = room["liveroomByRoomId"]["displayName"].string_value();
+                auto jHash = room["liveroomByRoomId"]["hash"].string_value();
                 if (!jId.empty() && !jName.empty()) {
-                        Room r = {jId, jName};
+                        Room r = {jId, jName, jHash};
                         allRooms.insert({jId, r});
                 }
         }
@@ -326,8 +349,9 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::str
         for (auto &room : j["data"]["currentProfile"]["rooms"]["nodes"].array_items()) {
                 auto jId = room["id"].string_value();
                 auto jName = room["displayName"].string_value();
+                auto jHash = room["hash"].string_value();
                 if (!jId.empty() && !jName.empty()) {
-                        Room r = {jId, jName};
+                        Room r = {jId, jName, jHash};
                         allRooms.insert({jId, r});
                 }
         }
@@ -343,6 +367,39 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::str
         });
 
         return rooms;
+
+}
+
+EvercastAuth::Room EvercastAuth::obtainOneRoomInfo(const Token& token,
+                                                   const std::string& roomHash,
+						   const std::string& apiUrl)
+{
+
+        blog(LOG_INFO, "EvercastAuth::obtainOneRoomInfo(). apiURL='%s'", apiUrl.c_str());
+
+        auto query = createOneRoomQuery(roomHash);
+        auto res = execHttp(apiUrl, query.dump(),
+                            {
+                                    "X-Double-Submit: " + token.nonce,
+                                    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
+                            });
+
+        if(!res.error.empty()) {
+                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        }
+
+        std::string err;
+        auto j = json11::Json::parse(res.body, err);
+        if (!err.empty()) {
+                blog(LOG_INFO, "json error='%s'", err.c_str());
+                return {};
+        }
+
+        Room room;
+        room.id = j["data"]["room"]["id"].string_value();
+        room.hash = j["data"]["room"]["hash"].string_value();
+
+        return room;
 
 }
 
@@ -384,6 +441,16 @@ void EvercastAuth::updateState(std::string apiUrl) {
         }
 
 	setRooms(obtainRooms(token, apiUrl));
+
+}
+
+EvercastAuth::Room EvercastAuth::getOneRoomInfo(const std::string& roomHash, std::string apiUrl) {
+
+        if(apiUrl.empty()) {
+                apiUrl = EvercastUtils::getGraphApiUrl();
+        }
+
+	return obtainOneRoomInfo(getToken(), roomHash, apiUrl);
 
 }
 

@@ -150,6 +150,9 @@ private:
 	std::shared_ptr<Auth> auth;
         EvercastAuth evercastAuth;
 	int evercastCurrRoomIndex = -1;
+	std::mutex evercastStateMutex;
+        std::string evercastCurrRoomHash = "";
+        std::string evercastCurrRoomId = "";
         std::string wantedRoomUrl;
 
 	std::vector<VolControl *> volumes;
@@ -803,6 +806,7 @@ private slots:
 
         void EvercastResetAccount();
         void EvercastLoginCallback();
+        void EvercastRoomInfoCallback();
         bool EvercastCheckRoom();
 
 	void PauseToggled();
