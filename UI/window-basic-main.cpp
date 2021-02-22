@@ -7800,6 +7800,13 @@ void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
 
 }
 
+void OBSBasic::on_evercastRoomsTabsWidget_currentChanged(int index) {
+        if(ui->evercastAccountWidget->isVisible() && ui->evercastRoomsTabsWidget->currentIndex() == 0) {
+		evercastCurrRoomIndex = -1;
+                on_evercastRooms_currentIndexChanged(ui->evercastRooms->currentIndex());
+	}
+}
+
 void OBSBasic::EvercastRoomInfoCallback() {
 
         std::lock_guard<std::mutex> lock(evercastStateMutex);

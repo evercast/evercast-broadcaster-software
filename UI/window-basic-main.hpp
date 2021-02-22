@@ -803,6 +803,7 @@ private slots:
         void on_logoutButton_clicked();
 
         void on_evercastRooms_currentIndexChanged(int index);
+	void on_evercastRoomsTabsWidget_currentChanged(int index);
 
         void EvercastResetAccount();
         void EvercastLoginCallback();
