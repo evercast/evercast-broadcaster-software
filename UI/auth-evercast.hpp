@@ -31,6 +31,7 @@ public:
 	struct Room {
 		std::string id;
 		std::string name;
+		std::string hash;
 	};
 
 	struct Rooms {
@@ -50,7 +51,8 @@ private:
 
 	static HttpResponse execHttp(const std::string& url,
                                      const std::string& body,
-                                     const std::vector<std::string>& headers = std::vector<std::string>({}));
+                                     const std::vector<std::string>& headers = std::vector<std::string>({}),
+				     int timeoutSec = 5);
 
         static void skipChar(const std::string& text, int& pos, char c);
         static bool findChar(const std::string& text, int& pos, char c);
@@ -63,13 +65,26 @@ private:
         static json11::Json createStreamKeyQuery();
         static json11::Json obtainStreamKeyQuery();
         static json11::Json createRoomsQuery();
+        static json11::Json createOneRoomQuery(const std::string& roomHash);
+        static json11::Json createIsRoomJoinableQuery(const std::string& roomHash);
 
         static Token obtainToken(const Credentials& credentials, const std::string& apiUrl);
 	static std::string createStreamKey(const Token& token, const std::string& apiUrl);
         static std::string obtainStreamKey(const Token& token, const std::string& apiUrl);
         static Rooms obtainRooms(const Token& token, const std::string& apiUrl);
+	static Room obtainOneRoomInfo(const Token& token,
+                                      const std::string& roomHash,
+				      const std::string& apiUrl);
 
-	void updateState(std::string apiUrl);
+	static bool obtainIsRoomJoinable(const Token& token,
+                                         const std::string& roomHash,
+                                         const std::string& apiUrl);
+
+public:
+
+	void updateState(std::string apiUrl = "");
+        bool getIsRoomJoinable(const std::string& roomHash, std::string apiUrl = "");
+	Room getOneRoomInfo(const std::string& roomHash, std::string apiUrl = "");
 
 private:
         std::mutex m_mutex;
@@ -95,6 +110,30 @@ public:
 		t.detach();
 
 	}
+
+        template<typename Callback>
+        void getIsRoomJoinable(Callback callback, const std::string& roomHash, const std::string& apiUrl = "") {
+
+                std::thread t([this, callback, roomHash, apiUrl]{
+                        auto isJoinable = getIsRoomJoinable(roomHash, apiUrl);
+                        callback(isJoinable, roomHash);
+                });
+
+                t.detach();
+
+        }
+
+        template<typename Callback>
+        void getRoomInfo(Callback callback, const std::string& roomHash, const std::string& apiUrl = "") {
+
+                std::thread t([this, callback, roomHash, apiUrl]{
+                        auto room = getOneRoomInfo(roomHash, apiUrl);
+                        callback(room);
+                });
+
+                t.detach();
+
+        }
 
 	void setCredentials(const Credentials& credentials);
 
