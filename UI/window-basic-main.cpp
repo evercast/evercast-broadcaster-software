@@ -7832,6 +7832,17 @@ void OBSBasic::EvercastRoomInfoCallback() {
 
 }
 
+void OBSBasic::EvercastCantJoinRoomCallback() {
+
+        ui->streamButton->setEnabled(true);
+        ui->evercastDoc->setEnabled(true);
+
+        OBSMessageBox::information(
+                this, QTStr("Info.Title.PrivateRoomAccess"),
+                QTStr("Info.Text.PrivateRoomAccess"));
+
+}
+
 bool OBSBasic::EvercastCheckRoom() {
 
 	if(ui->evercastAccountWidget->isVisible() && ui->evercastRoomsTabsWidget->currentIndex() == 1) {
@@ -7868,12 +7879,25 @@ bool OBSBasic::EvercastCheckRoom() {
                         ui->streamButton->setEnabled(false);
                         ui->evercastDoc->setEnabled(false);
 
-                        evercastAuth.getRoomInfo([this](EvercastAuth::Room room) {
-				std::lock_guard<std::mutex> lock(evercastStateMutex);
-                                evercastCurrRoomHash = room.hash;
-				evercastCurrRoomId = room.id;
-                                QMetaObject::invokeMethod(this, "EvercastRoomInfoCallback", Qt::QueuedConnection);
-                        }, roomHash);
+			evercastAuth.getIsRoomJoinable([this](bool canJoin, const std::string& hash){
+
+				if(canJoin) {
+
+					auto room = evercastAuth.getOneRoomInfo(hash);
+
+                                        std::lock_guard<std::mutex> lock(evercastStateMutex);
+                                        evercastCurrRoomHash = room.hash;
+                                        evercastCurrRoomId = room.id;
+
+                                        QMetaObject::invokeMethod(this, "EvercastRoomInfoCallback", Qt::QueuedConnection);
+
+				} else {
+                                        blog(LOG_INFO, "Can't joint room");
+
+                                        QMetaObject::invokeMethod(this, "EvercastCantJoinRoomCallback", Qt::QueuedConnection);
+				}
+
+			}, roomHash);
 
 		} else {
 

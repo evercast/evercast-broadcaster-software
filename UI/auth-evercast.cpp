@@ -208,6 +208,29 @@ json11::Json EvercastAuth::createOneRoomQuery(const std::string& roomHash) {
 
 }
 
+json11::Json EvercastAuth::createIsRoomJoinableQuery(const std::string& roomHash) {
+
+        std::string query = "mutation CanJoinRoomMutation(\n"
+			    "    $input: CanJoinRoomInput!\n"
+			    ") {\n"
+			    "    canJoinRoom(input: $input) {\n"
+			    "        canJoinRoom: boolean\n"
+			    "    }\n"
+			    "}";
+
+        json11::Json j = json11::Json::object{
+                {"query", query},
+                {"variables", json11::Json::object {
+                        {"input", json11::Json::object {
+                                {"joinHash", roomHash}
+                        }}
+                }}
+        };
+
+        return j;
+
+}
+
 EvercastAuth::HttpResponse EvercastAuth::execHttp(const std::string& url,
 						  const std::string& body,
 						  const std::vector<std::string>& headers,
@@ -403,6 +426,37 @@ EvercastAuth::Room EvercastAuth::obtainOneRoomInfo(const Token& token,
 
 }
 
+bool EvercastAuth::obtainIsRoomJoinable(const Token& token,
+					const std::string& roomHash,
+                                        const std::string& apiUrl)
+{
+
+        blog(LOG_INFO, "EvercastAuth::obtainIsRoomJoinable(). apiURL='%s'", apiUrl.c_str());
+
+        auto query = createIsRoomJoinableQuery(roomHash);
+        auto res = execHttp(apiUrl, query.dump(),
+                            {
+                                    "X-Double-Submit: " + token.nonce,
+                                    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
+                            });
+
+        if(!res.error.empty()) {
+                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        }
+
+        std::string err;
+        auto j = json11::Json::parse(res.body, err);
+        if (!err.empty()) {
+                blog(LOG_INFO, "json error='%s'", err.c_str());
+                return {};
+        }
+
+        blog(LOG_INFO, "EvercastAuth::obtainIsRoomJoinable(). json='%s'", j.dump().c_str());
+
+        return j["data"]["canJoinRoom"]["canJoinRoom"].bool_value();
+
+}
+
 void EvercastAuth::updateState(std::string apiUrl) {
 
 	if(apiUrl.empty()) {
@@ -442,6 +496,14 @@ void EvercastAuth::updateState(std::string apiUrl) {
 
 	setRooms(obtainRooms(token, apiUrl));
 
+}
+
+bool EvercastAuth::getIsRoomJoinable(const std::string& roomHash, std::string apiUrl) {
+        if(apiUrl.empty()) {
+                apiUrl = EvercastUtils::getGraphApiUrl();
+        }
+
+        return obtainIsRoomJoinable(getToken(), roomHash, apiUrl);
 }
 
 EvercastAuth::Room EvercastAuth::getOneRoomInfo(const std::string& roomHash, std::string apiUrl) {

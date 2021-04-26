@@ -808,6 +808,7 @@ private slots:
         void EvercastResetAccount();
         void EvercastLoginCallback();
         void EvercastRoomInfoCallback();
+	void EvercastCantJoinRoomCallback();
         bool EvercastCheckRoom();
 
 	void PauseToggled();

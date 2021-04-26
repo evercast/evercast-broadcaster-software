@@ -66,6 +66,7 @@ private:
         static json11::Json obtainStreamKeyQuery();
         static json11::Json createRoomsQuery();
         static json11::Json createOneRoomQuery(const std::string& roomHash);
+        static json11::Json createIsRoomJoinableQuery(const std::string& roomHash);
 
         static Token obtainToken(const Credentials& credentials, const std::string& apiUrl);
 	static std::string createStreamKey(const Token& token, const std::string& apiUrl);
@@ -75,8 +76,15 @@ private:
                                       const std::string& roomHash,
 				      const std::string& apiUrl);
 
-	void updateState(std::string apiUrl);
-	Room getOneRoomInfo(const std::string& roomHash, std::string apiUrl);
+	static bool obtainIsRoomJoinable(const Token& token,
+                                         const std::string& roomHash,
+                                         const std::string& apiUrl);
+
+public:
+
+	void updateState(std::string apiUrl = "");
+        bool getIsRoomJoinable(const std::string& roomHash, std::string apiUrl = "");
+	Room getOneRoomInfo(const std::string& roomHash, std::string apiUrl = "");
 
 private:
         std::mutex m_mutex;
@@ -102,6 +110,18 @@ public:
 		t.detach();
 
 	}
+
+        template<typename Callback>
+        void getIsRoomJoinable(Callback callback, const std::string& roomHash, const std::string& apiUrl = "") {
+
+                std::thread t([this, callback, roomHash, apiUrl]{
+                        auto isJoinable = getIsRoomJoinable(roomHash, apiUrl);
+                        callback(isJoinable, roomHash);
+                });
+
+                t.detach();
+
+        }
 
         template<typename Callback>
         void getRoomInfo(Callback callback, const std::string& roomHash, const std::string& apiUrl = "") {
