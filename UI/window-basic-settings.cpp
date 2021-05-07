@@ -818,11 +818,13 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	AdvOutRecCheckWarnings();
 
   // NOTE LUDO #169: Settings/Output no access to encoder settings except Video Bitrate
+  /*
   ui->simpleOutStrEncoder->setEnabled(false);
   ui->simpleOutAdvanced->setEnabled(false);
   ui->simpleOutEnforce->setEnabled(false);
   ui->simpleOutPreset->setEnabled(false);
   ui->simpleOutCustom->setEnabled(false);
+	*/
 
   // NOTE LUDO: #184 Settings/Stream disable entry "Username"
   ui->authUsernameLabel->setEnabled(false);
@@ -1186,9 +1188,9 @@ void OBSBasicSettings::CheckAdvancedOptions()
     // Several settings are hidden by default
     ui->groupBox_5->setHidden(!showAdvancedOptions);
     ui->groupBox_7->setHidden(!showAdvancedOptions);
-    ui->simpleOutAdvanced->setHidden(!showAdvancedOptions);
-	ui->simpleOutStrEncoder->setHidden(!showAdvancedOptions);
-	ui->simpleOutRecEncoderLabel_2->setHidden(!showAdvancedOptions);
+    // ui->simpleOutAdvanced->setHidden(!showAdvancedOptions);
+	// ui->simpleOutStrEncoder->setHidden(!showAdvancedOptions);
+	// ui->simpleOutRecEncoderLabel_2->setHidden(!showAdvancedOptions);
 }
 
 void OBSBasicSettings::LoadEvercastSettings() {
