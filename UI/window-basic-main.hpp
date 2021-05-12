@@ -154,6 +154,7 @@ private:
         std::string evercastCurrRoomHash = "";
         std::string evercastCurrRoomId = "";
         std::string wantedRoomUrl;
+	bool evercastRoomChecked = false;
 
 	std::vector<VolControl *> volumes;
 
@@ -809,6 +810,7 @@ private slots:
         void EvercastLoginCallback();
         void EvercastRoomInfoCallback();
 	void EvercastCantJoinRoomCallback();
+	void EvercastLoggedOutCallback();
         bool EvercastCheckRoom();
 
 	void PauseToggled();

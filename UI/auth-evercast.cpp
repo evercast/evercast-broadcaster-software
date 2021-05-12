@@ -266,24 +266,24 @@ EvercastAuth::Token EvercastAuth::obtainToken(const Credentials& credentials, co
 
 }
 
-std::string EvercastAuth::obtainStreamKey(const Token& token, const std::string& apiUrl) {
+std::string EvercastAuth::obtainStreamKey(EvercastAuth::HttpResponse& httpResponse, const Token& token, const std::string& apiUrl) {
 
         blog(LOG_INFO, "EvercastAuth::obtainStreamKey(). apiURL='%s'", apiUrl.c_str());
 
         auto query = obtainStreamKeyQuery();
-        auto res = execHttp(apiUrl, query.dump(),
+        httpResponse = execHttp(apiUrl, query.dump(),
 			    {
 				    "X-Double-Submit: " + token.nonce,
 				    "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
 			    });
 
-        if(!res.error.empty()) {
-                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        if(!httpResponse.error.empty()) {
+                blog(LOG_INFO, "error='%s'", httpResponse.error.c_str());
 		return "";
         }
 
         std::string err;
-        auto j = json11::Json::parse(res.body, err);
+        auto j = json11::Json::parse(httpResponse.body, err);
         if (!err.empty()) {
                 blog(LOG_INFO, "error='%s'", err.c_str());
 		return "";
@@ -296,23 +296,23 @@ std::string EvercastAuth::obtainStreamKey(const Token& token, const std::string&
 
 }
 
-std::string EvercastAuth::createStreamKey(const Token& token, const std::string& apiUrl) {
+std::string EvercastAuth::createStreamKey(EvercastAuth::HttpResponse& httpResponse, const Token& token, const std::string& apiUrl) {
 
         blog(LOG_INFO, "EvercastAuth::createStreamKey(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createStreamKeyQuery();
-        auto res = execHttp(apiUrl, query.dump(),
+        httpResponse = execHttp(apiUrl, query.dump(),
                             {
                                     "X-Double-Submit: " + token.nonce,
                                     "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
                             });
 
-        if(!res.error.empty()) {
-                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        if(!httpResponse.error.empty()) {
+                blog(LOG_INFO, "error='%s'", httpResponse.error.c_str());
         }
 
         std::string err;
-        auto j = json11::Json::parse(res.body, err);
+        auto j = json11::Json::parse(httpResponse.body, err);
         if (!err.empty()) {
                 blog(LOG_INFO, "error='%s'", err.c_str());
                 return "";
@@ -324,24 +324,24 @@ std::string EvercastAuth::createStreamKey(const Token& token, const std::string&
         return key;
 }
 
-EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::string& apiUrl) {
+EvercastAuth::Rooms EvercastAuth::obtainRooms(EvercastAuth::HttpResponse& httpResponse, const Token& token, const std::string& apiUrl) {
 
         std::string apiURL = EvercastUtils::getGraphApiUrl();
         blog(LOG_INFO, "EvercastAuth::obtainRooms(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createRoomsQuery();
-        auto res = execHttp(apiUrl, query.dump(),
+        httpResponse = execHttp(apiUrl, query.dump(),
                             {
                                     "X-Double-Submit: " + token.nonce,
                                     "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
                             });
 
-        if(!res.error.empty()) {
-                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        if(!httpResponse.error.empty()) {
+                blog(LOG_INFO, "error='%s'", httpResponse.error.c_str());
         }
 
         std::string err;
-        auto j = json11::Json::parse(res.body, err);
+        auto j = json11::Json::parse(httpResponse.body, err);
         if (!err.empty()) {
                 blog(LOG_INFO, "error='%s'", err.c_str());
                 return {};
@@ -393,7 +393,8 @@ EvercastAuth::Rooms EvercastAuth::obtainRooms(const Token& token, const std::str
 
 }
 
-EvercastAuth::Room EvercastAuth::obtainOneRoomInfo(const Token& token,
+EvercastAuth::Room EvercastAuth::obtainOneRoomInfo(EvercastAuth::HttpResponse& httpResponse,
+						   const Token& token,
                                                    const std::string& roomHash,
 						   const std::string& apiUrl)
 {
@@ -401,18 +402,18 @@ EvercastAuth::Room EvercastAuth::obtainOneRoomInfo(const Token& token,
         blog(LOG_INFO, "EvercastAuth::obtainOneRoomInfo(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createOneRoomQuery(roomHash);
-        auto res = execHttp(apiUrl, query.dump(),
+        httpResponse = execHttp(apiUrl, query.dump(),
                             {
                                     "X-Double-Submit: " + token.nonce,
                                     "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
                             });
 
-        if(!res.error.empty()) {
-                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        if(!httpResponse.error.empty()) {
+                blog(LOG_INFO, "error='%s'", httpResponse.error.c_str());
         }
 
         std::string err;
-        auto j = json11::Json::parse(res.body, err);
+        auto j = json11::Json::parse(httpResponse.body, err);
         if (!err.empty()) {
                 blog(LOG_INFO, "json error='%s'", err.c_str());
                 return {};
@@ -426,7 +427,8 @@ EvercastAuth::Room EvercastAuth::obtainOneRoomInfo(const Token& token,
 
 }
 
-bool EvercastAuth::obtainIsRoomJoinable(const Token& token,
+bool EvercastAuth::obtainIsRoomJoinable(EvercastAuth::HttpResponse& httpResponse,
+					const Token& token,
 					const std::string& roomHash,
                                         const std::string& apiUrl)
 {
@@ -434,18 +436,18 @@ bool EvercastAuth::obtainIsRoomJoinable(const Token& token,
         blog(LOG_INFO, "EvercastAuth::obtainIsRoomJoinable(). apiURL='%s'", apiUrl.c_str());
 
         auto query = createIsRoomJoinableQuery(roomHash);
-        auto res = execHttp(apiUrl, query.dump(),
+        httpResponse = execHttp(apiUrl, query.dump(),
                             {
                                     "X-Double-Submit: " + token.nonce,
                                     "cookie: __Host-nonce=" + token.nonce + "; __Host-jwt=" + token.token
                             });
 
-        if(!res.error.empty()) {
-                blog(LOG_INFO, "error='%s'", res.error.c_str());
+        if(!httpResponse.error.empty()) {
+                blog(LOG_INFO, "error='%s'", httpResponse.error.c_str());
         }
 
         std::string err;
-        auto j = json11::Json::parse(res.body, err);
+        auto j = json11::Json::parse(httpResponse.body, err);
         if (!err.empty()) {
                 blog(LOG_INFO, "json error='%s'", err.c_str());
                 return {};
@@ -459,7 +461,9 @@ bool EvercastAuth::obtainIsRoomJoinable(const Token& token,
 
 void EvercastAuth::updateState(std::string apiUrl) {
 
-	if(apiUrl.empty()) {
+        EvercastAuth::HttpResponse httpResponse;
+
+        if(apiUrl.empty()) {
 		apiUrl = EvercastUtils::getGraphApiUrl();
 	}
 
@@ -473,7 +477,7 @@ void EvercastAuth::updateState(std::string apiUrl) {
                 }
 	}
 
-	auto streamKey = obtainStreamKey(token, apiUrl);
+	auto streamKey = obtainStreamKey(httpResponse, token, apiUrl);
 	if(streamKey.empty()) {
 		/* get a new token, old one was revoked */
                 token = obtainToken(getCredentials(), apiUrl);
@@ -482,11 +486,11 @@ void EvercastAuth::updateState(std::string apiUrl) {
                         setStreamKey("");
 			return;
 		}
-		streamKey = obtainStreamKey(token, apiUrl);
+		streamKey = obtainStreamKey(httpResponse, token, apiUrl);
 
 		if (streamKey.empty()) {
 			/* Still no stream key; try creating one */
-			streamKey = createStreamKey(token, apiUrl);
+			streamKey = createStreamKey(httpResponse, token, apiUrl);
 		}
 	}
         setStreamKey(streamKey);
@@ -494,25 +498,25 @@ void EvercastAuth::updateState(std::string apiUrl) {
                 return;
         }
 
-	setRooms(obtainRooms(token, apiUrl));
+	setRooms(obtainRooms(httpResponse, token, apiUrl));
 
 }
 
-bool EvercastAuth::getIsRoomJoinable(const std::string& roomHash, std::string apiUrl) {
+bool EvercastAuth::getIsRoomJoinable(EvercastAuth::HttpResponse& httpResponse, const std::string& roomHash, std::string apiUrl) {
         if(apiUrl.empty()) {
                 apiUrl = EvercastUtils::getGraphApiUrl();
         }
 
-        return obtainIsRoomJoinable(getToken(), roomHash, apiUrl);
+        return obtainIsRoomJoinable(httpResponse, getToken(), roomHash, apiUrl);
 }
 
-EvercastAuth::Room EvercastAuth::getOneRoomInfo(const std::string& roomHash, std::string apiUrl) {
+EvercastAuth::Room EvercastAuth::getOneRoomInfo(EvercastAuth::HttpResponse& httpResponse, const std::string& roomHash, std::string apiUrl) {
 
         if(apiUrl.empty()) {
                 apiUrl = EvercastUtils::getGraphApiUrl();
         }
 
-	return obtainOneRoomInfo(getToken(), roomHash, apiUrl);
+	return obtainOneRoomInfo(httpResponse, getToken(), roomHash, apiUrl);
 
 }
 

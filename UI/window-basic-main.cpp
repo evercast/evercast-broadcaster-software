@@ -7756,6 +7756,7 @@ void OBSBasic::on_logoutButton_clicked() {
 
 void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
 
+        evercastRoomChecked = false;
 	if(index == evercastCurrRoomIndex) return;
 
         if (outputHandler->StreamingActive()) {
@@ -7801,6 +7802,7 @@ void OBSBasic::on_evercastRooms_currentIndexChanged(int index) {
 }
 
 void OBSBasic::on_evercastRoomsTabsWidget_currentChanged(int index) {
+        evercastRoomChecked = false;
         if(ui->evercastAccountWidget->isVisible() && ui->evercastRoomsTabsWidget->currentIndex() == 0) {
 		evercastCurrRoomIndex = -1;
                 on_evercastRooms_currentIndexChanged(ui->evercastRooms->currentIndex());
@@ -7828,6 +7830,8 @@ void OBSBasic::EvercastRoomInfoCallback() {
         ui->streamButton->setEnabled(true);
         ui->evercastDoc->setEnabled(true);
 
+	evercastRoomChecked = true;
+
         QMetaObject::invokeMethod(this, "on_streamButton_clicked", Qt::QueuedConnection);
 
 }
@@ -7843,47 +7847,129 @@ void OBSBasic::EvercastCantJoinRoomCallback() {
 
 }
 
+void OBSBasic::EvercastLoggedOutCallback() {
+
+        ui->streamButton->setEnabled(true);
+        ui->evercastDoc->setEnabled(true);
+
+        EvercastResetAccount();
+
+        OBSMessageBox::information(
+                this, QTStr("Info.Title.LoggedOut"),
+                QTStr("Info.Text.LoggedOut"));
+
+}
+
 bool OBSBasic::EvercastCheckRoom() {
 
-	if(ui->evercastAccountWidget->isVisible() && ui->evercastRoomsTabsWidget->currentIndex() == 1) {
+	if(ui->evercastAccountWidget->isVisible()) {
 
-		std::string roomUrl = QT_TO_UTF8(ui->evercastEditRoomURL->text());
+                if(ui->evercastRoomsTabsWidget->currentIndex() == 1) {
 
-		if(roomUrl.empty()) {
-                        OBSMessageBox::information(
+                        std::string roomUrl = QT_TO_UTF8(ui->evercastEditRoomURL->text());
+
+                        if(roomUrl.empty()) {
+                                OBSMessageBox::information(
                                         this, QTStr("Info.Title.NoRoomUrl"),
                                         QTStr("Info.Text.NoRoomUrl"));
 
+                                return false;
+                        }
+
+                        std::string apiUrl = EvercastUtils::getGraphApiUrl();
+
+                        auto roomUrlComponents = EvercastUtils::parseUrlComponents(roomUrl);
+                        auto apiUrlComponents = EvercastUtils::parseUrlComponents(apiUrl);
+
+                        blog(LOG_INFO, "roomUrl domain='%s', apiUrl domain='%s'",
+                             roomUrlComponents.domain.c_str(),
+                             apiUrlComponents.domain.c_str());
+
+                        if(roomUrlComponents.domain == apiUrlComponents.domain) {
+
+                                std::lock_guard<std::mutex> lock(evercastStateMutex);
+
+                                auto roomHash = EvercastUtils::parseRoomIdFromUrl(roomUrl);
+
+                                if(roomHash == evercastCurrRoomHash) {
+                                        return true;
+                                }
+
+                                ui->streamButton->setEnabled(false);
+                                ui->evercastDoc->setEnabled(false);
+
+                                evercastAuth.getIsRoomJoinable([this](EvercastAuth::HttpResponse response, bool canJoin, const std::string& hash){
+
+                                        if(response.code == 403) {
+						QMetaObject::invokeMethod(this, "EvercastLoggedOutCallback", Qt::QueuedConnection);
+						return;
+					}
+
+                                        if(canJoin) {
+
+                                                EvercastAuth::HttpResponse res;
+                                                auto room = evercastAuth.getOneRoomInfo(res, hash);
+
+                                                std::lock_guard<std::mutex> lock(evercastStateMutex);
+                                                evercastCurrRoomHash = room.hash;
+                                                evercastCurrRoomId = room.id;
+
+                                                QMetaObject::invokeMethod(this, "EvercastRoomInfoCallback", Qt::QueuedConnection);
+
+                                        } else {
+                                                blog(LOG_INFO, "Can't joint room");
+
+                                                QMetaObject::invokeMethod(this, "EvercastCantJoinRoomCallback", Qt::QueuedConnection);
+                                        }
+
+                                }, roomHash);
+
+                        } else {
+
+                                auto message = QTStr("Question.Text.RoomUrlDomainIsDifferent")
+                                                       .arg(QTStr(apiUrlComponents.domain.c_str()))
+                                                       .arg(QTStr(roomUrlComponents.domain.c_str()));
+                                QMessageBox::StandardButton button =
+                                        OBSMessageBox::question(
+                                                this, QTStr("Question.Title.RoomUrlDomainIsDifferent"),
+                                                message);
+
+                                if (button == QMessageBox::Yes) {
+                                        wantedRoomUrl = roomUrl;
+                                        on_logoutButton_clicked();
+                                        on_loginButton_clicked();
+                                }
+
+                        }
+
                         return false;
-		}
 
-		std::string apiUrl = EvercastUtils::getGraphApiUrl();
+                } else if(!evercastRoomChecked && ui->evercastRoomsTabsWidget->currentIndex() == 0) {
 
-		auto roomUrlComponents = EvercastUtils::parseUrlComponents(roomUrl);
-                auto apiUrlComponents = EvercastUtils::parseUrlComponents(apiUrl);
+                        auto index = ui->evercastRooms->currentIndex();
+			EvercastAuth::Room room;
 
-                blog(LOG_INFO, "roomUrl domain='%s', apiUrl domain='%s'",
-		     roomUrlComponents.domain.c_str(),
-                     apiUrlComponents.domain.c_str());
+                        const auto& rooms = evercastAuth.getRooms();
+                        if(index < rooms.ordered.size()) {
+                                room = rooms.ordered[index];
+                        }
 
-		if(roomUrlComponents.domain == apiUrlComponents.domain) {
+                        blog(LOG_INFO, "Check Room id='%s', hash='%s', name='%s'",
+                             room.id.c_str(),
+                             room.hash.c_str(),
+			     room.name.c_str());
 
-                        std::lock_guard<std::mutex> lock(evercastStateMutex);
+                        evercastAuth.getIsRoomJoinable([this](EvercastAuth::HttpResponse response, bool canJoin, const std::string& hash){
 
-                        auto roomHash = EvercastUtils::parseRoomIdFromUrl(roomUrl);
+                                if(response.code == 403) {
+                                        QMetaObject::invokeMethod(this, "EvercastLoggedOutCallback", Qt::QueuedConnection);
+                                        return;
+                                }
 
-			if(roomHash == evercastCurrRoomHash) {
-			        return true;
-			}
+                                if(canJoin) {
 
-                        ui->streamButton->setEnabled(false);
-                        ui->evercastDoc->setEnabled(false);
-
-			evercastAuth.getIsRoomJoinable([this](bool canJoin, const std::string& hash){
-
-				if(canJoin) {
-
-					auto room = evercastAuth.getOneRoomInfo(hash);
+                                        EvercastAuth::HttpResponse res;
+                                        auto room = evercastAuth.getOneRoomInfo(res, hash);
 
                                         std::lock_guard<std::mutex> lock(evercastStateMutex);
                                         evercastCurrRoomHash = room.hash;
@@ -7891,33 +7977,16 @@ bool OBSBasic::EvercastCheckRoom() {
 
                                         QMetaObject::invokeMethod(this, "EvercastRoomInfoCallback", Qt::QueuedConnection);
 
-				} else {
+                                } else {
                                         blog(LOG_INFO, "Can't joint room");
-
                                         QMetaObject::invokeMethod(this, "EvercastCantJoinRoomCallback", Qt::QueuedConnection);
-				}
+                                }
 
-			}, roomHash);
+                        }, room.hash);
 
-		} else {
-
-			auto message = QTStr("Question.Text.RoomUrlDomainIsDifferent")
-				.arg(QTStr(apiUrlComponents.domain.c_str()))
-				.arg(QTStr(roomUrlComponents.domain.c_str()));
-                        QMessageBox::StandardButton button =
-                                OBSMessageBox::question(
-                                        this, QTStr("Question.Title.RoomUrlDomainIsDifferent"),
-                                        message);
-
-                        if (button == QMessageBox::Yes) {
-                                wantedRoomUrl = roomUrl;
-				on_logoutButton_clicked();
-                                on_loginButton_clicked();
-                        }
+                        return false;
 
 		}
-
-                return false;
 
 	}
 
