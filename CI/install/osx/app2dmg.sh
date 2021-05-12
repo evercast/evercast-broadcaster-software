@@ -1,6 +1,14 @@
+echo "EBS_VERSION=$EBS_VERSION"
+echo "NDI_RUNTIME=$NDI_RUNTIME"
+echo "NDI_M1_RUNTIME=$NDI_M1_RUNTIME"
+echo "NOTARIZE_PASS=$NOTARIZE_PASS"
+
 xattr -rc ./EBS.app
+echo "\n 1 \n"
 rm -rf ./EBS.app/Contents/Frameworks/Qt*.framework/Headers
+echo "\n 2 \n"
 codesign --deep --options runtime -vfs 'Developer ID Application: Evercast LLC' './EBS.app' --keychain 'login.keychain' --entitlements ./EBS.app/Contents/entitlements.plist
+echo "\n 3 \n"
 mkdir /tmp/installebs
 rm -rf /tmp/installebs/EBS.app
 cp -R "./EBS.app" /tmp/installebs

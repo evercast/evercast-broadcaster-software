@@ -1,6 +1,8 @@
 #include "EvercastAudioSource.h"
 #include <obs.h>
 
+#include <sstream>
+
 rtc::scoped_refptr<EvercastAudioSource> EvercastAudioSource::Create(cricket::AudioOptions *options)
 {
 	audio_t *audio = obs_get_audio();
@@ -48,6 +50,14 @@ void EvercastAudioSource::OnAudioData(audio_data *frame)
 	size_t i = 0;
 	uint8_t *position;
 
+        blog(LOG_WARNING, "I think, I'm sending audio! channels %d", num_channels);
+
+	int channs[num_channels];
+
+	for(int c = 0; c < num_channels; c++) {
+		channs[c] = 0;
+	}
+
 	if (pending_remainder) {
 		// Copy missing chunks
 		i = chunk - pending_remainder;
@@ -72,6 +82,30 @@ void EvercastAudioSource::OnAudioData(audio_data *frame)
 		memcpy(pending, data + i * sample_size * num_channels,
 		       pending_remainder * sample_size * num_channels);
 	}
+
+        {
+
+		int mul = num_channels * sample_size;
+
+		for(int i = 0; i < chunk; i++) {
+			for(int c = 0; c < num_channels; c++) {
+
+                                int16_t* s = (int16_t*) &data[i * mul + c * sample_size];
+                                channs[c] += *s;
+
+			}
+		}
+	}
+
+        std::stringstream ss;
+	ss << "\n\nchanns:\n";
+        for(int c = 0; c < num_channels; c++) {
+                ss << "[" << c << "]: " << channs[c] << "\n";
+        }
+
+	auto stats = ss.str();
+        blog(LOG_WARNING, stats.c_str());
+
 }
 
 EvercastAudioSource::EvercastAudioSource()

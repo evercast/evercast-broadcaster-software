@@ -292,12 +292,12 @@ bool WebRTCStream::startWebSocket(WebRTCStream::Type type)
 
 		bool successfullyJoined = session_data->awaitJoinComplete(5);
 		if (!successfullyJoined) {
-            webrtc::MutexLock lock(&mutex_);
-            if (!this->connection_invalidated) {
-                this->connection_invalidated = true;
-                recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
-            }
-			return false;
+                        webrtc::MutexLock lock(&mutex_);
+                        if (!this->connection_invalidated) {
+                                this->connection_invalidated = true;
+                                recordConnectionError("Please make sure there is at least one participant in your Evercast virtual room in order to connect.");
+                        }
+		        return false;
 		}
 
 		std::vector<IceServerDefinition> servers =
@@ -363,7 +363,9 @@ bool WebRTCStream::startPeerConnection()
     audio_track = factory->CreateAudioTrack("audio", audio_source);
     // pc->AddTrack(audio_track, {"obs"});
     stream->AddTrack(audio_track);
-    
+
+    info("Hek hek. No audio track");
+
     video_track = factory->CreateVideoTrack("video", videoCapturer);
     // pc->AddTrack(video_track, {"obs"});
     stream->AddTrack(video_track);
