@@ -38,7 +38,7 @@ public:
                 std::vector<Room> ordered;
 	};
 
-private:
+public:
 
 	struct HttpResponse {
                 long code;
@@ -69,22 +69,24 @@ private:
         static json11::Json createIsRoomJoinableQuery(const std::string& roomHash);
 
         static Token obtainToken(const Credentials& credentials, const std::string& apiUrl);
-	static std::string createStreamKey(const Token& token, const std::string& apiUrl);
-        static std::string obtainStreamKey(const Token& token, const std::string& apiUrl);
-        static Rooms obtainRooms(const Token& token, const std::string& apiUrl);
-	static Room obtainOneRoomInfo(const Token& token,
+	static std::string createStreamKey(EvercastAuth::HttpResponse& httpResponse, const Token& token, const std::string& apiUrl);
+        static std::string obtainStreamKey(EvercastAuth::HttpResponse& httpResponse, const Token& token, const std::string& apiUrl);
+        static Rooms obtainRooms(EvercastAuth::HttpResponse& httpResponse, const Token& token, const std::string& apiUrl);
+	static Room obtainOneRoomInfo(EvercastAuth::HttpResponse& httpResponse,
+				      const Token& token,
                                       const std::string& roomHash,
 				      const std::string& apiUrl);
 
-	static bool obtainIsRoomJoinable(const Token& token,
+	static bool obtainIsRoomJoinable(EvercastAuth::HttpResponse& httpResponse,
+					 const Token& token,
                                          const std::string& roomHash,
                                          const std::string& apiUrl);
 
 public:
 
 	void updateState(std::string apiUrl = "");
-        bool getIsRoomJoinable(const std::string& roomHash, std::string apiUrl = "");
-	Room getOneRoomInfo(const std::string& roomHash, std::string apiUrl = "");
+        bool getIsRoomJoinable(EvercastAuth::HttpResponse& httpResponse, const std::string& roomHash, std::string apiUrl = "");
+	Room getOneRoomInfo(EvercastAuth::HttpResponse& httpResponse, const std::string& roomHash, std::string apiUrl = "");
 
 private:
         std::mutex m_mutex;
@@ -115,8 +117,9 @@ public:
         void getIsRoomJoinable(Callback callback, const std::string& roomHash, const std::string& apiUrl = "") {
 
                 std::thread t([this, callback, roomHash, apiUrl]{
-                        auto isJoinable = getIsRoomJoinable(roomHash, apiUrl);
-                        callback(isJoinable, roomHash);
+                        EvercastAuth::HttpResponse httpResponse;
+                        auto isJoinable = getIsRoomJoinable(httpResponse, roomHash, apiUrl);
+                        callback(httpResponse, isJoinable, roomHash);
                 });
 
                 t.detach();
@@ -127,8 +130,9 @@ public:
         void getRoomInfo(Callback callback, const std::string& roomHash, const std::string& apiUrl = "") {
 
                 std::thread t([this, callback, roomHash, apiUrl]{
-                        auto room = getOneRoomInfo(roomHash, apiUrl);
-                        callback(room);
+                        EvercastAuth::HttpResponse httpResponse;
+                        auto room = getOneRoomInfo(httpResponse, roomHash, apiUrl);
+                        callback(httpResponse, room);
                 });
 
                 t.detach();
