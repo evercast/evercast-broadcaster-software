@@ -191,7 +191,7 @@
      <item>
       <widget class="QStackedWidget" name="settingsPages">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="generalPage">
         <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -223,8 +223,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>943</height>
+              <width>809</width>
+              <height>976</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -1176,7 +1176,7 @@
                   <x>10</x>
                   <y>10</y>
                   <width>206</width>
-                  <height>81</height>
+                  <height>84</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1320,8 +1320,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>717</height>
+              <width>603</width>
+              <height>605</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -3504,8 +3504,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>753</width>
-              <height>632</height>
+              <width>826</width>
+              <height>661</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_50">
@@ -3590,9 +3590,6 @@
                    </item>
                    <item row="1" column="1">
                     <widget class="QComboBox" name="channelSetup">
-                     <property name="currentText">
-                      <string>Mono</string>
-                     </property>
                      <property name="currentIndex">
                       <number>0</number>
                      </property>
@@ -3628,7 +3625,7 @@
                      </item>
                      <item>
                       <property name="text">
-                       <string>7.1</string>
+                       <string>7.1 (beta)</string>
                       </property>
                      </item>
                     </widget>
@@ -4311,8 +4308,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>755</width>
-              <height>755</height>
+              <width>592</width>
+              <height>629</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -5533,9 +5530,9 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="basicSettingsButtonGroup"/>
   <buttongroup name="serviceButtonGroup"/>
   <buttongroup name="outputModeButtonGroup"/>
   <buttongroup name="codecButtonGroup"/>
+  <buttongroup name="basicSettingsButtonGroup"/>
  </buttongroups>
 </ui>
