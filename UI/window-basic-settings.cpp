@@ -1651,9 +1651,9 @@ void OBSBasicSettings::LoadSimpleOutputSettings()
 	// 	config_get_string(main->Config(), "SimpleOutput", "RecFormat");
 	int videoBitrate =
 		config_get_uint(main->Config(), "SimpleOutput", "VBitrate");
-  // NOTE LUDO: #165 Remove button recording
-	// const char *streamEnc = config_get_string(
-	// 	main->Config(), "SimpleOutput", "StreamEncoder");
+
+	const char *streamEnc = config_get_string(
+		main->Config(), "SimpleOutput", "StreamEncoder");
 	int audioBitrate =
 		config_get_uint(main->Config(), "SimpleOutput", "ABitrate");
 	bool advanced =
@@ -1722,10 +1722,10 @@ void OBSBasicSettings::LoadSimpleOutputSettings()
 	// 	idx = 0;
 	// ui->simpleOutRecQuality->setCurrentIndex(idx);
 
-	// idx = ui->simpleOutStrEncoder->findData(QString(streamEnc));
-	// if (idx == -1)
-	// 	idx = 0;
-	// ui->simpleOutStrEncoder->setCurrentIndex(idx);
+	idx = ui->simpleOutStrEncoder->findData(QString(streamEnc));
+	if (idx == -1)
+	 	idx = 0;
+	ui->simpleOutStrEncoder->setCurrentIndex(idx);
 
 	// idx = ui->simpleOutRecEncoder->findData(QString(recEnc));
 	// if (idx == -1)
