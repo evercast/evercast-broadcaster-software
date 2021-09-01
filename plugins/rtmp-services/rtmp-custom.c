@@ -1,5 +1,4 @@
 #include <obs-module.h>
-#include <util/dstr.h>
 
 struct rtmp_custom {
 	char *server, *key;
@@ -19,8 +18,6 @@ static void rtmp_custom_update(void *data, obs_data_t *settings)
 
 	bfree(service->server);
 	bfree(service->key);
-	bfree(service->username);
-	bfree(service->password);
 
 	service->server = bstrdup(obs_data_get_string(settings, "server"));
 	service->key = bstrdup(obs_data_get_string(settings, "key"));
@@ -110,19 +107,6 @@ static const char *rtmp_custom_password(void *data)
 	return service->password;
 }
 
-#define RTMP_PROTOCOL "rtmp"
-
-static void rtmp_custom_apply_settings(void *data, obs_data_t *video_settings,
-				       obs_data_t *audio_settings)
-{
-	struct rtmp_custom *service = data;
-	if (service->server != NULL && video_settings != NULL &&
-	    strncmp(service->server, RTMP_PROTOCOL, strlen(RTMP_PROTOCOL)) !=
-		    0) {
-		obs_data_set_bool(video_settings, "repeat_headers", true);
-	}
-}
-
 struct obs_service_info rtmp_custom_service = {
 	.id = "rtmp_custom",
 	.get_name = rtmp_custom_name,
@@ -134,5 +118,4 @@ struct obs_service_info rtmp_custom_service = {
 	.get_key = rtmp_custom_key,
 	.get_username = rtmp_custom_username,
 	.get_password = rtmp_custom_password,
-	.apply_encoder_settings = rtmp_custom_apply_settings,
 };
