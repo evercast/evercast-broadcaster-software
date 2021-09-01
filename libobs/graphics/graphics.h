@@ -169,6 +169,12 @@ enum gs_texture_type {
 	GS_TEXTURE_CUBE,
 };
 
+struct gs_device_loss {
+	void (*device_loss_release)(void *data);
+	void (*device_loss_rebuild)(void *device, void *data);
+	void *data;
+};
+
 struct gs_monitor_info {
 	int rotation_degrees;
 	long x;
@@ -500,6 +506,7 @@ EXPORT void gs_destroy(graphics_t *graphics);
 EXPORT void gs_enter_context(graphics_t *graphics);
 EXPORT void gs_leave_context(void);
 EXPORT graphics_t *gs_get_context(void);
+EXPORT void *gs_get_device_obj(void);
 
 EXPORT void gs_matrix_push(void);
 EXPORT void gs_matrix_pop(void);
@@ -824,6 +831,8 @@ EXPORT void gs_debug_marker_end(void);
  * from shared surface resources */
 EXPORT gs_texture_t *gs_texture_create_from_iosurface(void *iosurf);
 EXPORT bool gs_texture_rebind_iosurface(gs_texture_t *texture, void *iosurf);
+EXPORT gs_texture_t *gs_texture_open_shared(uint32_t handle);
+EXPORT bool gs_shared_texture_available(void);
 
 #elif _WIN32
 
@@ -860,6 +869,8 @@ EXPORT gs_texture_t *gs_texture_open_shared(uint32_t handle);
 #define GS_INVALID_HANDLE (uint32_t) - 1
 EXPORT uint32_t gs_texture_get_shared_handle(gs_texture_t *tex);
 
+EXPORT gs_texture_t *gs_texture_wrap_obj(void *obj);
+
 #define GS_WAIT_INFINITE (uint32_t) - 1
 
 /**
@@ -881,6 +892,9 @@ EXPORT bool gs_texture_create_nv12(gs_texture_t **tex_y, gs_texture_t **tex_uv,
 
 EXPORT gs_stagesurf_t *gs_stagesurface_create_nv12(uint32_t width,
 						   uint32_t height);
+
+EXPORT void gs_register_loss_callbacks(const struct gs_device_loss *callbacks);
+EXPORT void gs_unregister_loss_callbacks(void *data);
 
 #endif
 

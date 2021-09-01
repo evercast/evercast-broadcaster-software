@@ -50,6 +50,7 @@ bool load_graphics_imports(struct gs_exports *exports, void *module,
 	GRAPHICS_IMPORT(device_destroy);
 	GRAPHICS_IMPORT(device_enter_context);
 	GRAPHICS_IMPORT(device_leave_context);
+	GRAPHICS_IMPORT(device_get_device_obj);
 	GRAPHICS_IMPORT(device_swapchain_create);
 	GRAPHICS_IMPORT(device_resize);
 	GRAPHICS_IMPORT(device_get_size);
@@ -192,6 +193,8 @@ bool load_graphics_imports(struct gs_exports *exports, void *module,
 
 	/* OSX/Cocoa specific functions */
 #ifdef __APPLE__
+	GRAPHICS_IMPORT(device_shared_texture_available);
+	GRAPHICS_IMPORT_OPTIONAL(device_texture_open_shared);
 	GRAPHICS_IMPORT_OPTIONAL(device_texture_create_from_iosurface);
 	GRAPHICS_IMPORT_OPTIONAL(gs_texture_rebind_iosurface);
 
@@ -209,10 +212,13 @@ bool load_graphics_imports(struct gs_exports *exports, void *module,
 	GRAPHICS_IMPORT_OPTIONAL(gs_texture_release_dc);
 	GRAPHICS_IMPORT_OPTIONAL(device_texture_open_shared);
 	GRAPHICS_IMPORT_OPTIONAL(device_texture_get_shared_handle);
+	GRAPHICS_IMPORT_OPTIONAL(device_texture_wrap_obj);
 	GRAPHICS_IMPORT_OPTIONAL(device_texture_acquire_sync);
 	GRAPHICS_IMPORT_OPTIONAL(device_texture_release_sync);
 	GRAPHICS_IMPORT_OPTIONAL(device_texture_create_nv12);
 	GRAPHICS_IMPORT_OPTIONAL(device_stagesurface_create_nv12);
+	GRAPHICS_IMPORT_OPTIONAL(device_register_loss_callbacks);
+	GRAPHICS_IMPORT_OPTIONAL(device_unregister_loss_callbacks);
 #endif
 
 	return success;

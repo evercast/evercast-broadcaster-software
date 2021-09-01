@@ -160,12 +160,14 @@ static void image_source_tick(void *data, float seconds)
 
 	context->update_time_elapsed += seconds;
 
-	if (context->update_time_elapsed >= 1.0f) {
-		time_t t = get_modified_timestamp(context->file);
-		context->update_time_elapsed = 0.0f;
+	if (obs_source_showing(context->source)) {
+		if (context->update_time_elapsed >= 1.0f) {
+			time_t t = get_modified_timestamp(context->file);
+			context->update_time_elapsed = 0.0f;
 
-		if (context->file_timestamp != t) {
-			image_source_load(context);
+			if (context->file_timestamp != t) {
+				image_source_load(context);
+			}
 		}
 	}
 
@@ -209,13 +211,14 @@ static void image_source_tick(void *data, float seconds)
 }
 
 static const char *image_filter =
-	"All formats (*.bmp *.tga *.png *.jpeg *.jpg *.gif *.psd);;"
+	"All formats (*.bmp *.tga *.png *.jpeg *.jpg *.gif *.psd *.webp);;"
 	"BMP Files (*.bmp);;"
 	"Targa Files (*.tga);;"
 	"PNG Files (*.png);;"
 	"JPEG Files (*.jpeg *.jpg);;"
 	"GIF Files (*.gif);;"
 	"PSD Files (*.psd);;"
+	"WebP Files (*.webp);;"
 	"All Files (*.*)";
 
 static obs_properties_t *image_source_properties(void *data)
@@ -265,7 +268,9 @@ static struct obs_source_info image_source_info = {
 	.get_height = image_source_getheight,
 	.video_render = image_source_render,
 	.video_tick = image_source_tick,
-	.get_properties = image_source_properties};
+	.get_properties = image_source_properties,
+	.icon_type = OBS_ICON_TYPE_IMAGE,
+};
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("image-source", "en-US")
@@ -275,12 +280,16 @@ MODULE_EXPORT const char *obs_module_description(void)
 }
 
 extern struct obs_source_info slideshow_info;
-extern struct obs_source_info color_source_info;
+extern struct obs_source_info color_source_info_v1;
+extern struct obs_source_info color_source_info_v2;
+extern struct obs_source_info color_source_info_v3;
 
 bool obs_module_load(void)
 {
 	obs_register_source(&image_source_info);
-	obs_register_source(&color_source_info);
+	obs_register_source(&color_source_info_v1);
+	obs_register_source(&color_source_info_v2);
+	obs_register_source(&color_source_info_v3);
 	obs_register_source(&slideshow_info);
 	return true;
 }

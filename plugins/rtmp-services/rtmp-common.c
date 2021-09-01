@@ -2,9 +2,13 @@
 #include <util/dstr.h>
 #include <obs-module.h>
 #include <jansson.h>
+#include <obs-config.h>
 
 #include "rtmp-format-ver.h"
 #include "twitch.h"
+#include "younow.h"
+#include "nimotv.h"
+#include "showroom.h"
 
 struct rtmp_common {
 	char *service;
@@ -12,6 +16,11 @@ struct rtmp_common {
 	char *key;
 
 	char *output;
+	struct obs_service_resolution *supported_resolutions;
+	size_t supported_resolutions_count;
+	int max_fps;
+
+	bool supports_additional_audio_track;
 };
 
 static const char *rtmp_common_getname(void *unused)
@@ -23,7 +32,9 @@ static const char *rtmp_common_getname(void *unused)
 static json_t *open_services_file(void);
 static inline json_t *find_service(json_t *root, const char *name,
 				   const char **p_new_name);
+static inline bool get_bool_val(json_t *service, const char *key);
 static inline const char *get_string_val(json_t *service, const char *key);
+static inline int get_int_val(json_t *service, const char *key);
 
 extern void twitch_ingests_refresh(int seconds);
 
@@ -60,6 +71,43 @@ static void ensure_valid_url(struct rtmp_common *service, json_t *json,
 	}
 }
 
+static void update_recommendations(struct rtmp_common *service, json_t *rec)
+{
+	const char *out = get_string_val(rec, "output");
+	if (out)
+		service->output = bstrdup(out);
+
+	json_t *sr = json_object_get(rec, "supported resolutions");
+	if (sr && json_is_array(sr)) {
+		DARRAY(struct obs_service_resolution) res_list;
+		json_t *res_obj;
+		size_t index;
+
+		da_init(res_list);
+
+		json_array_foreach (sr, index, res_obj) {
+			if (!json_is_string(res_obj))
+				continue;
+
+			const char *res_str = json_string_value(res_obj);
+			struct obs_service_resolution res;
+			if (sscanf(res_str, "%dx%d", &res.cx, &res.cy) != 2)
+				continue;
+			if (res.cx <= 0 || res.cy <= 0)
+				continue;
+
+			da_push_back(res_list, &res);
+		}
+
+		if (res_list.num) {
+			service->supported_resolutions = res_list.array;
+			service->supported_resolutions_count = res_list.num;
+		}
+	}
+
+	service->max_fps = get_int_val(rec, "max fps");
+}
+
 static void rtmp_common_update(void *data, obs_data_t *settings)
 {
 	struct rtmp_common *service = data;
@@ -68,35 +116,39 @@ static void rtmp_common_update(void *data, obs_data_t *settings)
 	bfree(service->server);
 	bfree(service->output);
 	bfree(service->key);
+	bfree(service->supported_resolutions);
 
 	service->service = bstrdup(obs_data_get_string(settings, "service"));
 	service->server = bstrdup(obs_data_get_string(settings, "server"));
 	service->key = bstrdup(obs_data_get_string(settings, "key"));
+	service->supports_additional_audio_track = false;
 	service->output = NULL;
+	service->supported_resolutions = NULL;
+	service->supported_resolutions_count = 0;
+	service->max_fps = 0;
 
-  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
-	// json_t *root = open_services_file();
-	// if (root) {
-	// 	const char *new_name;
-	// 	json_t *serv = find_service(root, service->service, &new_name);
+	json_t *root = open_services_file();
+	if (root) {
+		const char *new_name;
+		json_t *serv = find_service(root, service->service, &new_name);
 
-	// 	if (new_name) {
-	// 		bfree(service->service);
-	// 		service->service = bstrdup(new_name);
-	// 	}
+		if (new_name) {
+			bfree(service->service);
+			service->service = bstrdup(new_name);
+		}
 
-	// 	if (serv) {
-	// 		json_t *rec = json_object_get(serv, "recommended");
-	// 		if (json_is_object(rec)) {
-	// 			const char *out = get_string_val(rec, "output");
-	// 			if (out)
-	// 				service->output = bstrdup(out);
-	// 		}
+		if (serv) {
+			json_t *rec = json_object_get(serv, "recommended");
+			if (json_is_object(rec)) {
+				update_recommendations(service, rec);
+			}
 
-	// 		ensure_valid_url(service, serv, settings);
-	// 	}
-	// }
-	// json_decref(root);
+			service->supports_additional_audio_track = get_bool_val(
+				serv, "supports_additional_audio_track");
+			ensure_valid_url(service, serv, settings);
+		}
+	}
+	json_decref(root);
 
 	if (!service->output)
 		service->output = bstrdup("rtmp_output");
@@ -106,6 +158,7 @@ static void rtmp_common_destroy(void *data)
 {
 	struct rtmp_common *service = data;
 
+	bfree(service->supported_resolutions);
 	bfree(service->service);
 	bfree(service->server);
 	bfree(service->output);
@@ -182,6 +235,7 @@ static void add_service(obs_property_t *list, json_t *service, bool show_all,
 		     name);
 		return;
 	}
+
 	obs_property_list_add_string(list, name, name);
 }
 
@@ -339,13 +393,14 @@ static void fill_servers(obs_property_t *servers_prop, json_t *service,
 		return;
 	}
 
-	if (strcmp(name, "Mixer.com - FTL") == 0) {
-		obs_property_list_add_string(
-			servers_prop, obs_module_text("Server.Auto"), "auto");
-	}
 	if (strcmp(name, "Twitch") == 0) {
 		if (fill_twitch_servers(servers_prop))
 			return;
+	}
+
+	if (strcmp(name, "Nimo TV") == 0) {
+		obs_property_list_add_string(
+			servers_prop, obs_module_text("Server.Auto"), "auto");
 	}
 
 	json_array_foreach (servers, index, server) {
@@ -357,6 +412,15 @@ static void fill_servers(obs_property_t *servers_prop, json_t *service,
 
 		obs_property_list_add_string(servers_prop, server_name, url);
 	}
+}
+
+static void fill_more_info_link(json_t *service, obs_data_t *settings)
+{
+	const char *more_info_link;
+
+	more_info_link = get_string_val(service, "more_info_link");
+	if (more_info_link)
+		obs_data_set_string(settings, "more_info_link", more_info_link);
 }
 
 static inline json_t *find_service(json_t *root, const char *name,
@@ -421,7 +485,7 @@ static bool service_selected(obs_properties_t *props, obs_property_t *p,
 	}
 
 	fill_servers(obs_properties_get(props, "server"), service, name);
-
+	fill_more_info_link(service, settings);
 	return true;
 }
 
@@ -448,12 +512,11 @@ static obs_properties_t *rtmp_common_properties(void *unused)
 
 	obs_properties_t *ppts = obs_properties_create();
 	obs_property_t *p;
-  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
-	// json_t *root;
+	json_t *root;
 
-	// root = open_services_file();
-	// if (root)
-	// 	obs_properties_set_param(ppts, root, properties_data_destroy);
+	root = open_services_file();
+	if (root)
+		obs_properties_set_param(ppts, root, properties_data_destroy);
 
 	p = obs_properties_add_list(ppts, "service", obs_module_text("Service"),
 				    OBS_COMBO_TYPE_LIST,
@@ -486,10 +549,14 @@ static void apply_video_encoder_settings(obs_data_t *settings,
 	obs_data_set_string(settings, "rate_control", "CBR");
 
 	item = json_object_get(recommended, "profile");
-	if (json_is_string(item)) {
+	obs_data_item_t *enc_item = obs_data_item_byname(settings, "profile");
+	if (json_is_string(item) &&
+	    obs_data_item_gettype(enc_item) == OBS_DATA_STRING) {
 		const char *profile = json_string_value(item);
 		obs_data_set_string(settings, "profile", profile);
 	}
+
+	obs_data_item_release(&enc_item);
 
 	item = json_object_get(recommended, "max video bitrate");
 	if (json_is_integer(item)) {
@@ -501,8 +568,10 @@ static void apply_video_encoder_settings(obs_data_t *settings,
 	}
 
 	item = json_object_get(recommended, "bframes");
-	if (json_is_integer(item))
-		obs_data_set_int(settings, "bf", 0);
+	if (json_is_integer(item)) {
+		int bframes = (int)json_integer_value(item);
+		obs_data_set_int(settings, "bf", bframes);
+	}
 
 	item = json_object_get(recommended, "x264opts");
 	if (json_is_string(item)) {
@@ -561,15 +630,14 @@ static void initialize_output(struct rtmp_common *service, json_t *root,
 static void rtmp_common_apply_settings(void *data, obs_data_t *video_settings,
 				       obs_data_t *audio_settings)
 {
-  // NOTE LUDO: #167 Settings/Stream: only one service displayed: Evercast
-	// struct rtmp_common *service = data;
-	// json_t *root = open_services_file();
+	struct rtmp_common *service = data;
+	json_t *root = open_services_file();
 
-	// if (root) {
-	// 	initialize_output(service, root, video_settings,
-	// 			  audio_settings);
-	// 	json_decref(root);
-	// }
+	if (root) {
+		initialize_output(service, root, video_settings,
+				  audio_settings);
+		json_decref(root);
+	}
 }
 
 static const char *rtmp_common_get_output_type(void *data)
@@ -596,13 +664,98 @@ static const char *rtmp_common_url(void *data)
 		}
 	}
 
+	if (service->service && strcmp(service->service, "YouNow") == 0) {
+		if (service->server && service->key) {
+			return younow_get_ingest(service->server, service->key);
+		}
+	}
+
+	if (service->service && strcmp(service->service, "Nimo TV") == 0) {
+		if (service->server && strcmp(service->server, "auto") == 0) {
+			return nimotv_get_ingest(service->key);
+		}
+	}
+
+	if (service->service && strcmp(service->service, "SHOWROOM") == 0) {
+		if (service->server && service->key) {
+			struct showroom_ingest *ingest;
+			ingest = showroom_get_ingest(service->server,
+						     service->key);
+			return ingest->url;
+		}
+	}
 	return service->server;
 }
 
 static const char *rtmp_common_key(void *data)
 {
 	struct rtmp_common *service = data;
+	if (service->service && strcmp(service->service, "SHOWROOM") == 0) {
+		if (service->server && service->key) {
+			struct showroom_ingest *ingest;
+			ingest = showroom_get_ingest(service->server,
+						     service->key);
+			return ingest->key;
+		}
+	}
 	return service->key;
+}
+
+static bool supports_multitrack(void *data)
+{
+	struct rtmp_common *service = data;
+	return service->supports_additional_audio_track;
+}
+
+static void rtmp_common_get_supported_resolutions(
+	void *data, struct obs_service_resolution **resolutions, size_t *count)
+{
+	struct rtmp_common *service = data;
+	*count = service->supported_resolutions_count;
+	*resolutions = bmemdup(service->supported_resolutions,
+			       *count * sizeof(struct obs_service_resolution));
+}
+
+static void rtmp_common_get_max_fps(void *data, int *fps)
+{
+	struct rtmp_common *service = data;
+	*fps = service->max_fps;
+}
+
+static void rtmp_common_get_max_bitrate(void *data, int *video_bitrate,
+					int *audio_bitrate)
+{
+	struct rtmp_common *service = data;
+	json_t *root = open_services_file();
+	json_t *item;
+
+	if (!root)
+		return;
+
+	json_t *json_service = find_service(root, service->service, NULL);
+	if (!json_service) {
+		goto fail;
+	}
+
+	json_t *recommended = json_object_get(json_service, "recommended");
+	if (!recommended) {
+		goto fail;
+	}
+
+	if (audio_bitrate) {
+		item = json_object_get(recommended, "max audio bitrate");
+		if (json_is_integer(item))
+			*audio_bitrate = (int)json_integer_value(item);
+	}
+
+	if (video_bitrate) {
+		item = json_object_get(recommended, "max video bitrate");
+		if (json_is_integer(item))
+			*video_bitrate = (int)json_integer_value(item);
+	}
+
+fail:
+	json_decref(root);
 }
 
 struct obs_service_info rtmp_common_service = {
@@ -616,4 +769,7 @@ struct obs_service_info rtmp_common_service = {
 	.get_key = rtmp_common_key,
 	.apply_encoder_settings = rtmp_common_apply_settings,
 	.get_output_type = rtmp_common_get_output_type,
+	.get_supported_resolutions = rtmp_common_get_supported_resolutions,
+	.get_max_fps = rtmp_common_get_max_fps,
+	.get_max_bitrate = rtmp_common_get_max_bitrate,
 };

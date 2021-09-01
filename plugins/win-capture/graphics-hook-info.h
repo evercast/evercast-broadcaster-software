@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -46,6 +47,10 @@ struct dxgi_offsets {
 	uint32_t present1;
 };
 
+struct dxgi_offsets2 {
+	uint32_t release;
+};
+
 struct ddraw_offsets {
 	uint32_t surface_create;
 	uint32_t surface_restore;
@@ -77,17 +82,22 @@ struct graphics_offsets {
 	struct d3d9_offsets d3d9;
 	struct dxgi_offsets dxgi;
 	struct ddraw_offsets ddraw;
+	struct dxgi_offsets2 dxgi2;
 };
 
 struct hook_info {
+	/* hook version */
+	uint32_t hook_ver_major;
+	uint32_t hook_ver_minor;
+
 	/* capture info */
 	enum capture_type type;
 	uint32_t window;
 	uint32_t format;
 	uint32_t cx;
 	uint32_t cy;
-	uint32_t base_cx;
-	uint32_t base_cy;
+	uint32_t UNUSED_base_cx;
+	uint32_t UNUSED_base_cy;
 	uint32_t pitch;
 	uint32_t map_id;
 	uint32_t map_size;
@@ -95,13 +105,16 @@ struct hook_info {
 
 	/* additional options */
 	uint64_t frame_interval;
-	bool use_scale;
+	bool UNUSED_use_scale;
 	bool force_shmem;
 	bool capture_overlay;
 
 	/* hook addresses */
 	struct graphics_offsets offsets;
+
+	uint32_t reserved[127];
 };
+static_assert(sizeof(struct hook_info) == 648, "ABI compatibility");
 
 #pragma pack(pop)
 
@@ -109,9 +122,16 @@ struct hook_info {
 
 static inline HANDLE create_hook_info(DWORD id)
 {
-	wchar_t new_name[64];
-	_snwprintf(new_name, 64, L"%s%lu", SHMEM_HOOK_INFO, id);
+	HANDLE handle = NULL;
 
-	return CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,
-				  sizeof(struct hook_info), new_name);
+	wchar_t new_name[64];
+	const int len = swprintf(new_name, _countof(new_name),
+				 SHMEM_HOOK_INFO L"%lu", id);
+	if (len > 0) {
+		handle = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL,
+					    PAGE_READWRITE, 0,
+					    sizeof(struct hook_info), new_name);
+	}
+
+	return handle;
 }

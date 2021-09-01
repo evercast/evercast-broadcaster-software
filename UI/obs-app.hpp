@@ -75,7 +75,7 @@ private:
 	std::string theme;
 	ConfigFile globalConfig;
 	TextLookup textLookup;
-	OBSContext obsContext;
+
 	QPointer<OBSMainWindow> mainWindow;
 	profiler_name_store_t *profilerNameStore = nullptr;
 
