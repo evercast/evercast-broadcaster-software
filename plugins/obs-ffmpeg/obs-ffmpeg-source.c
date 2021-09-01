@@ -43,6 +43,7 @@ struct ffmpeg_source {
 	uint8_t *sws_data;
 	int sws_linesize;
 	enum video_range_type range;
+	bool is_linear_alpha;
 	obs_source_t *source;
 	obs_hotkey_id hotkey;
 
@@ -109,6 +110,7 @@ static void ffmpeg_source_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "looping", false);
 	obs_data_set_default_bool(settings, "clear_on_media_end", true);
 	obs_data_set_default_bool(settings, "restart_on_activate", true);
+	obs_data_set_default_bool(settings, "linear_alpha", false);
 	obs_data_set_default_int(settings, "reconnect_delay_sec", 10);
 	obs_data_set_default_int(settings, "buffering_mb", 2);
 	obs_data_set_default_int(settings, "speed_percent", 100);
@@ -163,8 +165,7 @@ static obs_properties_t *ffmpeg_source_getproperties(void *data)
 	dstr_free(&filter);
 	dstr_free(&path);
 
-	prop = obs_properties_add_bool(props, "looping",
-				       obs_module_text("Looping"));
+	obs_properties_add_bool(props, "looping", obs_module_text("Looping"));
 
 	obs_properties_add_bool(props, "restart_on_activate",
 				obs_module_text("RestartWhenActivated"));
@@ -186,10 +187,8 @@ static obs_properties_t *ffmpeg_source_getproperties(void *data)
 		obs_module_text("ReconnectDelayTime"), 1, 60, 1);
 	obs_property_int_set_suffix(prop, " S");
 
-#ifndef __APPLE__
 	obs_properties_add_bool(props, "hw_decode",
 				obs_module_text("HardwareDecode"));
-#endif
 
 	obs_properties_add_bool(props, "clear_on_media_end",
 				obs_module_text("ClearOnMediaEnd"));
@@ -217,6 +216,9 @@ static obs_properties_t *ffmpeg_source_getproperties(void *data)
 	obs_property_list_add_int(prop, obs_module_text("ColorRange.Full"),
 				  VIDEO_RANGE_FULL);
 
+	obs_properties_add_bool(props, "linear_alpha",
+				obs_module_text("LinearAlpha"));
+
 	obs_properties_add_bool(props, "seekable", obs_module_text("Seekable"));
 
 	return props;
@@ -231,13 +233,15 @@ static void dump_source_info(struct ffmpeg_source *s, const char *input,
 		"\tinput_format:            %s\n"
 		"\tspeed:                   %d\n"
 		"\tis_looping:              %s\n"
+		"\tis_linear_alpha:         %s\n"
 		"\tis_hw_decoding:          %s\n"
 		"\tis_clear_on_media_end:   %s\n"
 		"\trestart_on_activate:     %s\n"
 		"\tclose_when_inactive:     %s",
 		input ? input : "(null)",
 		input_format ? input_format : "(null)", s->speed_percent,
-		s->is_looping ? "yes" : "no", s->is_hw_decoding ? "yes" : "no",
+		s->is_looping ? "yes" : "no", s->is_linear_alpha ? "yes" : "no",
+		s->is_hw_decoding ? "yes" : "no",
 		s->is_clear_on_media_end ? "yes" : "no",
 		s->restart_on_activate ? "yes" : "no",
 		s->close_when_inactive ? "yes" : "no");
@@ -284,7 +288,7 @@ static void media_stopped(void *opaque)
 		obs_source_output_video(s->source, NULL);
 	}
 
-	if (s->close_when_inactive && s->media_valid)
+	if ((s->close_when_inactive || !s->is_local_file) && s->media_valid)
 		s->destroy_media = true;
 
 	set_media_state(s, OBS_MEDIA_STATE_ENDED);
@@ -306,6 +310,7 @@ static void ffmpeg_source_open(struct ffmpeg_source *s)
 			.buffering = s->buffering_mb * 1024 * 1024,
 			.speed = s->speed_percent,
 			.force_range = s->range,
+			.is_linear_alpha = s->is_linear_alpha,
 			.hardware_decoding = s->is_hw_decoding,
 			.is_local_file = s->is_local_file || s->seekable,
 			.reconnecting = s->reconnecting,
@@ -420,15 +425,14 @@ static void ffmpeg_source_update(void *data, obs_data_t *settings)
 
 	s->input = input ? bstrdup(input) : NULL;
 	s->input_format = input_format ? bstrdup(input_format) : NULL;
-#ifndef __APPLE__
 	s->is_hw_decoding = obs_data_get_bool(settings, "hw_decode");
-#endif
 	s->is_clear_on_media_end =
 		obs_data_get_bool(settings, "clear_on_media_end");
 	s->restart_on_activate =
 		obs_data_get_bool(settings, "restart_on_activate");
 	s->range = (enum video_range_type)obs_data_get_int(settings,
 							   "color_range");
+	s->is_linear_alpha = obs_data_get_bool(settings, "linear_alpha");
 	s->buffering_mb = (int)obs_data_get_int(settings, "buffering_mb");
 	s->speed_percent = (int)obs_data_get_int(settings, "speed_percent");
 	s->is_local_file = is_local_file;
@@ -665,10 +669,14 @@ static void ffmpeg_source_play_pause(void *data, bool pause)
 
 	mp_media_play_pause(&s->media, pause);
 
-	if (pause)
+	if (pause) {
+
 		set_media_state(s, OBS_MEDIA_STATE_PAUSED);
-	else
+	} else {
+
 		set_media_state(s, OBS_MEDIA_STATE_PLAYING);
+		obs_source_media_started(s->source);
+	}
 }
 
 static void ffmpeg_source_stop(void *data)
@@ -727,6 +735,37 @@ static enum obs_media_state ffmpeg_source_get_state(void *data)
 	return s->state;
 }
 
+static void missing_file_callback(void *src, const char *new_path, void *data)
+{
+	struct ffmpeg_source *s = src;
+
+	obs_source_t *source = s->source;
+	obs_data_t *settings = obs_source_get_settings(source);
+	obs_data_set_string(settings, "local_file", new_path);
+	obs_source_update(source, settings);
+	obs_data_release(settings);
+
+	UNUSED_PARAMETER(data);
+}
+
+static obs_missing_files_t *ffmpeg_source_missingfiles(void *data)
+{
+	struct ffmpeg_source *s = data;
+	obs_missing_files_t *files = obs_missing_files_create();
+
+	if (s->is_local_file && strcmp(s->input, "") != 0) {
+		if (!os_file_exists(s->input)) {
+			obs_missing_file_t *file = obs_missing_file_create(
+				s->input, missing_file_callback,
+				OBS_MISSING_FILE_SOURCE, s->source, NULL);
+
+			obs_missing_files_add_file(files, file);
+		}
+	}
+
+	return files;
+}
+
 struct obs_source_info ffmpeg_source = {
 	.id = "ffmpeg_source",
 	.type = OBS_SOURCE_TYPE_INPUT,
@@ -741,6 +780,7 @@ struct obs_source_info ffmpeg_source = {
 	.activate = ffmpeg_source_activate,
 	.deactivate = ffmpeg_source_deactivate,
 	.video_tick = ffmpeg_source_tick,
+	.missing_files = ffmpeg_source_missingfiles,
 	.update = ffmpeg_source_update,
 	.icon_type = OBS_ICON_TYPE_MEDIA,
 	.media_play_pause = ffmpeg_source_play_pause,

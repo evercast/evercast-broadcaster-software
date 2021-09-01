@@ -122,7 +122,6 @@ struct obs_frontend_callbacks {
 	virtual void obs_frontend_take_screenshot() = 0;
 	virtual void
 	obs_frontend_take_source_screenshot(obs_source_t *source) = 0;
-
 };
 
 EXPORT void

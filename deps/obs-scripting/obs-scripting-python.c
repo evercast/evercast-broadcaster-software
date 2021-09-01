@@ -1649,7 +1649,9 @@ bool obs_scripting_load_python(const char *python_path)
 	/* ---------------------------------------------- */
 	/* Load main interface module                     */
 
-	add_to_python_path(SCRIPT_DIR);
+	char *absolute_script_path = os_get_abs_path_ptr(SCRIPT_DIR);
+	add_to_python_path(absolute_script_path);
+	bfree(absolute_script_path);
 
 	py_obspython = PyImport_ImportModule("obspython");
 	bool success = !py_error();

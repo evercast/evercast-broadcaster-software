@@ -3,6 +3,8 @@ project(obs-outputs)
 set(WITH_RTMPS AUTO CACHE STRING "Enable RTMPS support with mbedTLS")
 set_property(CACHE WITH_RTMPS PROPERTY STRINGS AUTO ON OFF)
 
+find_package(PkgConfig)
+
 option(STATIC_MBEDTLS "Statically link mbedTLS into binary" OFF)
 
 set(CMAKE_CXX_STANDARD 14)

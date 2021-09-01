@@ -84,7 +84,13 @@ static void nvenc_video_info(void *data, struct video_scale_info *info)
 	info->format = pref_format;
 }
 
-static bool nvenc_init_codec(struct nvenc_encoder *enc)
+static void set_psycho_aq(struct nvenc_encoder *enc, bool psycho_aq)
+{
+	av_opt_set_int(enc->context->priv_data, "spatial-aq", psycho_aq, 0);
+	av_opt_set_int(enc->context->priv_data, "temporal-aq", psycho_aq, 0);
+}
+
+static bool nvenc_init_codec(struct nvenc_encoder *enc, bool psycho_aq)
 {
 	int ret;
 
@@ -160,10 +166,9 @@ static bool nvenc_init_codec(struct nvenc_encoder *enc)
 
 enum RC_MODE { RC_MODE_CBR, RC_MODE_VBR, RC_MODE_CQP, RC_MODE_LOSSLESS };
 
-static bool nvenc_update(void *data, obs_data_t *settings)
+static bool nvenc_update(struct nvenc_encoder *enc, obs_data_t *settings,
+			 bool psycho_aq)
 {
-	struct nvenc_encoder *enc = data;
-
 	const char *rc = obs_data_get_string(settings, "rate_control");
 	int bitrate = (int)obs_data_get_int(settings, "bitrate");
 	int cqp = (int)obs_data_get_int(settings, "cqp");
@@ -220,8 +225,9 @@ static bool nvenc_update(void *data, obs_data_t *settings)
 
 	} else if (astrcmpi(rc, "vbr") != 0) { /* CBR by default */
 		av_opt_set_int(enc->context->priv_data, "cbr", true, 0);
-		enc->context->rc_max_rate = bitrate * 1000;
-		enc->context->rc_min_rate = bitrate * 1000;
+		const int64_t rate = bitrate * INT64_C(1000);
+		enc->context->rc_max_rate = rate;
+		enc->context->rc_min_rate = rate;
 		cqp = 0;
 	}
 
@@ -229,8 +235,11 @@ static bool nvenc_update(void *data, obs_data_t *settings)
 	av_opt_set_int(enc->context->priv_data, "2pass", twopass, 0);
 	av_opt_set_int(enc->context->priv_data, "gpu", gpu, 0);
 
-	enc->context->bit_rate = bitrate * 1000;
-	enc->context->rc_buffer_size = bitrate * 1000;
+	set_psycho_aq(enc, psycho_aq);
+
+	const int rate = bitrate * 1000;
+	enc->context->bit_rate = rate;
+	enc->context->rc_buffer_size = rate;
 	enc->context->width = obs_encoder_get_width(enc->encoder);
 	enc->context->height = obs_encoder_get_height(enc->encoder);
 	enc->context->time_base = (AVRational){voi->fps_den, voi->fps_num};
@@ -278,12 +287,14 @@ static bool nvenc_update(void *data, obs_data_t *settings)
 	     "\theight:       %d\n"
 	     "\t2-pass:       %s\n"
 	     "\tb-frames:     %d\n"
+	     "\tpsycho-aq:    %d\n"
 	     "\tGPU:          %d\n",
 	     rc, bitrate, cqp, enc->context->gop_size, preset, profile,
 	     enc->context->width, enc->context->height,
-	     twopass ? "true" : "false", enc->context->max_b_frames, gpu);
+	     twopass ? "true" : "false", enc->context->max_b_frames, psycho_aq,
+	     gpu);
 
-	return nvenc_init_codec(enc);
+	return nvenc_init_codec(enc, psycho_aq);
 }
 
 static bool nvenc_reconfigure(void *data, obs_data_t *settings)
@@ -291,13 +302,14 @@ static bool nvenc_reconfigure(void *data, obs_data_t *settings)
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(58, 19, 101)
 	struct nvenc_encoder *enc = data;
 
-	int bitrate = (int)obs_data_get_int(settings, "bitrate");
+	const int64_t bitrate = obs_data_get_int(settings, "bitrate");
 	const char *rc = obs_data_get_string(settings, "rate_control");
 	bool cbr = astrcmpi(rc, "CBR") == 0;
 	bool vbr = astrcmpi(rc, "VBR") == 0;
 	if (cbr || vbr) {
-		enc->context->bit_rate = bitrate * 1000;
-		enc->context->rc_max_rate = bitrate * 1000;
+		const int64_t rate = bitrate * 1000;
+		enc->context->bit_rate = rate;
+		enc->context->rc_max_rate = rate;
 	}
 #endif
 	return true;
@@ -336,7 +348,8 @@ static void nvenc_destroy(void *data)
 	bfree(enc);
 }
 
-static void *nvenc_create(obs_data_t *settings, obs_encoder_t *encoder)
+static void *nvenc_create_internal(obs_data_t *settings, obs_encoder_t *encoder,
+				   bool psycho_aq)
 {
 	struct nvenc_encoder *enc;
 
@@ -366,7 +379,7 @@ static void *nvenc_create(obs_data_t *settings, obs_encoder_t *encoder)
 		goto fail;
 	}
 
-	if (!nvenc_update(enc, settings))
+	if (!nvenc_update(enc, settings, psycho_aq))
 		goto fail;
 
 	return enc;
@@ -374,6 +387,20 @@ static void *nvenc_create(obs_data_t *settings, obs_encoder_t *encoder)
 fail:
 	nvenc_destroy(enc);
 	return NULL;
+}
+
+static void *nvenc_create(obs_data_t *settings, obs_encoder_t *encoder)
+{
+	bool psycho_aq = obs_data_get_bool(settings, "psycho_aq");
+	void *enc = nvenc_create_internal(settings, encoder, psycho_aq);
+	if ((enc == NULL) && psycho_aq) {
+		blog(LOG_WARNING,
+		     "[NVENC encoder] nvenc_create_internal failed, "
+		     "trying again without Psycho Visual Tuning");
+		enc = nvenc_create_internal(settings, encoder, false);
+	}
+
+	return enc;
 }
 
 static inline void copy_data(AVFrame *pic, const struct encoder_frame *frame,
@@ -571,16 +598,15 @@ obs_properties_t *nvenc_properties_internal(bool ffmpeg)
 					    obs_module_text("NVENC.LookAhead"));
 		obs_property_set_long_description(
 			p, obs_module_text("NVENC.LookAhead.ToolTip"));
-
-		p = obs_properties_add_bool(
-			props, "psycho_aq",
-			obs_module_text("NVENC.PsychoVisualTuning"));
-		obs_property_set_long_description(
-			p, obs_module_text("NVENC.PsychoVisualTuning.ToolTip"));
 		p = obs_properties_add_bool(props, "repeat_headers",
 					    "repeat_headers");
 		obs_property_set_visible(p, false);
 	}
+	p = obs_properties_add_bool(
+		props, "psycho_aq",
+		obs_module_text("NVENC.PsychoVisualTuning"));
+	obs_property_set_long_description(
+		p, obs_module_text("NVENC.PsychoVisualTuning.ToolTip"));
 
 	obs_properties_add_int(props, "gpu", obs_module_text("GPU"), 0, 8, 1);
 
