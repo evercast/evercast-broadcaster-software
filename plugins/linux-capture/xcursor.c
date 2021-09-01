@@ -103,26 +103,37 @@ void xcursor_tick(xcursor_t *data)
 	XFree(xc);
 }
 
-void xcursor_render(xcursor_t *data)
+void xcursor_render(xcursor_t *data, int x_offset, int y_offset)
 {
 	if (!data->tex)
 		return;
 
+	const bool linear_srgb = gs_get_linear_srgb();
+
+	const bool previous = gs_framebuffer_srgb_enabled();
+	gs_enable_framebuffer_srgb(linear_srgb);
+
 	gs_effect_t *effect = gs_get_effect();
 	gs_eparam_t *image = gs_effect_get_param_by_name(effect, "image");
-	gs_effect_set_texture(image, data->tex);
+	if (linear_srgb)
+		gs_effect_set_texture_srgb(image, data->tex);
+	else
+		gs_effect_set_texture(image, data->tex);
 
 	gs_blend_state_push();
 	gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
 	gs_enable_color(true, true, true, false);
 
 	gs_matrix_push();
-	gs_matrix_translate3f(data->render_x, data->render_y, 0.0f);
+	gs_matrix_translate3f(data->render_x + x_offset,
+			      data->render_y + y_offset, 0.0f);
 	gs_draw_sprite(data->tex, 0, 0, 0);
 	gs_matrix_pop();
 
 	gs_enable_color(true, true, true, true);
 	gs_blend_state_pop();
+
+	gs_enable_framebuffer_srgb(previous);
 }
 
 void xcursor_offset(xcursor_t *data, int_fast32_t x_org, int_fast32_t y_org)

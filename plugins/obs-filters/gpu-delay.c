@@ -1,5 +1,6 @@
 #include <obs-module.h>
 #include <util/circlebuf.h>
+#include <util/util_uint64.h>
 
 #define S_DELAY_MS "delay_ms"
 #define T_DELAY_MS obs_module_text("DelayMs")
@@ -90,8 +91,7 @@ static inline void check_interval(struct gpu_delay_filter_data *f)
 
 	obs_get_video_info(&ovi);
 
-	interval_ns =
-		(uint64_t)ovi.fps_den * 1000000000ULL / (uint64_t)ovi.fps_num;
+	interval_ns = util_mul_div64(ovi.fps_den, 1000000000ULL, ovi.fps_num);
 
 	if (interval_ns != f->interval_ns)
 		update_interval(f, interval_ns);
@@ -195,12 +195,22 @@ static void draw_frame(struct gpu_delay_filter_data *f)
 	gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 	gs_texture_t *tex = gs_texrender_get_texture(frame.render);
 	if (tex) {
+		const bool linear_srgb = gs_get_linear_srgb();
+
+		const bool previous = gs_framebuffer_srgb_enabled();
+		gs_enable_framebuffer_srgb(linear_srgb);
+
 		gs_eparam_t *image =
 			gs_effect_get_param_by_name(effect, "image");
-		gs_effect_set_texture(image, tex);
+		if (linear_srgb)
+			gs_effect_set_texture_srgb(image, tex);
+		else
+			gs_effect_set_texture(image, tex);
 
 		while (gs_effect_loop(effect, "Draw"))
 			gs_draw_sprite(tex, 0, f->cx, f->cy);
+
+		gs_enable_framebuffer_srgb(previous);
 	}
 }
 

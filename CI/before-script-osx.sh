@@ -15,7 +15,7 @@ cmake \
 -DOBS_VERSION_OVERRIDE=$EBS_VERSION \
 -DOBS_BASE_VERSION=23.2.0 \
 -DWEBRTC_VERSION=87.0.0 \
--DENABLE_VLC=ON \
+-DENABLE_VLC=OFF \
 -DQt5Core_DIR=/usr/local/Cellar/qt@5/5.15.2/lib/cmake/Qt5Core \
 -DQt5Widgets_DIR=/usr/local/Cellar/qt@5/5.15.2/lib/cmake/Qt5Widgets \
 -DQTDIR=/usr/local/Cellar/qt@5/5.15.2 \

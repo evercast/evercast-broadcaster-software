@@ -160,6 +160,8 @@ if(APPLE)
 	list(APPEND CMAKE_INSTALL_RPATH "@loader_path/" "@executable_path/")
 elseif(UNIX)
 	option(USE_XDG "Utilize XDG Base Directory Specification" ON)
+	option(ENABLE_WAYLAND "Build support for Wayland" ON)
+
 	if(USE_XDG)
 		add_definitions(-DUSE_XDG)
 	endif()
@@ -214,7 +216,7 @@ if(NOT INSTALLER_RUN)
         message( FATAL_ERROR "ERROR, you must give path to a Qt installed by brew in /usr/local/Cellar" )
       endif()
     endif()
-	endif()
+endif()
 
 	add_subdirectory(deps)
 
@@ -229,8 +231,6 @@ if(NOT INSTALLER_RUN)
 	if (BUILD_TESTS)
 		add_subdirectory(test)
 	endif()
-
-	add_subdirectory(cmake/helper_subdir)
 else()
 	# if INSTALLER_RUN
 	obs_generate_multiarch_installer()

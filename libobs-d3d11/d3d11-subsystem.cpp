@@ -21,8 +21,11 @@
 #include <util/dstr.h>
 #include <util/util.hpp>
 #include <graphics/matrix3.h>
+#include <winternl.h>
 #include <d3d9.h>
 #include "d3d11-subsystem.hpp"
+#include "d3d11-config.h"
+#include "intel-nv12-support.hpp"
 
 struct UnsupportedHWError : HRError {
 	inline UnsupportedHWError(const char *str, HRESULT hr)
@@ -75,7 +78,7 @@ static inline void make_swap_desc(DXGI_SWAP_CHAIN_DESC &desc,
 {
 	memset(&desc, 0, sizeof(desc));
 	desc.BufferCount = data->num_backbuffers;
-	desc.BufferDesc.Format = ConvertGSTextureFormat(data->format);
+	desc.BufferDesc.Format = ConvertGSTextureFormatView(data->format);
 	desc.BufferDesc.Width = data->cx;
 	desc.BufferDesc.Height = data->cy;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -96,10 +99,24 @@ void gs_swap_chain::InitTarget(uint32_t cx, uint32_t cy)
 	if (FAILED(hr))
 		throw HRError("Failed to get swap buffer texture", hr);
 
+	D3D11_RENDER_TARGET_VIEW_DESC rtv;
+	rtv.Format = target.dxgiFormatView;
+	rtv.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	rtv.Texture2D.MipSlice = 0;
 	hr = device->device->CreateRenderTargetView(
-		target.texture, NULL, target.renderTarget[0].Assign());
+		target.texture, &rtv, target.renderTarget[0].Assign());
 	if (FAILED(hr))
-		throw HRError("Failed to create swap render target view", hr);
+		throw HRError("Failed to create swap RTV", hr);
+	if (target.dxgiFormatView == target.dxgiFormatViewLinear) {
+		target.renderTargetLinear[0] = target.renderTarget[0];
+	} else {
+		rtv.Format = target.dxgiFormatViewLinear;
+		hr = device->device->CreateRenderTargetView(
+			target.texture, &rtv,
+			target.renderTargetLinear[0].Assign());
+		if (FAILED(hr))
+			throw HRError("Failed to create linear swap RTV", hr);
+	}
 }
 
 void gs_swap_chain::InitZStencilBuffer(uint32_t cx, uint32_t cy)
@@ -122,6 +139,7 @@ void gs_swap_chain::Resize(uint32_t cx, uint32_t cy)
 
 	target.texture.Clear();
 	target.renderTarget[0].Clear();
+	target.renderTargetLinear[0].Clear();
 	zs.texture.Clear();
 	zs.view.Clear();
 
@@ -136,7 +154,7 @@ void gs_swap_chain::Resize(uint32_t cx, uint32_t cy)
 			cy = clientRect.bottom;
 	}
 
-	hr = swap->ResizeBuffers(numBuffers, cx, cy, target.dxgiFormat, 0);
+	hr = swap->ResizeBuffers(numBuffers, cx, cy, DXGI_FORMAT_UNKNOWN, 0);
 	if (FAILED(hr))
 		throw HRError("Failed to resize swap buffers", hr);
 
@@ -149,7 +167,11 @@ void gs_swap_chain::Init()
 	target.device = device;
 	target.isRenderTarget = true;
 	target.format = initData.format;
-	target.dxgiFormat = ConvertGSTextureFormat(initData.format);
+	target.dxgiFormatResource =
+		ConvertGSTextureFormatResource(initData.format);
+	target.dxgiFormatView = ConvertGSTextureFormatView(initData.format);
+	target.dxgiFormatViewLinear =
+		ConvertGSTextureFormatViewLinear(initData.format);
 	InitTarget(initData.cx, initData.cy);
 
 	zs.device = device;
@@ -210,7 +232,7 @@ void gs_device::InitCompiler()
 	      "DirectX components</a> that OBS Studio requires.";
 }
 
-void gs_device::InitFactory(uint32_t adapterIdx)
+void gs_device::InitFactory()
 {
 	HRESULT hr;
 	IID factoryIID = (GetWinVer() >= 0x602) ? dxgiFactory2
@@ -219,8 +241,50 @@ void gs_device::InitFactory(uint32_t adapterIdx)
 	hr = CreateDXGIFactory1(factoryIID, (void **)factory.Assign());
 	if (FAILED(hr))
 		throw UnsupportedHWError("Failed to create DXGIFactory", hr);
+}
 
-	hr = factory->EnumAdapters1(adapterIdx, &adapter);
+#define VENDOR_ID_INTEL 0x8086
+#define IGPU_MEM (512 * 1024 * 1024)
+
+void gs_device::ReorderAdapters(uint32_t &adapterIdx)
+{
+	std::vector<uint32_t> adapterOrder;
+	ComPtr<IDXGIAdapter> adapter;
+	DXGI_ADAPTER_DESC desc;
+	uint32_t iGPUIndex = 0;
+	bool hasIGPU = false;
+	bool hasDGPU = false;
+	int idx = 0;
+
+	while (SUCCEEDED(factory->EnumAdapters(idx, &adapter))) {
+		if (SUCCEEDED(adapter->GetDesc(&desc))) {
+			if (desc.VendorId == VENDOR_ID_INTEL) {
+				if (desc.DedicatedVideoMemory <= IGPU_MEM) {
+					hasIGPU = true;
+					iGPUIndex = (uint32_t)idx;
+				} else {
+					hasDGPU = true;
+				}
+			}
+		}
+
+		adapterOrder.push_back((uint32_t)idx++);
+	}
+
+	/* Intel specific adapter check for Intel integrated and Intel
+	 * dedicated. If both exist, then change adapter priority so that the
+	 * integrated comes first for the sake of improving overall
+	 * performance */
+	if (hasIGPU && hasDGPU) {
+		adapterOrder.erase(adapterOrder.begin() + iGPUIndex);
+		adapterOrder.insert(adapterOrder.begin(), iGPUIndex);
+		adapterIdx = adapterOrder[adapterIdx];
+	}
+}
+
+void gs_device::InitAdapter(uint32_t adapterIdx)
+{
+	HRESULT hr = factory->EnumAdapters1(adapterIdx, &adapter);
 	if (FAILED(hr))
 		throw UnsupportedHWError("Failed to enumerate DXGIAdapter", hr);
 }
@@ -229,7 +293,6 @@ const static D3D_FEATURE_LEVEL featureLevels[] = {
 	D3D_FEATURE_LEVEL_11_0,
 	D3D_FEATURE_LEVEL_10_1,
 	D3D_FEATURE_LEVEL_10_0,
-	D3D_FEATURE_LEVEL_9_3,
 };
 
 /* ------------------------------------------------------------------------- */
@@ -308,6 +371,7 @@ try {
 	UpdateBlendState();
 	UpdateRasterState();
 	UpdateZStencilState();
+	FlushOutputViews();
 	context->Draw(4, 0);
 
 	device_set_viewport(this, 0, 0, NV12_CX / 2, NV12_CY / 2);
@@ -316,6 +380,7 @@ try {
 	UpdateBlendState();
 	UpdateRasterState();
 	UpdateZStencilState();
+	FlushOutputViews();
 	context->Draw(4, 0);
 
 	device_load_pixelshader(this, nullptr);
@@ -342,7 +407,7 @@ try {
 	}
 	return bad_driver;
 
-} catch (HRError error) {
+} catch (const HRError &error) {
 	blog(LOG_WARNING, "HasBadNV12Output failed: %s (%08lX)", error.str,
 	     error.hr);
 	return false;
@@ -391,11 +456,83 @@ int gs_device::CheckDuplicationSupport()
 	return 0;
 }
 
+static bool increase_maximum_frame_latency(ID3D11Device *device)
+{
+	ComQIPtr<IDXGIDevice1> dxgiDevice(device);
+	if (!dxgiDevice) {
+		blog(LOG_DEBUG, "%s: Failed to get IDXGIDevice1", __FUNCTION__);
+		return false;
+	}
+
+	const HRESULT hr = dxgiDevice->SetMaximumFrameLatency(16);
+	if (FAILED(hr)) {
+		blog(LOG_DEBUG, "%s: SetMaximumFrameLatency failed",
+		     __FUNCTION__);
+		return false;
+	}
+
+	blog(LOG_INFO, "DXGI increase maximum frame latency success");
+	return true;
+}
+
+#if USE_GPU_PRIORITY
+static bool set_priority(ID3D11Device *device)
+{
+	typedef enum _D3DKMT_SCHEDULINGPRIORITYCLASS {
+		D3DKMT_SCHEDULINGPRIORITYCLASS_IDLE,
+		D3DKMT_SCHEDULINGPRIORITYCLASS_BELOW_NORMAL,
+		D3DKMT_SCHEDULINGPRIORITYCLASS_NORMAL,
+		D3DKMT_SCHEDULINGPRIORITYCLASS_ABOVE_NORMAL,
+		D3DKMT_SCHEDULINGPRIORITYCLASS_HIGH,
+		D3DKMT_SCHEDULINGPRIORITYCLASS_REALTIME
+	} D3DKMT_SCHEDULINGPRIORITYCLASS;
+
+	ComQIPtr<IDXGIDevice> dxgiDevice(device);
+	if (!dxgiDevice) {
+		blog(LOG_DEBUG, "%s: Failed to get IDXGIDevice", __FUNCTION__);
+		return false;
+	}
+
+	HMODULE gdi32 = GetModuleHandleW(L"GDI32");
+	if (!gdi32) {
+		blog(LOG_DEBUG, "%s: Failed to get GDI32", __FUNCTION__);
+		return false;
+	}
+
+	NTSTATUS(WINAPI * d3dkmt_spspc)(HANDLE, D3DKMT_SCHEDULINGPRIORITYCLASS);
+	d3dkmt_spspc = (decltype(d3dkmt_spspc))GetProcAddress(
+		gdi32, "D3DKMTSetProcessSchedulingPriorityClass");
+	if (!d3dkmt_spspc) {
+		blog(LOG_DEBUG, "%s: Failed to get d3dkmt_spspc", __FUNCTION__);
+		return false;
+	}
+
+	NTSTATUS status = d3dkmt_spspc(GetCurrentProcess(),
+				       D3DKMT_SCHEDULINGPRIORITYCLASS_REALTIME);
+	if (status != 0) {
+		blog(LOG_DEBUG, "%s: Failed to set process priority class: %d",
+		     __FUNCTION__, (int)status);
+		return false;
+	}
+
+	HRESULT hr = dxgiDevice->SetGPUThreadPriority(GPU_PRIORITY_VAL);
+	if (FAILED(hr)) {
+		blog(LOG_DEBUG, "%s: SetGPUThreadPriority failed",
+		     __FUNCTION__);
+		return false;
+	}
+
+	blog(LOG_INFO, "D3D11 GPU priority setup success");
+	return true;
+}
+
+#endif
+
 void gs_device::InitDevice(uint32_t adapterIdx)
 {
 	wstring adapterName;
 	DXGI_ADAPTER_DESC desc;
-	D3D_FEATURE_LEVEL levelUsed = D3D_FEATURE_LEVEL_9_3;
+	D3D_FEATURE_LEVEL levelUsed = D3D_FEATURE_LEVEL_10_0;
 	HRESULT hr = 0;
 	uint32_t createFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef _DEBUG
@@ -424,14 +561,37 @@ void gs_device::InitDevice(uint32_t adapterIdx)
 	if (CheckDuplicationSupport()) {
 		throw UnsupportedHWError("Device does not support screen duplication", hr);
 	}
-	
-	blog(LOG_INFO, "D3D11 loaded successfully, feature level used: %u",
+
+	blog(LOG_INFO, "D3D11 loaded successfully, feature level used: %x",
 	     (unsigned int)levelUsed);
+
+	/* prevent stalls sometimes seen in Present calls */
+	if (!increase_maximum_frame_latency(device)) {
+		blog(LOG_INFO, "DXGI increase maximum frame latency failed");
+	}
+
+	/* adjust gpu thread priority on non-intel GPUs */
+#if USE_GPU_PRIORITY
+	if (desc.VendorId != 0x8086 && !set_priority(device)) {
+		blog(LOG_INFO, "D3D11 GPU priority setup "
+			       "failed (not admin?)");
+	}
+#endif
 
 	/* ---------------------------------------- */
 	/* check for nv12 texture output support    */
 
 	nv12Supported = false;
+
+	/* WARP NV12 support is suspected to be buggy on older Windows */
+	if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c) {
+		return;
+	}
+
+	/* Intel CopyResource is very slow with NV12 */
+	if (desc.VendorId == 0x8086 && IsOldIntelPlatform(desc.DeviceId)) {
+		return;
+	}
 
 	ComQIPtr<ID3D11Device1> d3d11_1(device);
 	if (!d3d11_1) {
@@ -673,6 +833,30 @@ void gs_device::UpdateViewProjMatrix()
 				      &curViewProjMatrix);
 }
 
+void gs_device::FlushOutputViews()
+{
+	if (curFramebufferInvalidate) {
+		ID3D11RenderTargetView *rtv = nullptr;
+		if (curRenderTarget) {
+			const int i = curRenderSide;
+			rtv = curFramebufferSrgb
+				      ? curRenderTarget->renderTargetLinear[i]
+						.Get()
+				      : curRenderTarget->renderTarget[i].Get();
+			if (!rtv) {
+				blog(LOG_ERROR,
+				     "device_draw (D3D11): texture is not a render target");
+				return;
+			}
+		}
+		ID3D11DepthStencilView *dsv = nullptr;
+		if (curZStencilBuffer)
+			dsv = curZStencilBuffer->view;
+		context->OMSetRenderTargets(1, &rtv, dsv);
+		curFramebufferInvalidate = false;
+	}
+}
+
 gs_device::gs_device(uint32_t adapterIdx)
 	: curToplogy(D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED)
 {
@@ -688,7 +872,9 @@ gs_device::gs_device(uint32_t adapterIdx)
 	}
 
 	InitCompiler();
-	InitFactory(adapterIdx);
+	InitFactory();
+	ReorderAdapters(adapterIdx);
+	InitAdapter(adapterIdx);
 	InitDevice(adapterIdx);
 	device_set_render_target(this, NULL, NULL);
 }
@@ -755,11 +941,58 @@ bool device_enum_adapters(bool (*callback)(void *param, const char *name,
 		EnumD3DAdapters(callback, param);
 		return true;
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_WARNING, "Failed enumerating devices: %s (%08lX)",
 		     error.str, error.hr);
 		return false;
 	}
+}
+
+static bool GetMonitorTarget(const MONITORINFOEX &info,
+			     DISPLAYCONFIG_TARGET_DEVICE_NAME &target)
+{
+	bool found = false;
+
+	UINT32 numPath, numMode;
+	if (GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &numPath,
+					&numMode) == ERROR_SUCCESS) {
+		std::vector<DISPLAYCONFIG_PATH_INFO> paths(numPath);
+		std::vector<DISPLAYCONFIG_MODE_INFO> modes(numMode);
+		if (QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &numPath,
+				       paths.data(), &numMode, modes.data(),
+				       nullptr) == ERROR_SUCCESS) {
+			paths.resize(numPath);
+			for (size_t i = 0; i < numPath; ++i) {
+				const DISPLAYCONFIG_PATH_INFO &path = paths[i];
+
+				DISPLAYCONFIG_SOURCE_DEVICE_NAME
+				source;
+				source.header.type =
+					DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+				source.header.size = sizeof(source);
+				source.header.adapterId =
+					path.sourceInfo.adapterId;
+				source.header.id = path.sourceInfo.id;
+				if (DisplayConfigGetDeviceInfo(
+					    &source.header) == ERROR_SUCCESS &&
+				    wcscmp(info.szDevice,
+					   source.viewGdiDeviceName) == 0) {
+					target.header.type =
+						DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+					target.header.size = sizeof(target);
+					target.header.adapterId =
+						path.sourceInfo.adapterId;
+					target.header.id = path.targetInfo.id;
+					found = DisplayConfigGetDeviceInfo(
+							&target.header) ==
+						ERROR_SUCCESS;
+					break;
+				}
+			}
+		}
+	}
+
+	return found;
 }
 
 static inline void LogAdapterMonitors(IDXGIAdapter1 *adapter)
@@ -772,15 +1005,41 @@ static inline void LogAdapterMonitors(IDXGIAdapter1 *adapter)
 		if (FAILED(output->GetDesc(&desc)))
 			continue;
 
-		RECT rect = desc.DesktopCoordinates;
+		unsigned refresh = 0;
+
+		bool target_found = false;
+		DISPLAYCONFIG_TARGET_DEVICE_NAME target;
+
+		MONITORINFOEX info;
+		info.cbSize = sizeof(info);
+		if (GetMonitorInfo(desc.Monitor, &info)) {
+			target_found = GetMonitorTarget(info, target);
+
+			DEVMODE mode;
+			mode.dmSize = sizeof(mode);
+			mode.dmDriverExtra = 0;
+			if (EnumDisplaySettings(info.szDevice,
+						ENUM_CURRENT_SETTINGS, &mode)) {
+				refresh = mode.dmDisplayFrequency;
+			}
+		}
+
+		if (!target_found) {
+			target.monitorFriendlyDeviceName[0] = 0;
+		}
+
+		const RECT &rect = desc.DesktopCoordinates;
 		blog(LOG_INFO,
 		     "\t  output %u: "
 		     "pos={%d, %d}, "
 		     "size={%d, %d}, "
-		     "attached=%s",
+		     "attached=%s, "
+		     "refresh=%u, "
+		     "name=%ls",
 		     i, rect.left, rect.top, rect.right - rect.left,
 		     rect.bottom - rect.top,
-		     desc.AttachedToDesktop ? "true" : "false");
+		     desc.AttachedToDesktop ? "true" : "false", refresh,
+		     target.monitorFriendlyDeviceName);
 	}
 }
 
@@ -818,6 +1077,27 @@ static inline void LogD3DAdapters()
 		     desc.DedicatedVideoMemory);
 		blog(LOG_INFO, "\t  Shared VRAM:    %u",
 		     desc.SharedSystemMemory);
+		blog(LOG_INFO, "\t  PCI ID:         %x:%x", desc.VendorId,
+		     desc.DeviceId);
+
+		/* driver version */
+		LARGE_INTEGER umd;
+		hr = adapter->CheckInterfaceSupport(__uuidof(IDXGIDevice),
+						    &umd);
+		if (SUCCEEDED(hr)) {
+			const uint64_t version = umd.QuadPart;
+			const uint16_t aa = (version >> 48) & 0xffff;
+			const uint16_t bb = (version >> 32) & 0xffff;
+			const uint16_t ccccc = (version >> 16) & 0xffff;
+			const uint16_t ddddd = version & 0xffff;
+			blog(LOG_INFO,
+			     "\t  Driver Version: %" PRIu16 ".%" PRIu16
+			     ".%" PRIu16 ".%" PRIu16,
+			     aa, bb, ccccc, ddddd);
+		} else {
+			blog(LOG_INFO, "\t  Driver Version: Unknown (0x%X)",
+			     (unsigned)hr);
+		}
 
 		LogAdapterMonitors(adapter);
 	}
@@ -835,12 +1115,12 @@ int device_create(gs_device_t **p_device, uint32_t adapter)
 
 		device = new gs_device(adapter);
 
-	} catch (UnsupportedHWError error) {
+	} catch (const UnsupportedHWError &error) {
 		blog(LOG_ERROR, "device_create (D3D11): %s (%08lX)", error.str,
 		     error.hr);
 		errorcode = GS_ERROR_NOT_SUPPORTED;
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_create (D3D11): %s (%08lX)", error.str,
 		     error.hr);
 		errorcode = GS_ERROR_FAIL;
@@ -867,6 +1147,11 @@ void device_leave_context(gs_device_t *device)
 	UNUSED_PARAMETER(device);
 }
 
+void *device_get_device_obj(gs_device_t *device)
+{
+	return (void *)device->device.Get();
+}
+
 gs_swapchain_t *device_swapchain_create(gs_device_t *device,
 					const struct gs_init_data *data)
 {
@@ -874,7 +1159,7 @@ gs_swapchain_t *device_swapchain_create(gs_device_t *device,
 
 	try {
 		swap = new gs_swap_chain(device, data);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_swapchain_create (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -892,19 +1177,10 @@ void device_resize(gs_device_t *device, uint32_t cx, uint32_t cy)
 
 	try {
 		ID3D11RenderTargetView *renderView = NULL;
-		ID3D11DepthStencilView *depthView = NULL;
-		int i = device->curRenderSide;
-
-		device->context->OMSetRenderTargets(1, &renderView, depthView);
+		device->context->OMSetRenderTargets(1, &renderView, NULL);
 		device->curSwapChain->Resize(cx, cy);
-
-		if (device->curRenderTarget)
-			renderView = device->curRenderTarget->renderTarget[i];
-		if (device->curZStencilBuffer)
-			depthView = device->curZStencilBuffer->view;
-		device->context->OMSetRenderTargets(1, &renderView, depthView);
-
-	} catch (HRError error) {
+		device->curFramebufferInvalidate = true;
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_resize (D3D11): %s (%08lX)", error.str,
 		     error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -954,7 +1230,7 @@ gs_texture_t *device_texture_create(gs_device_t *device, uint32_t width,
 		texture = new gs_texture_2d(device, width, height, color_format,
 					    levels, data, flags, GS_TEXTURE_2D,
 					    false);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_texture_create (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -975,7 +1251,7 @@ gs_texture_t *device_cubetexture_create(gs_device_t *device, uint32_t size,
 		texture = new gs_texture_2d(device, size, size, color_format,
 					    levels, data, flags,
 					    GS_TEXTURE_CUBE, false);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_cubetexture_create (D3D11): %s "
 		     "(%08lX)",
@@ -1018,7 +1294,7 @@ gs_zstencil_t *device_zstencil_create(gs_device_t *device, uint32_t width,
 	try {
 		zstencil =
 			new gs_zstencil_buffer(device, width, height, format);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_zstencil_create (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -1035,7 +1311,7 @@ gs_stagesurf_t *device_stagesurface_create(gs_device_t *device, uint32_t width,
 	try {
 		surf = new gs_stage_surface(device, width, height,
 					    color_format);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_stagesurface_create (D3D11): %s "
 		     "(%08lX)",
@@ -1053,7 +1329,7 @@ device_samplerstate_create(gs_device_t *device,
 	gs_sampler_state *ss = NULL;
 	try {
 		ss = new gs_sampler_state(device, info);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_samplerstate_create (D3D11): %s "
 		     "(%08lX)",
@@ -1072,14 +1348,14 @@ gs_shader_t *device_vertexshader_create(gs_device_t *device,
 	try {
 		shader = new gs_vertex_shader(device, file, shader_string);
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_vertexshader_create (D3D11): %s "
 		     "(%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
 
-	} catch (ShaderError error) {
+	} catch (const ShaderError &error) {
 		const char *buf =
 			(const char *)error.errors->GetBufferPointer();
 		if (error_string)
@@ -1105,14 +1381,14 @@ gs_shader_t *device_pixelshader_create(gs_device_t *device,
 	try {
 		shader = new gs_pixel_shader(device, file, shader_string);
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_pixelshader_create (D3D11): %s "
 		     "(%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
 
-	} catch (ShaderError error) {
+	} catch (const ShaderError &error) {
 		const char *buf =
 			(const char *)error.errors->GetBufferPointer();
 		if (error_string)
@@ -1136,7 +1412,7 @@ gs_vertbuffer_t *device_vertexbuffer_create(gs_device_t *device,
 	gs_vertex_buffer *buffer = NULL;
 	try {
 		buffer = new gs_vertex_buffer(device, data, flags);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_vertexbuffer_create (D3D11): %s "
 		     "(%08lX)",
@@ -1158,7 +1434,7 @@ gs_indexbuffer_t *device_indexbuffer_create(gs_device_t *device,
 	gs_index_buffer *buffer = NULL;
 	try {
 		buffer = new gs_index_buffer(device, type, indices, num, flags);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_indexbuffer_create (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -1172,7 +1448,7 @@ gs_timer_t *device_timer_create(gs_device_t *device)
 	gs_timer *timer = NULL;
 	try {
 		timer = new gs_timer(device);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_timer_create (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -1186,7 +1462,7 @@ gs_timer_range_t *device_timer_range_create(gs_device_t *device)
 	gs_timer_range *range = NULL;
 	try {
 		range = new gs_timer_range(device);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_timer_range_create (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -1266,18 +1542,35 @@ void device_load_indexbuffer(gs_device_t *device, gs_indexbuffer_t *indexbuffer)
 	device->context->IASetIndexBuffer(buffer, format, 0);
 }
 
-void device_load_texture(gs_device_t *device, gs_texture_t *tex, int unit)
+static void device_load_texture_internal(gs_device_t *device, gs_texture_t *tex,
+					 int unit,
+					 ID3D11ShaderResourceView *view)
 {
-	ID3D11ShaderResourceView *view = NULL;
-
 	if (device->curTextures[unit] == tex)
 		return;
 
-	if (tex)
-		view = tex->shaderRes;
-
 	device->curTextures[unit] = tex;
 	device->context->PSSetShaderResources(unit, 1, &view);
+}
+
+void device_load_texture(gs_device_t *device, gs_texture_t *tex, int unit)
+{
+	ID3D11ShaderResourceView *view;
+	if (tex)
+		view = tex->shaderRes;
+	else
+		view = NULL;
+	return device_load_texture_internal(device, tex, unit, view);
+}
+
+void device_load_texture_srgb(gs_device_t *device, gs_texture_t *tex, int unit)
+{
+	ID3D11ShaderResourceView *view;
+	if (tex)
+		view = tex->shaderResLinear;
+	else
+		view = NULL;
+	return device_load_texture_internal(device, tex, unit, view);
 }
 
 void device_load_samplerstate(gs_device_t *device,
@@ -1421,26 +1714,19 @@ void device_set_render_target(gs_device_t *device, gs_texture_t *tex,
 		return;
 
 	if (tex && tex->type != GS_TEXTURE_2D) {
-		blog(LOG_ERROR, "device_set_render_target (D3D11): "
-				"texture is not a 2D texture");
+		blog(LOG_ERROR,
+		     "device_set_render_target (D3D11): texture is not a 2D texture");
 		return;
 	}
 
-	gs_texture_2d *tex2d = static_cast<gs_texture_2d *>(tex);
-	if (tex2d && !tex2d->renderTarget[0]) {
-		blog(LOG_ERROR, "device_set_render_target (D3D11): "
-				"texture is not a render target");
-		return;
+	gs_texture_2d *const tex2d = static_cast<gs_texture_2d *>(tex);
+	if (device->curRenderTarget != tex2d || device->curRenderSide != 0 ||
+	    device->curZStencilBuffer != zstencil) {
+		device->curRenderTarget = tex2d;
+		device->curRenderSide = 0;
+		device->curZStencilBuffer = zstencil;
+		device->curFramebufferInvalidate = true;
 	}
-
-	ID3D11RenderTargetView *rt = tex2d ? tex2d->renderTarget[0].Get()
-					   : nullptr;
-
-	device->curRenderTarget = tex2d;
-	device->curRenderSide = 0;
-	device->curZStencilBuffer = zstencil;
-	device->context->OMSetRenderTargets(
-		1, &rt, zstencil ? zstencil->view : nullptr);
 }
 
 void device_set_cube_render_target(gs_device_t *device, gs_texture_t *tex,
@@ -1466,19 +1752,27 @@ void device_set_cube_render_target(gs_device_t *device, gs_texture_t *tex,
 		return;
 	}
 
-	gs_texture_2d *tex2d = static_cast<gs_texture_2d *>(tex);
-	if (!tex2d->renderTarget[side]) {
-		blog(LOG_ERROR, "device_set_cube_render_target (D3D11): "
-				"texture is not a render target");
-		return;
+	gs_texture_2d *const tex2d = static_cast<gs_texture_2d *>(tex);
+	if (device->curRenderTarget != tex2d || device->curRenderSide != side ||
+	    device->curZStencilBuffer != zstencil) {
+		device->curRenderTarget = tex2d;
+		device->curRenderSide = side;
+		device->curZStencilBuffer = zstencil;
+		device->curFramebufferInvalidate = true;
 	}
+}
 
-	ID3D11RenderTargetView *rt = tex2d->renderTarget[0];
+void device_enable_framebuffer_srgb(gs_device_t *device, bool enable)
+{
+	if (device->curFramebufferSrgb != enable) {
+		device->curFramebufferSrgb = enable;
+		device->curFramebufferInvalidate = true;
+	}
+}
 
-	device->curRenderTarget = tex2d;
-	device->curRenderSide = side;
-	device->curZStencilBuffer = zstencil;
-	device->context->OMSetRenderTargets(1, &rt, zstencil->view);
+bool device_framebuffer_srgb_enabled(gs_device_t *device)
+{
+	return device->curFramebufferSrgb;
 }
 
 inline void gs_device::CopyTex(ID3D11Texture2D *dst, uint32_t dst_x,
@@ -1627,6 +1921,8 @@ void device_draw(gs_device_t *device, enum gs_draw_mode draw_mode,
 		if (!device->curSwapChain && !device->curRenderTarget)
 			throw "No render target or swap chain to render to";
 
+		device->FlushOutputViews();
+
 		gs_effect_t *effect = gs_get_effect();
 		if (effect)
 			gs_effect_update_params(effect);
@@ -1643,7 +1939,7 @@ void device_draw(gs_device_t *device, enum gs_draw_mode draw_mode,
 		blog(LOG_ERROR, "device_draw (D3D11): %s", error);
 		return;
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_draw (D3D11): %s (%08lX)", error.str,
 		     error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -2436,10 +2732,11 @@ device_texture_create_gdi(gs_device_t *device, uint32_t width, uint32_t height)
 {
 	gs_texture *texture = nullptr;
 	try {
-		texture = new gs_texture_2d(device, width, height, GS_BGRA, 1,
-					    nullptr, GS_RENDER_TARGET,
-					    GS_TEXTURE_2D, true);
-	} catch (HRError error) {
+		texture = new gs_texture_2d(device, width, height,
+					    GS_BGRA_UNORM, 1, nullptr,
+					    GS_RENDER_TARGET, GS_TEXTURE_2D,
+					    true);
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "device_texture_create_gdi (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -2497,7 +2794,7 @@ extern "C" EXPORT gs_texture_t *device_texture_open_shared(gs_device_t *device,
 	gs_texture *texture = nullptr;
 	try {
 		texture = new gs_texture_2d(device, handle);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "gs_texture_open_shared (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -2515,6 +2812,23 @@ extern "C" EXPORT uint32_t device_texture_get_shared_handle(gs_texture_t *tex)
 		return GS_INVALID_HANDLE;
 
 	return tex2d->isShared ? tex2d->sharedHandle : GS_INVALID_HANDLE;
+}
+
+extern "C" EXPORT gs_texture_t *device_texture_wrap_obj(gs_device_t *device,
+							void *obj)
+{
+	gs_texture *texture = nullptr;
+	try {
+		texture = new gs_texture_2d(device, (ID3D11Texture2D *)obj);
+	} catch (const HRError &error) {
+		blog(LOG_ERROR, "gs_texture_wrap_obj (D3D11): %s (%08lX)",
+		     error.str, error.hr);
+		LogD3D11ErrorDetails(error, device);
+	} catch (const char *error) {
+		blog(LOG_ERROR, "gs_texture_wrap_obj (D3D11): %s", error);
+	}
+
+	return texture;
 }
 
 int device_texture_acquire_sync(gs_texture_t *tex, uint64_t key, uint32_t ms)
@@ -2584,7 +2898,7 @@ device_texture_create_nv12(gs_device_t *device, gs_texture_t **p_tex_y,
 					  true);
 		tex_uv = new gs_texture_2d(device, tex_y->texture, flags);
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR, "gs_texture_create_nv12 (D3D11): %s (%08lX)",
 		     error.str, error.hr);
 		LogD3D11ErrorDetails(error, device);
@@ -2610,7 +2924,7 @@ device_stagesurface_create_nv12(gs_device_t *device, uint32_t width,
 	gs_stage_surface *surf = NULL;
 	try {
 		surf = new gs_stage_surface(device, width, height);
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_stagesurface_create (D3D11): %s "
 		     "(%08lX)",
@@ -2619,4 +2933,49 @@ device_stagesurface_create_nv12(gs_device_t *device, uint32_t width,
 	}
 
 	return surf;
+}
+
+extern "C" EXPORT void
+device_register_loss_callbacks(gs_device_t *device,
+			       const gs_device_loss *callbacks)
+{
+	device->loss_callbacks.emplace_back(*callbacks);
+}
+
+extern "C" EXPORT void device_unregister_loss_callbacks(gs_device_t *device,
+							void *data)
+{
+	for (auto iter = device->loss_callbacks.begin();
+	     iter != device->loss_callbacks.end(); ++iter) {
+		if (iter->data == data) {
+			device->loss_callbacks.erase(iter);
+			break;
+		}
+	}
+}
+
+uint32_t gs_get_adapter_count(void)
+{
+	uint32_t count = 0;
+
+	const IID factoryIID = (GetWinVer() >= 0x602) ? dxgiFactory2
+						      : __uuidof(IDXGIFactory1);
+	ComPtr<IDXGIFactory1> factory;
+	HRESULT hr = CreateDXGIFactory1(factoryIID, (void **)factory.Assign());
+	if (SUCCEEDED(hr)) {
+		ComPtr<IDXGIAdapter1> adapter;
+		for (UINT i = 0;
+		     factory->EnumAdapters1(i, adapter.Assign()) == S_OK; ++i) {
+			DXGI_ADAPTER_DESC desc;
+			if (SUCCEEDED(adapter->GetDesc(&desc))) {
+				/* ignore Microsoft's 'basic' renderer' */
+				if (desc.VendorId != 0x1414 &&
+				    desc.DeviceId != 0x8c) {
+					++count;
+				}
+			}
+		}
+	}
+
+	return count;
 }

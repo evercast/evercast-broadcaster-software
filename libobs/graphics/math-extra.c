@@ -72,7 +72,7 @@ float calc_torquef(float val1, float val2, float torque, float min_adjust,
 	bool over;
 
 	if (close_float(val1, val2, EPSILON))
-		return val1;
+		return val2;
 
 	dist = (val2 - val1) * torque;
 	over = dist > 0.0f;
@@ -101,7 +101,7 @@ void calc_torque(struct vec3 *dst, const struct vec3 *v1, const struct vec3 *v2,
 	float orig_dist, torque_dist, adjust_dist;
 
 	if (vec3_close(v1, v2, EPSILON)) {
-		vec3_copy(dst, v1);
+		vec3_copy(dst, v2);
 		return;
 	}
 

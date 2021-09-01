@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include <obs-module.h>
+#include <mach/mach_time.h>
 #include <util/threading.h>
 #include <util/c99defs.h>
 #include <util/apple/cfstring-utils.h>
@@ -348,7 +349,16 @@ static OSStatus input_callback(void *data,
 	audio.speakers = ca->speakers;
 	audio.format = ca->format;
 	audio.samples_per_sec = ca->sample_rate;
-	audio.timestamp = ts_data->mHostTime;
+	static double factor = 0.;
+	static mach_timebase_info_data_t info = {0, 0};
+	if (info.numer == 0 && info.denom == 0) {
+		mach_timebase_info(&info);
+		factor = ((double)info.numer) / info.denom;
+	}
+	if (info.numer != info.denom)
+		audio.timestamp = (uint64_t)(factor * ts_data->mHostTime);
+	else
+		audio.timestamp = ts_data->mHostTime;
 
 	obs_source_output_audio(ca->source, &audio);
 
@@ -817,6 +827,7 @@ struct obs_source_info coreaudio_input_capture_info = {
 	.update = coreaudio_update,
 	.get_defaults = coreaudio_defaults,
 	.get_properties = coreaudio_input_properties,
+	.icon_type = OBS_ICON_TYPE_AUDIO_INPUT,
 };
 
 struct obs_source_info coreaudio_output_capture_info = {
@@ -830,4 +841,5 @@ struct obs_source_info coreaudio_output_capture_info = {
 	.update = coreaudio_update,
 	.get_defaults = coreaudio_defaults,
 	.get_properties = coreaudio_output_properties,
+	.icon_type = OBS_ICON_TYPE_AUDIO_OUTPUT,
 };

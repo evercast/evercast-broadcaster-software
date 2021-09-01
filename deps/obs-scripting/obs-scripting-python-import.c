@@ -135,6 +135,13 @@ bool import_python(const char *python_path)
 	IMPORT_FUNC(PyArg_VaParse);
 	IMPORT_FUNC(_Py_NoneStruct);
 
+#if defined(Py_DEBUG) || PY_VERSION_HEX >= 0x030900b0
+	IMPORT_FUNC(_Py_Dealloc);
+#endif
+#if PY_VERSION_HEX >= 0x030900b0
+	IMPORT_FUNC(PyType_GetFlags);
+#endif
+
 #undef IMPORT_FUNC
 
 	success = true;

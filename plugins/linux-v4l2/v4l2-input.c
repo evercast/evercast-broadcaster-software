@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <util/platform.h>
 #include <obs-module.h>
 
+#include "v4l2-controls.h"
 #include "v4l2-helpers.h"
 
 #if HAVE_UDEV
@@ -52,11 +53,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define timeval2ns(tv) \
 	(((uint64_t)tv.tv_sec * 1000000000) + ((uint64_t)tv.tv_usec * 1000))
 
-#define V4L2_FOURCC_STR(code)                                                 \
-	(char[5])                                                             \
-	{                                                                     \
-		(code >> 24) & 0xFF, (code >> 16) & 0xFF, (code >> 8) & 0xFF, \
-			code & 0xFF, 0                                        \
+#define V4L2_FOURCC_STR(code)                                         \
+	(char[5])                                                     \
+	{                                                             \
+		code & 0xFF, (code >> 8) & 0xFF, (code >> 16) & 0xFF, \
+			(code >> 24) & 0xFF, 0                        \
 	}
 
 #define blog(level, msg, ...) blog(level, "v4l2-input: " msg, ##__VA_ARGS__)
@@ -80,16 +81,22 @@ struct v4l2_data {
 	pthread_t thread;
 	os_event_t *event;
 
+	bool framerate_unchanged;
+	bool resolution_unchanged;
 	int_fast32_t dev;
 	int width;
 	int height;
 	int linesize;
 	struct v4l2_buffer_data buffers;
+
+	bool auto_reset;
+	int timeout_frames;
 };
 
 /* forward declarations */
 static void v4l2_init(struct v4l2_data *data);
 static void v4l2_terminate(struct v4l2_data *data);
+static void v4l2_update(void *vptr, obs_data_t *settings);
 
 /**
  * Prepare the output frame structure for obs and compute plane offsets
@@ -119,7 +126,7 @@ static void v4l2_prep_obs_frame(struct v4l2_data *data,
 	switch (data->pixfmt) {
 	case V4L2_PIX_FMT_NV12:
 		frame->linesize[0] = data->linesize;
-		frame->linesize[1] = data->linesize / 2;
+		frame->linesize[1] = data->linesize;
 		plane_offsets[1] = data->linesize * data->height;
 		break;
 	case V4L2_PIX_FMT_YVU420:
@@ -157,28 +164,71 @@ static void *v4l2_thread(void *vptr)
 	struct v4l2_buffer buf;
 	struct obs_source_frame out;
 	size_t plane_offsets[MAX_AV_PLANES];
+	int fps_num, fps_denom;
+	float ffps;
+	uint64_t timeout_usec;
+
+	blog(LOG_DEBUG, "%s: new capture thread", data->device_id);
+	os_set_thread_name("v4l2: capture");
+
+	/* Get framerate and calculate appropriate select timeout value. */
+	v4l2_unpack_tuple(&fps_num, &fps_denom, data->framerate);
+	ffps = (float)fps_denom / fps_num;
+	blog(LOG_DEBUG, "%s: framerate: %.2f fps", data->device_id, ffps);
+	/* Timeout set to 5 frame periods. */
+	timeout_usec = (1000000 * data->timeout_frames) / ffps;
+	blog(LOG_INFO, "%s: select timeout set to %ldus (%dx frame periods)",
+	     data->device_id, timeout_usec, data->timeout_frames);
 
 	if (v4l2_start_capture(data->dev, &data->buffers) < 0)
 		goto exit;
+
+	blog(LOG_DEBUG, "%s: new capture started", data->device_id);
 
 	frames = 0;
 	first_ts = 0;
 	v4l2_prep_obs_frame(data, &out, plane_offsets);
 
+	blog(LOG_DEBUG, "%s: obs frame prepared", data->device_id);
+
 	while (os_event_try(data->event) == EAGAIN) {
 		FD_ZERO(&fds);
 		FD_SET(data->dev, &fds);
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+
+		/* Set timeout timevalue. */
+		tv.tv_sec = 0;
+		tv.tv_usec = timeout_usec;
 
 		r = select(data->dev + 1, &fds, NULL, NULL, &tv);
 		if (r < 0) {
 			if (errno == EINTR)
 				continue;
-			blog(LOG_DEBUG, "select failed");
+			blog(LOG_ERROR, "%s: select failed", data->device_id);
 			break;
 		} else if (r == 0) {
-			blog(LOG_DEBUG, "select timeout");
+			blog(LOG_ERROR, "%s: select timed out",
+			     data->device_id);
+
+#ifdef _DEBUG
+			v4l2_query_all_buffers(data->dev, &data->buffers);
+#endif
+
+			if (v4l2_ioctl(data->dev, VIDIOC_LOG_STATUS) < 0) {
+				blog(LOG_ERROR, "%s: failed to log status",
+				     data->device_id);
+			}
+
+			if (data->auto_reset) {
+				if (v4l2_reset_capture(data->dev,
+						       &data->buffers) == 0)
+					blog(LOG_INFO,
+					     "%s: stream reset successful",
+					     data->device_id);
+				else
+					blog(LOG_ERROR, "%s: failed to reset",
+					     data->device_id);
+			}
+
 			continue;
 		}
 
@@ -186,11 +236,20 @@ static void *v4l2_thread(void *vptr)
 		buf.memory = V4L2_MEMORY_MMAP;
 
 		if (v4l2_ioctl(data->dev, VIDIOC_DQBUF, &buf) < 0) {
-			if (errno == EAGAIN)
+			if (errno == EAGAIN) {
+				blog(LOG_DEBUG, "%s: ioctl dqbuf eagain",
+				     data->device_id);
 				continue;
-			blog(LOG_DEBUG, "failed to dequeue buffer");
+			}
+			blog(LOG_ERROR, "%s: failed to dequeue buffer",
+			     data->device_id);
 			break;
 		}
+
+		blog(LOG_DEBUG,
+		     "%s: ts: %06ld buf id #%d, flags 0x%08X, seq #%d, len %d, used %d",
+		     data->device_id, buf.timestamp.tv_usec, buf.index,
+		     buf.flags, buf.sequence, buf.length, buf.bytesused);
 
 		out.timestamp = timeval2ns(buf.timestamp);
 		if (!frames)
@@ -203,14 +262,16 @@ static void *v4l2_thread(void *vptr)
 		obs_source_output_video(data->source, &out);
 
 		if (v4l2_ioctl(data->dev, VIDIOC_QBUF, &buf) < 0) {
-			blog(LOG_DEBUG, "failed to enqueue buffer");
+			blog(LOG_ERROR, "%s: failed to enqueue buffer",
+			     data->device_id);
 			break;
 		}
 
 		frames++;
 	}
 
-	blog(LOG_INFO, "Stopped capture after %" PRIu64 " frames", frames);
+	blog(LOG_INFO, "%s: Stopped capture after %" PRIu64 " frames",
+	     data->device_id, frames);
 
 exit:
 	v4l2_stop_capture(data->dev);
@@ -233,6 +294,8 @@ static void v4l2_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "framerate", -1);
 	obs_data_set_default_int(settings, "color_range", VIDEO_RANGE_DEFAULT);
 	obs_data_set_default_bool(settings, "buffering", true);
+	obs_data_set_default_bool(settings, "auto_reset", false);
+	obs_data_set_default_int(settings, "timeout_frames", 5);
 }
 
 /**
@@ -578,8 +641,17 @@ static bool device_selected(obs_properties_t *props, obs_property_t *p,
 		return false;
 
 	obs_property_t *prop = obs_properties_get(props, "input");
+	obs_properties_t *ctrl_props_new = obs_properties_create();
+
+	obs_properties_remove_by_name(props, "controls");
+
 	v4l2_input_list(dev, prop);
+	v4l2_update_controls(dev, ctrl_props_new, settings);
 	v4l2_close(dev);
+
+	obs_properties_add_group(props, "controls",
+				 obs_module_text("CameraCtrls"),
+				 OBS_GROUP_NORMAL, ctrl_props_new);
 
 	obs_property_modified(prop, settings);
 
@@ -783,6 +855,19 @@ static obs_properties_t *v4l2_properties(void *vptr)
 	obs_properties_add_bool(props, "buffering",
 				obs_module_text("UseBuffering"));
 
+	obs_properties_add_bool(props, "auto_reset",
+				obs_module_text("AutoresetOnTimeout"));
+
+	obs_properties_add_int(props, "timeout_frames",
+			       obs_module_text("FramesUntilTimeout"), 2, 120,
+			       1);
+
+	// a group to contain the camera control
+	obs_properties_t *ctrl_props = obs_properties_create();
+	obs_properties_add_group(props, "controls",
+				 obs_module_text("CameraCtrls"),
+				 OBS_GROUP_NORMAL, ctrl_props);
+
 	obs_data_t *settings = obs_source_get_settings(data->source);
 	v4l2_device_list(device_list, settings);
 	obs_data_release(settings);
@@ -938,18 +1023,77 @@ static void v4l2_update_source_flags(struct v4l2_data *data,
 }
 
 /**
+ * Checking if any of the settings have changed so that we can restart the
+ * stream
+ */
+static bool v4l2_settings_changed(struct v4l2_data *data, obs_data_t *settings)
+{
+	bool res = false;
+
+	if (obs_data_get_string(settings, "device_id") != NULL &&
+	    data->device_id != NULL) {
+		res |= strcmp(data->device_id,
+			      obs_data_get_string(settings, "device_id")) != 0;
+		res |= data->input != obs_data_get_int(settings, "input");
+		res |= data->pixfmt !=
+		       obs_data_get_int(settings, "pixelformat");
+		res |= data->standard != obs_data_get_int(settings, "standard");
+		res |= data->dv_timing !=
+		       obs_data_get_int(settings, "dv_timing");
+
+		if (obs_data_get_int(settings, "resolution") == -1 &&
+		    !data->resolution_unchanged) {
+			data->resolution_unchanged = true;
+			res |= true;
+		} else if (obs_data_get_int(settings, "resolution") == -1 &&
+			   data->resolution_unchanged) {
+			res |= false;
+		} else {
+			data->resolution_unchanged = false;
+			res |= (data->resolution !=
+				obs_data_get_int(settings, "resolution")) &&
+			       (obs_data_get_int(settings, "resolution") != -1);
+		}
+
+		if (obs_data_get_int(settings, "framerate") == -1 &&
+		    !data->framerate_unchanged) {
+			data->framerate_unchanged = true;
+			res |= true;
+		} else if (obs_data_get_int(settings, "framerate") == -1 &&
+			   data->framerate_unchanged) {
+			res |= false;
+		} else {
+			data->framerate_unchanged = false;
+			res |= (data->framerate !=
+				obs_data_get_int(settings, "framerate")) &&
+			       (obs_data_get_int(settings, "framerate") != -1);
+		}
+
+		res |= data->color_range !=
+		       obs_data_get_int(settings, "color_range");
+	} else {
+		res = true;
+	}
+
+	return res;
+}
+
+/**
  * Update the settings for the v4l2 source
  *
- * Since there are very few settings that can be changed without restarting the
- * stream we don't bother to even try. Whenever this is called the currently
- * active stream (if exists) is stopped, the settings are updated and finally
- * the new stream is started.
+ * There are a few settings that can be changed without restarting the stream
+ * Whenever this is called the currently active stream (if exists) is stopped,
+ * the settings are updated and finally the new stream is started.
  */
 static void v4l2_update(void *vptr, obs_data_t *settings)
 {
+
 	V4L2_DATA(vptr);
 
-	v4l2_terminate(data);
+	bool needs_restart = v4l2_settings_changed(data, settings);
+
+	if (needs_restart)
+		v4l2_terminate(data);
 
 	if (data->device_id)
 		bfree(data->device_id);
@@ -962,10 +1106,13 @@ static void v4l2_update(void *vptr, obs_data_t *settings)
 	data->resolution = obs_data_get_int(settings, "resolution");
 	data->framerate = obs_data_get_int(settings, "framerate");
 	data->color_range = obs_data_get_int(settings, "color_range");
+	data->auto_reset = obs_data_get_bool(settings, "auto_reset");
+	data->timeout_frames = obs_data_get_int(settings, "timeout_frames");
 
 	v4l2_update_source_flags(data, settings);
 
-	v4l2_init(data);
+	if (needs_restart)
+		v4l2_init(data);
 }
 
 static void *v4l2_create(obs_data_t *settings, obs_source_t *source)
@@ -973,6 +1120,8 @@ static void *v4l2_create(obs_data_t *settings, obs_source_t *source)
 	struct v4l2_data *data = bzalloc(sizeof(struct v4l2_data));
 	data->dev = -1;
 	data->source = source;
+	data->resolution_unchanged = false;
+	data->framerate_unchanged = false;
 
 	/* Bitch about build problems ... */
 #ifndef V4L2_CAP_DEVICE_CAPS
@@ -1005,4 +1154,5 @@ struct obs_source_info v4l2_input = {
 	.update = v4l2_update,
 	.get_defaults = v4l2_defaults,
 	.get_properties = v4l2_properties,
+	.icon_type = OBS_ICON_TYPE_CAMERA,
 };

@@ -55,6 +55,7 @@ struct path_data {
 
 struct text_data {
 	enum obs_text_type type;
+	bool monospace;
 };
 
 struct list_data {
@@ -369,22 +370,34 @@ void obs_properties_remove_by_name(obs_properties_t *props, const char *name)
 	}
 }
 
-void obs_properties_apply_settings(obs_properties_t *props,
-				   obs_data_t *settings)
+void obs_properties_apply_settings_internal(obs_properties_t *props,
+					    obs_data_t *settings,
+					    obs_properties_t *realprops)
 {
 	struct obs_property *p;
 
+	p = props->first_property;
+	while (p) {
+		if (p->type == OBS_PROPERTY_GROUP) {
+			obs_properties_apply_settings_internal(
+				obs_property_group_content(p), settings,
+				realprops);
+		}
+		if (p->modified)
+			p->modified(realprops, p, settings);
+		else if (p->modified2)
+			p->modified2(p->priv, realprops, p, settings);
+		p = p->next;
+	}
+}
+
+void obs_properties_apply_settings(obs_properties_t *props,
+				   obs_data_t *settings)
+{
 	if (!props)
 		return;
 
-	p = props->first_property;
-	while (p) {
-		if (p->modified)
-			p->modified(props, p, settings);
-		else if (p->modified2)
-			p->modified2(p->priv, props, p, settings);
-		p = p->next;
-	}
+	obs_properties_apply_settings_internal(props, settings, props);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -413,9 +426,11 @@ static inline size_t get_property_size(enum obs_property_type type)
 		return sizeof(struct path_data);
 	case OBS_PROPERTY_LIST:
 		return sizeof(struct list_data);
+
         // NOTE LUDO: Clickable items replacement
         case OBS_PROPERTY_BUTTON_GROUP:
                 return sizeof(struct button_group_data);
+
 	case OBS_PROPERTY_COLOR:
 		return 0;
 	case OBS_PROPERTY_BUTTON:
@@ -428,6 +443,8 @@ static inline size_t get_property_size(enum obs_property_type type)
 		return sizeof(struct frame_rate_data);
 	case OBS_PROPERTY_GROUP:
 		return sizeof(struct group_data);
+	case OBS_PROPERTY_COLOR_ALPHA:
+		return 0;
 	}
 
 	return 0;
@@ -658,6 +675,15 @@ obs_property_t *obs_properties_add_color(obs_properties_t *props,
 	return new_prop(props, name, desc, OBS_PROPERTY_COLOR);
 }
 
+obs_property_t *obs_properties_add_color_alpha(obs_properties_t *props,
+					       const char *name,
+					       const char *desc)
+{
+	if (!props || has_prop(props, name))
+		return NULL;
+	return new_prop(props, name, desc, OBS_PROPERTY_COLOR_ALPHA);
+}
+
 obs_property_t *obs_properties_add_button(obs_properties_t *props,
 					  const char *name, const char *text,
 					  obs_property_clicked_t callback)
@@ -747,7 +773,8 @@ static bool check_property_group_recursion(obs_properties_t *parent,
 				 * lets verify anyway. */
 				return true;
 			}
-			check_property_group_recursion(cprops, group);
+			if (check_property_group_recursion(parent, cprops))
+				return true;
 		}
 
 		current_property = current_property->next;
@@ -1031,6 +1058,12 @@ enum obs_text_type obs_property_text_type(obs_property_t *p)
 	return data ? data->type : OBS_TEXT_DEFAULT;
 }
 
+enum obs_text_type obs_property_text_monospace(obs_property_t *p)
+{
+	struct text_data *data = get_type_data(p, OBS_PROPERTY_TEXT);
+	return data ? data->monospace : false;
+}
+
 enum obs_path_type obs_property_path_type(obs_property_t *p)
 {
 	struct path_data *data = get_type_data(p, OBS_PROPERTY_PATH);
@@ -1116,6 +1149,15 @@ void obs_property_float_set_suffix(obs_property_t *p, const char *suffix)
 
 	bfree(data->suffix);
 	data->suffix = bstrdup(suffix);
+}
+
+void obs_property_text_set_monospace(obs_property_t *p, bool monospace)
+{
+	struct text_data *data = get_type_data(p, OBS_PROPERTY_TEXT);
+	if (!data)
+		return;
+
+	data->monospace = monospace;
 }
 
 void obs_property_list_clear(obs_property_t *p)

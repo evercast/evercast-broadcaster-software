@@ -442,11 +442,11 @@ static inline video_colorspace get_colorspace(CMFormatDescriptionRef desc)
 		return VIDEO_CS_DEFAULT;
 
 	if (CFStringCompare(static_cast<CFStringRef>(matrix),
-			    kCVImageBufferYCbCrMatrix_ITU_R_709_2,
+			    kCVImageBufferYCbCrMatrix_ITU_R_601_4,
 			    0) == kCFCompareEqualTo)
-		return VIDEO_CS_709;
+		return VIDEO_CS_601;
 
-	return VIDEO_CS_601;
+	return VIDEO_CS_709;
 }
 
 static inline bool update_colorspace(av_capture *capture,
@@ -634,11 +634,10 @@ static inline bool update_frame(av_capture *capture, obs_source_frame *frame,
 }
 @end
 
-// NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
-// static void av_capture_enable_buffering(av_capture *capture, bool enabled)
-// {
-// 	obs_source_set_async_unbuffered(capture->source, !enabled);
-// }
+static void av_capture_enable_buffering(av_capture *capture, bool enabled)
+{
+	obs_source_set_async_unbuffered(capture->source, !enabled);
+}
 
 static const char *av_capture_getname(void *)
 {
@@ -1222,40 +1221,77 @@ static void *av_capture_create(obs_data_t *settings, obs_source_t *source)
 		return nullptr;
 	}
 
-  // NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
-	// av_capture_enable_buffering(capture.get(),
-	// 			    obs_data_get_bool(settings, "buffering"));
+	av_capture_enable_buffering(capture.get(),
+				    obs_data_get_bool(settings, "buffering"));
 
 	return capture.release();
 }
 
 static NSArray *presets(void)
 {
-	return @[
-		//AVCaptureSessionPresetiFrame1280x720,
-		//AVCaptureSessionPresetiFrame960x540,
-		AVCaptureSessionPreset1280x720, AVCaptureSessionPreset960x540,
-		AVCaptureSessionPreset640x480, AVCaptureSessionPreset352x288,
-		AVCaptureSessionPreset320x240, AVCaptureSessionPresetHigh,
-		//AVCaptureSessionPresetMedium,
-		//AVCaptureSessionPresetLow,
-		//AVCaptureSessionPresetPhoto,
-	];
+	if (@available(macOS 10.15, *)) {
+		return @[
+			//AVCaptureSessionPresetiFrame1280x720,
+			//AVCaptureSessionPresetiFrame960x540,
+			AVCaptureSessionPreset3840x2160,
+			AVCaptureSessionPreset1920x1080,
+			AVCaptureSessionPreset1280x720,
+			AVCaptureSessionPreset960x540,
+			AVCaptureSessionPreset640x480,
+			AVCaptureSessionPreset352x288,
+			AVCaptureSessionPreset320x240,
+			AVCaptureSessionPresetHigh,
+			//AVCaptureSessionPresetMedium,
+			//AVCaptureSessionPresetLow,
+			//AVCaptureSessionPresetPhoto,
+		];
+	} else {
+		return @[
+			//AVCaptureSessionPresetiFrame1280x720,
+			//AVCaptureSessionPresetiFrame960x540,
+			AVCaptureSessionPreset1280x720,
+			AVCaptureSessionPreset960x540,
+			AVCaptureSessionPreset640x480,
+			AVCaptureSessionPreset352x288,
+			AVCaptureSessionPreset320x240,
+			AVCaptureSessionPresetHigh,
+			//AVCaptureSessionPresetMedium,
+			//AVCaptureSessionPresetLow,
+			//AVCaptureSessionPresetPhoto,
+		];
+	}
 }
 
 static NSString *preset_names(NSString *preset)
 {
-	NSDictionary *preset_names = @{
-		AVCaptureSessionPresetLow: @"Low",
-		AVCaptureSessionPresetMedium: @"Medium",
-		AVCaptureSessionPresetHigh: @"High",
-		AVCaptureSessionPreset320x240: @"320x240",
-		AVCaptureSessionPreset352x288: @"352x288",
-		AVCaptureSessionPreset640x480: @"640x480",
-		AVCaptureSessionPreset960x540: @"960x540",
-		AVCaptureSessionPreset1280x720: @"1280x720",
-		AVCaptureSessionPresetHigh: @"High",
-	};
+	NSDictionary *preset_names = nil;
+	if (@available(macOS 10.15, *)) {
+		preset_names = @{
+			AVCaptureSessionPresetLow: @"Low",
+			AVCaptureSessionPresetMedium: @"Medium",
+			AVCaptureSessionPresetHigh: @"High",
+			AVCaptureSessionPreset320x240: @"320x240",
+			AVCaptureSessionPreset352x288: @"352x288",
+			AVCaptureSessionPreset640x480: @"640x480",
+			AVCaptureSessionPreset960x540: @"960x540",
+			AVCaptureSessionPreset1280x720: @"1280x720",
+			AVCaptureSessionPreset1920x1080: @"1920x1080",
+			AVCaptureSessionPreset3840x2160: @"3840x2160",
+			AVCaptureSessionPresetHigh: @"High",
+		};
+	} else {
+		preset_names = @{
+			AVCaptureSessionPresetLow: @"Low",
+			AVCaptureSessionPresetMedium: @"Medium",
+			AVCaptureSessionPresetHigh: @"High",
+			AVCaptureSessionPreset320x240: @"320x240",
+			AVCaptureSessionPreset352x288: @"352x288",
+			AVCaptureSessionPreset640x480: @"640x480",
+			AVCaptureSessionPreset960x540: @"960x540",
+			AVCaptureSessionPreset1280x720: @"1280x720",
+			AVCaptureSessionPresetHigh: @"High",
+		};
+	}
 	NSString *name = preset_names[preset];
 	if (name)
 		return name;
@@ -2089,9 +2125,8 @@ static obs_properties_t *av_capture_properties(void *capture)
 
 	add_manual_properties(props);
 
-  // NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
-	// obs_properties_add_bool(props, "buffering",
-	// 			obs_module_text("Buffering"));
+	obs_properties_add_bool(props, "buffering",
+				obs_module_text("Buffering"));
 
 	return props;
 }
@@ -2160,9 +2195,8 @@ static void av_capture_update(void *data, obs_data_t *settings)
 		update_manual(capture, settings);
 	}
 
-  // NOTE LUDO: #117 Video capture device settings: Remove option "Use Buffering"
-	// av_capture_enable_buffering(capture,
-	// 			    obs_data_get_bool(settings, "buffering"));
+	av_capture_enable_buffering(capture,
+				    obs_data_get_bool(settings, "buffering"));
 }
 
 OBS_DECLARE_MODULE()
@@ -2198,6 +2232,7 @@ bool obs_module_load(void)
 		.get_defaults = av_capture_defaults,
 		.get_properties = av_capture_properties,
 		.update = av_capture_update,
+		.icon_type = OBS_ICON_TYPE_CAMERA,
 	};
 
 	obs_register_source(&av_capture_info);
