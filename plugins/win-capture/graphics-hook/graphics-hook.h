@@ -20,6 +20,13 @@ extern "C" {
 #endif
 
 #define NUM_BUFFERS 3
+#define HOOK_VERBOSE_LOGGING 0
+
+#if HOOK_VERBOSE_LOGGING
+#define hlog_verbose(...) hlog(__VA_ARGS__)
+#else
+#define hlog_verbose(...) (void)0
+#endif
 
 extern void hlog(const char *format, ...);
 extern void hlog_hr(const char *text, HRESULT hr);
@@ -27,6 +34,9 @@ static inline const char *get_process_name(void);
 static inline HMODULE get_system_module(const char *module);
 static inline HMODULE load_system_library(const char *module);
 extern uint64_t os_gettime_ns(void);
+
+#define flog(format, ...) hlog("%s: " format, __FUNCTION__, ##__VA_ARGS__)
+#define flog_hr(text, hr) hlog_hr(__FUNCTION__ ": " text, hr)
 
 static inline bool capture_active(void);
 static inline bool capture_ready(void);
@@ -40,8 +50,12 @@ extern void shmem_texture_data_unlock(int idx);
 extern bool hook_ddraw(void);
 extern bool hook_d3d8(void);
 extern bool hook_d3d9(void);
+extern bool hook_d3d12(void);
 extern bool hook_dxgi(void);
 extern bool hook_gl(void);
+#if COMPILE_VULKAN_HOOK
+extern bool hook_vulkan(void);
+#endif
 
 extern void d3d10_capture(void *swap, void *backbuffer, bool capture_overlay);
 extern void d3d10_free(void);
@@ -53,19 +67,14 @@ extern void d3d12_capture(void *swap, void *backbuffer, bool capture_overlay);
 extern void d3d12_free(void);
 #endif
 
-extern uint8_t *get_d3d1x_vertex_shader(size_t *size);
-extern uint8_t *get_d3d1x_pixel_shader(size_t *size);
-
 extern bool rehook_gl(void);
 
 extern bool capture_init_shtex(struct shtex_data **data, HWND window,
-			       uint32_t base_cx, uint32_t base_cy, uint32_t cx,
-			       uint32_t cy, uint32_t format, bool flip,
-			       uintptr_t handle);
+			       uint32_t cx, uint32_t cy, uint32_t format,
+			       bool flip, uintptr_t handle);
 extern bool capture_init_shmem(struct shmem_data **data, HWND window,
-			       uint32_t base_cx, uint32_t base_cy, uint32_t cx,
-			       uint32_t cy, uint32_t pitch, uint32_t format,
-			       bool flip);
+			       uint32_t cx, uint32_t cy, uint32_t pitch,
+			       uint32_t format, bool flip);
 extern void capture_free(void);
 
 extern struct hook_info *global_hook_info;
@@ -146,12 +155,10 @@ static inline HMODULE load_system_library(const char *name)
 static inline bool capture_alive(void)
 {
 	HANDLE handle = OpenMutexW(SYNCHRONIZE, false, keepalive_name);
-	CloseHandle(handle);
-
-	if (handle)
-		return true;
-
-	return GetLastError() != ERROR_FILE_NOT_FOUND;
+	const bool success = handle != NULL;
+	if (success)
+		CloseHandle(handle);
+	return success;
 }
 
 static inline bool capture_active(void)
@@ -220,16 +227,27 @@ extern bool init_pipe(void);
 
 static inline bool capture_should_init(void)
 {
-	if (!capture_active() && capture_restarted()) {
-		if (capture_alive()) {
-			if (!ipc_pipe_client_valid(&pipe)) {
-				init_pipe();
+	bool should_init = false;
+
+	if (!capture_active()) {
+		if (capture_restarted()) {
+			if (capture_alive()) {
+				if (!ipc_pipe_client_valid(&pipe)) {
+					init_pipe();
+				}
+
+				should_init = true;
+			} else {
+				hlog_verbose(
+					"capture_should_init: inactive, restarted, not alive");
 			}
-			return true;
+		} else {
+			hlog_verbose(
+				"capture_should_init: inactive, not restarted");
 		}
 	}
 
-	return false;
+	return should_init;
 }
 
 #ifdef __cplusplus

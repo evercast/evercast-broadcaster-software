@@ -278,6 +278,7 @@ set(libobs_graphics_SOURCES
 	graphics/math-extra.c
 	graphics/graphics-imports.c)
 set(libobs_graphics_HEADERS
+	graphics/half.h
 	graphics/plane.h
 	graphics/quat.h
 	graphics/input.h
@@ -291,6 +292,7 @@ set(libobs_graphics_HEADERS
 	graphics/libnsgif/libnsgif.h
 	graphics/device-exports.h
 	graphics/image-file.h
+	graphics/srgb.h
 	graphics/vec2.h
 	graphics/vec4.h
 	graphics/matrix3.h
@@ -335,17 +337,17 @@ set(libobs_util_SOURCES
 	util/crc32.c
 	util/text-lookup.c
 	util/cf-parser.c
-	util/profiler.c)
+	util/profiler.c
+	util/bitstream.c)
 set(libobs_util_HEADERS
+	util/curl/curl-helper.h
+	util/sse-intrin.h
 	util/array-serializer.h
 	util/file-serializer.h
 	util/utf8.h
 	util/crc32.h
 	util/base.h
 	util/text-lookup.h
-	util/vc/vc_inttypes.h
-	util/vc/vc_stdbool.h
-	util/vc/vc_stdint.h
 	util/bmem.h
 	util/c99defs.h
 	util/util_uint64.h
@@ -362,7 +364,9 @@ set(libobs_util_HEADERS
 	util/lexer.h
 	util/platform.h
 	util/profiler.h
-	util/profiler.hpp)
+	util/profiler.hpp
+	util/bitstream.h
+	util/util.hpp)
 
 set(libobs_libobs_SOURCES
 	${libobs_PLATFORM_SOURCES}
@@ -388,6 +392,20 @@ set(libobs_libobs_SOURCES
 	obs-video-gpu-encode.c
 	obs-video.c)
 set(libobs_libobs_HEADERS
+	util/simde/check.h
+	util/simde/debug-trap.h
+	util/simde/hedley.h
+	util/simde/simde-align.h
+	util/simde/simde-arch.h
+	util/simde/simde-common.h
+	util/simde/simde-constify.h
+	util/simde/simde-detect-clang.h
+	util/simde/simde-diagnostic.h
+	util/simde/simde-features.h
+	util/simde/simde-math.h
+	util/simde/x86/mmx.h
+	util/simde/x86/sse2.h
+	util/simde/x86/sse.h
 	${libobs_PLATFORM_HEADERS}
 	obs-audio-controls.h
 	obs-defs.h
