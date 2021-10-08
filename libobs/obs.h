@@ -630,7 +630,7 @@ EXPORT gs_effect_t *obs_get_base_effect(enum obs_base_effect effect);
 
 #ifndef SWIG
 /* DEPRECATED: gets texture_rect default effect */
-DEPRECATED
+OBS_DEPRECATED
 EXPORT gs_effect_t *obs_get_default_rect_effect(void);
 #endif
 
@@ -642,7 +642,7 @@ EXPORT proc_handler_t *obs_get_proc_handler(void);
 
 #ifndef SWIG
 /** Renders the main view */
-DEPRECATED
+OBS_DEPRECATED
 EXPORT void obs_render_main_view(void);
 #endif
 
@@ -740,6 +740,19 @@ EXPORT bool obs_nv12_tex_active(void);
 EXPORT void obs_apply_private_data(obs_data_t *settings);
 EXPORT void obs_set_private_data(obs_data_t *settings);
 EXPORT obs_data_t *obs_get_private_data(void);
+
+typedef void (*obs_task_t)(void *param);
+
+enum obs_task_type {
+	OBS_TASK_UI,
+	OBS_TASK_GRAPHICS,
+};
+
+EXPORT void obs_queue_task(enum obs_task_type type, obs_task_t task,
+			   void *param, bool wait);
+
+typedef void (*obs_task_handler_t)(obs_task_t task, void *param, bool wait);
+EXPORT void obs_set_ui_task_handler(obs_task_handler_t handler);
 
 /* ------------------------------------------------------------------------- */
 /* View context */
@@ -2027,11 +2040,11 @@ EXPORT uint32_t obs_encoder_get_caps(const obs_encoder_t *encoder);
 
 #ifndef SWIG
 /** Duplicates an encoder packet */
-DEPRECATED
+OBS_DEPRECATED
 EXPORT void obs_duplicate_encoder_packet(struct encoder_packet *dst,
 					 const struct encoder_packet *src);
 
-DEPRECATED
+OBS_DEPRECATED
 EXPORT void obs_free_encoder_packet(struct encoder_packet *packet);
 #endif
 

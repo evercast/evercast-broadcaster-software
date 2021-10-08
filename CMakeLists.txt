@@ -180,6 +180,14 @@ option( BUILD_TESTS "Build test directory (includes test sources and possibly a 
 mark_as_advanced(BUILD_TESTS)
 
 
+include_directories(
+        "C:/inst/libwebrtc/include"
+)
+
+link_directories(
+	"C:/inst/libwebrtc/lib"
+)
+
 # --- Handle source code, UI, package, ....
 
 if(NOT INSTALLER_RUN)
@@ -220,6 +228,7 @@ if(NOT INSTALLER_RUN)
 
 	if(WIN32)
 		add_subdirectory(libobs-d3d11)
+		add_subdirectory(libobs-winrt)
 	endif()
 
 	add_subdirectory(libobs-opengl)

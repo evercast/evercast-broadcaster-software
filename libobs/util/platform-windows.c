@@ -31,9 +31,12 @@
 
 #include "../../deps/w32-pthreads/pthread.h"
 
+#define MAX_SZ_LEN 256
+
 static bool have_clockfreq = false;
 static LARGE_INTEGER clock_freq;
 static uint32_t winver = 0;
+static char win_release_id[MAX_SZ_LEN] = "unavailable";
 
 static inline uint64_t get_clockfreq(void)
 {
@@ -70,8 +73,9 @@ void *os_dlopen(const char *path)
 	dstr_replace(&dll_name, "\\", "/");
 	if (!dstr_find(&dll_name, ".dll"))
 		dstr_cat(&dll_name, ".dll");
-
 	os_utf8_to_wcs_ptr(dll_name.array, 0, &wpath);
+
+	dstr_free(&dll_name);
 
 	/* to make module dependency issues easier to deal with, allow
 	 * dynamically loaded libraries on windows to search for dependent
@@ -84,8 +88,8 @@ void *os_dlopen(const char *path)
 	}
 
 	h_library = LoadLibraryW(wpath);
+
 	bfree(wpath);
-	dstr_free(&dll_name);
 
 	if (wpath_slash)
 		SetDllDirectoryW(NULL);
@@ -129,6 +133,144 @@ void *os_dlsym(void *module, const char *func)
 void os_dlclose(void *module)
 {
 	FreeLibrary(module);
+}
+
+bool os_is_obs_plugin(const char *path)
+{
+	struct dstr dll_name;
+	wchar_t *wpath;
+
+	HANDLE hFile = INVALID_HANDLE_VALUE;
+	HANDLE hFileMapping = NULL;
+	VOID *base = NULL;
+
+	PIMAGE_DOS_HEADER dos_header;
+	PIMAGE_NT_HEADERS nt_headers;
+	PIMAGE_SECTION_HEADER section, last_section;
+
+	bool ret = false;
+
+	if (!path)
+		return false;
+
+	dstr_init_copy(&dll_name, path);
+	dstr_replace(&dll_name, "\\", "/");
+	if (!dstr_find(&dll_name, ".dll"))
+		dstr_cat(&dll_name, ".dll");
+	os_utf8_to_wcs_ptr(dll_name.array, 0, &wpath);
+
+	dstr_free(&dll_name);
+
+	hFile = CreateFileW(wpath, GENERIC_READ, FILE_SHARE_READ, NULL,
+			    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+	bfree(wpath);
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		goto cleanup;
+
+	hFileMapping =
+		CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+	if (hFileMapping == NULL)
+		goto cleanup;
+
+	base = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
+	if (!base)
+		goto cleanup;
+
+	/* all mapped file i/o must be prepared to handle exceptions */
+	__try {
+
+		dos_header = (PIMAGE_DOS_HEADER)base;
+
+		if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
+			goto cleanup;
+
+		nt_headers = (PIMAGE_NT_HEADERS)((byte *)dos_header +
+						 dos_header->e_lfanew);
+
+		if (nt_headers->Signature != IMAGE_NT_SIGNATURE)
+			goto cleanup;
+
+		PIMAGE_DATA_DIRECTORY data_dir;
+		data_dir =
+			&nt_headers->OptionalHeader
+				 .DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+
+		if (data_dir->Size == 0)
+			goto cleanup;
+
+		section = IMAGE_FIRST_SECTION(nt_headers);
+		last_section = section;
+
+		/* find the section that contains the export directory */
+		int i;
+		for (i = 0; i < nt_headers->FileHeader.NumberOfSections; i++) {
+			if (section->VirtualAddress <=
+			    data_dir->VirtualAddress) {
+				last_section = section;
+				section++;
+				continue;
+			} else {
+				break;
+			}
+		}
+
+		/* double check in case we exited early */
+		if (last_section->VirtualAddress > data_dir->VirtualAddress ||
+		    section->VirtualAddress <= data_dir->VirtualAddress)
+			goto cleanup;
+
+		section = last_section;
+
+		/* get a pointer to the export directory */
+		PIMAGE_EXPORT_DIRECTORY export;
+		export = (PIMAGE_EXPORT_DIRECTORY)(
+			(byte *)base + data_dir->VirtualAddress -
+			section->VirtualAddress + section->PointerToRawData);
+
+		if (export->NumberOfNames == 0)
+			goto cleanup;
+
+		/* get a pointer to the export directory names */
+		DWORD *names_ptr;
+		names_ptr = (DWORD *)((byte *)base + export->AddressOfNames -
+				      section->VirtualAddress +
+				      section->PointerToRawData);
+
+		/* iterate through each name and see if its an obs plugin */
+		CHAR *name;
+		size_t j;
+		for (j = 0; j < export->NumberOfNames; j++) {
+
+			name = (CHAR *)base + names_ptr[j] -
+			       section->VirtualAddress +
+			       section->PointerToRawData;
+
+			if (!strcmp(name, "obs_module_load")) {
+				ret = true;
+				goto cleanup;
+			}
+		}
+
+	} __except (EXCEPTION_EXECUTE_HANDLER) {
+		/* we failed somehow, for compatibility let's assume it
+		 * was a valid plugin and let the loader deal with it */
+		ret = true;
+		goto cleanup;
+	}
+
+cleanup:
+	if (base)
+		UnmapViewOfFile(base);
+
+	if (hFileMapping != NULL)
+		CloseHandle(hFileMapping);
+
+	if (hFile != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile);
+
+	return ret;
 }
 
 union time_data {
@@ -336,28 +478,28 @@ bool os_file_exists(const char *path)
 
 size_t os_get_abs_path(const char *path, char *abspath, size_t size)
 {
-	wchar_t wpath[512];
-	wchar_t wabspath[512];
+	wchar_t wpath[MAX_PATH];
+	wchar_t wabspath[MAX_PATH];
 	size_t out_len = 0;
 	size_t len;
 
 	if (!abspath)
 		return 0;
 
-	len = os_utf8_to_wcs(path, 0, wpath, 512);
+	len = os_utf8_to_wcs(path, 0, wpath, MAX_PATH);
 	if (!len)
 		return 0;
 
-	if (_wfullpath(wabspath, wpath, 512) != NULL)
+	if (_wfullpath(wabspath, wpath, MAX_PATH) != NULL)
 		out_len = os_wcs_to_utf8(wabspath, 0, abspath, size);
 	return out_len;
 }
 
 char *os_get_abs_path_ptr(const char *path)
 {
-	char *ptr = bmalloc(512);
+	char *ptr = bmalloc(MAX_PATH);
 
-	if (!os_get_abs_path(path, ptr, 512)) {
+	if (!os_get_abs_path(path, ptr, MAX_PATH)) {
 		bfree(ptr);
 		ptr = NULL;
 	}
@@ -857,6 +999,112 @@ void get_reg_dword(HKEY hkey, LPCWSTR sub_key, LPCWSTR value_name,
 
 #define WINVER_REG_KEY L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"
 
+static inline void rtl_get_ver(struct win_version_info *ver)
+{
+	RTL_OSVERSIONINFOEXW osver = {0};
+	HMODULE ntdll = GetModuleHandleW(L"ntdll");
+	NTSTATUS s;
+
+	NTSTATUS(WINAPI * get_ver)
+	(RTL_OSVERSIONINFOEXW *) =
+		(void *)GetProcAddress(ntdll, "RtlGetVersion");
+	if (!get_ver) {
+		return;
+	}
+
+	osver.dwOSVersionInfoSize = sizeof(osver);
+	s = get_ver(&osver);
+	if (s < 0) {
+		return;
+	}
+
+	ver->major = osver.dwMajorVersion;
+	ver->minor = osver.dwMinorVersion;
+	ver->build = osver.dwBuildNumber;
+	ver->revis = 0;
+}
+
+static inline bool get_reg_sz(HKEY key, const wchar_t *val, wchar_t *buf,
+			      const size_t size)
+{
+	DWORD dwsize = (DWORD)size;
+	LSTATUS status;
+
+	status = RegQueryValueExW(key, val, NULL, NULL, (LPBYTE)buf, &dwsize);
+	buf[(size / sizeof(wchar_t)) - 1] = 0;
+	return status == ERROR_SUCCESS;
+}
+
+static inline void get_reg_ver(struct win_version_info *ver)
+{
+	HKEY key;
+	DWORD size, dw_val;
+	LSTATUS status;
+	wchar_t str[MAX_SZ_LEN];
+
+	status = RegOpenKeyW(HKEY_LOCAL_MACHINE, WINVER_REG_KEY, &key);
+	if (status != ERROR_SUCCESS)
+		return;
+
+	size = sizeof(dw_val);
+
+	status = RegQueryValueExW(key, L"CurrentMajorVersionNumber", NULL, NULL,
+				  (LPBYTE)&dw_val, &size);
+	if (status == ERROR_SUCCESS)
+		ver->major = (int)dw_val;
+
+	status = RegQueryValueExW(key, L"CurrentMinorVersionNumber", NULL, NULL,
+				  (LPBYTE)&dw_val, &size);
+	if (status == ERROR_SUCCESS)
+		ver->minor = (int)dw_val;
+
+	status = RegQueryValueExW(key, L"UBR", NULL, NULL, (LPBYTE)&dw_val,
+				  &size);
+	if (status == ERROR_SUCCESS)
+		ver->revis = (int)dw_val;
+
+	if (get_reg_sz(key, L"CurrentBuildNumber", str, sizeof(str))) {
+		ver->build = wcstol(str, NULL, 10);
+	}
+
+	if (get_reg_sz(key, L"ReleaseId", str, sizeof(str))) {
+		os_wcs_to_utf8(str, 0, win_release_id, MAX_SZ_LEN);
+	}
+
+	RegCloseKey(key);
+}
+
+static inline bool version_higher(struct win_version_info *cur,
+				  struct win_version_info *new)
+{
+	if (new->major > cur->major) {
+		return true;
+	}
+
+	if (new->major == cur->major) {
+		if (new->minor > cur->minor) {
+			return true;
+		}
+		if (new->minor == cur->minor) {
+			if (new->build > cur->build) {
+				return true;
+			}
+			if (new->build == cur->build) {
+				return new->revis > cur->revis;
+			}
+		}
+	}
+
+	return false;
+}
+
+static inline void use_higher_ver(struct win_version_info *cur,
+				  struct win_version_info *new)
+{
+	if (version_higher(cur, new))
+		*cur = *new;
+}
+
 void get_win_ver(struct win_version_info *info)
 {
 	static struct win_version_info ver = {0};
@@ -866,34 +1114,27 @@ void get_win_ver(struct win_version_info *info)
 		return;
 
 	if (!got_version) {
-		get_dll_ver(L"kernel32", &ver);
+		struct win_version_info reg_ver = {0};
+		struct win_version_info rtl_ver = {0};
+		struct win_version_info nto_ver = {0};
+
+		get_reg_ver(&reg_ver);
+		rtl_get_ver(&rtl_ver);
+		get_dll_ver(L"ntoskrnl.exe", &nto_ver);
+
+		ver = reg_ver;
+		use_higher_ver(&ver, &rtl_ver);
+		use_higher_ver(&ver, &nto_ver);
+
 		got_version = true;
-
-		if (ver.major == 10) {
-			HKEY key;
-			DWORD size, win10_revision;
-			LSTATUS status;
-
-			status = RegOpenKeyW(HKEY_LOCAL_MACHINE, WINVER_REG_KEY,
-					     &key);
-			if (status != ERROR_SUCCESS)
-				return;
-
-			size = sizeof(win10_revision);
-
-			status = RegQueryValueExW(key, L"UBR", NULL, NULL,
-						  (LPBYTE)&win10_revision,
-						  &size);
-			if (status == ERROR_SUCCESS)
-				ver.revis = (int)win10_revision > ver.revis
-						    ? (int)win10_revision
-						    : ver.revis;
-
-			RegCloseKey(key);
-		}
 	}
 
 	*info = ver;
+}
+
+const char *get_win_release_id(void)
+{
+	return win_release_id;
 }
 
 uint32_t get_win_ver_int(void)

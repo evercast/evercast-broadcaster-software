@@ -16,7 +16,7 @@
 ******************************************************************************/
 
 #include "d3d11-subsystem.hpp"
-#include <map>
+#include <unordered_map>
 
 static inline bool get_monitor(gs_device_t *device, int monitor_idx,
 			       IDXGIOutput **dxgiOutput)
@@ -87,7 +87,7 @@ EXPORT bool device_get_duplicator_monitor_info(gs_device_t *device,
 		if (FAILED(hr))
 			throw HRError("GetDesc failed", hr);
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_ERROR,
 		     "device_get_duplicator_monitor_info: "
 		     "%s (%08lX)",
@@ -122,11 +122,52 @@ EXPORT bool device_get_duplicator_monitor_info(gs_device_t *device,
 	return true;
 }
 
-static std::map<int, gs_duplicator *> instances;
+EXPORT int device_duplicator_get_monitor_index(gs_device_t *device,
+					       void *monitor)
+{
+	const HMONITOR handle = (HMONITOR)monitor;
+
+	int index = -1;
+
+	UINT output = 0;
+	while (index == -1) {
+		IDXGIOutput *pOutput;
+		const HRESULT hr =
+			device->adapter->EnumOutputs(output, &pOutput);
+		if (hr == DXGI_ERROR_NOT_FOUND)
+			break;
+
+		if (SUCCEEDED(hr)) {
+			DXGI_OUTPUT_DESC desc;
+			if (SUCCEEDED(pOutput->GetDesc(&desc))) {
+				if (desc.Monitor == handle)
+					index = output;
+			} else {
+				blog(LOG_ERROR,
+				     "device_duplicator_get_monitor_index: "
+				     "Failed to get desc (%08lX)",
+				     hr);
+			}
+
+			pOutput->Release();
+		} else if (hr == DXGI_ERROR_NOT_FOUND) {
+			blog(LOG_ERROR,
+			     "device_duplicator_get_monitor_index: "
+			     "Failed to get output (%08lX)",
+			     hr);
+		}
+
+		++output;
+	}
+
+	return index;
+}
+
+static std::unordered_map<int, gs_duplicator *> instances;
 
 void reset_duplicators(void)
 {
-	for (auto &pair : instances) {
+	for (std::pair<const int, gs_duplicator *> &pair : instances) {
 		pair.second->updated = false;
 	}
 }
@@ -136,7 +177,7 @@ EXPORT gs_duplicator_t *device_duplicator_create(gs_device_t *device,
 {
 	gs_duplicator *duplicator = nullptr;
 
-	auto it = instances.find(monitor_idx);
+	const auto it = instances.find(monitor_idx);
 	if (it != instances.end()) {
 		duplicator = it->second;
 		duplicator->refs++;
@@ -151,7 +192,7 @@ EXPORT gs_duplicator_t *device_duplicator_create(gs_device_t *device,
 		blog(LOG_DEBUG, "device_duplicator_create: %s", error);
 		return nullptr;
 
-	} catch (HRError error) {
+	} catch (const HRError &error) {
 		blog(LOG_DEBUG, "device_duplicator_create: %s (%08lX)",
 		     error.str, error.hr);
 		return nullptr;
