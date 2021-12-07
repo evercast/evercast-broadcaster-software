@@ -185,7 +185,6 @@ bool obs_module_load(void)
 	info.get_name = GetIVCamName;
 	info.create = IVCamSource::CreateIVCamSource;
 	info.destroy = DestroyIVCamSource;
-	info.icon_type = OBS_ICON_TYPE_CAMERA;
 	obs_register_source(&info);
 	return true;
 }

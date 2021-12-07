@@ -537,18 +537,17 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
                 }
         }
 
-        /* ------------------------------------------------ */
-        /* if a source has gone backward in time, buffer */
-        pthread_mutex_lock(&data->audio_sources_mutex);
-        for (size_t i = 0; i < audio->render_order.num; i++) {
-                obs_source_t *source = audio->render_order.array[i];
-                if (!source->audio_pending && source->audio_ts && source->audio_ts < ts.start) {
-                        source->audio_pending = true;
-                        source->audio_ts = 0;
-                        source->timing_set = false;
-                }
-        }
-        pthread_mutex_unlock(&data->audio_sources_mutex);
+	/* ------------------------------------------------ */
+	/* get minimum audio timestamp */
+	pthread_mutex_lock(&data->audio_sources_mutex);
+	const char *buffering_name = calc_min_ts(data, sample_rate, &min_ts);
+	pthread_mutex_unlock(&data->audio_sources_mutex);
+
+	/* ------------------------------------------------ */
+	/* if a source has gone backward in time, buffer */
+	if (min_ts < ts.start)
+		add_audio_buffering(audio, sample_rate, &ts, min_ts,
+				    buffering_name);
 
         /* ------------------------------------------------ */
         /* mix audio */

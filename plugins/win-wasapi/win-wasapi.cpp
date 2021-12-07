@@ -8,9 +8,6 @@
 #include <util/windows/WinHandle.hpp>
 #include <util/windows/CoTaskMemPtr.hpp>
 #include <util/threading.h>
-#include <util/util_uint64.h>
-
-#include <thread>
 
 using namespace std;
 
@@ -27,15 +24,10 @@ class WASAPISource {
 	ComPtr<IAudioClient> client;
 	ComPtr<IAudioCaptureClient> capture;
 	ComPtr<IAudioRenderClient> render;
-	ComPtr<IMMDeviceEnumerator> enumerator;
-	ComPtr<IMMNotificationClient> notify;
 
 	obs_source_t *source;
-	wstring default_id;
 	string device_id;
 	string device_name;
-	string device_sample = "-";
-	uint64_t lastNotifyTime = 0;
 	bool isInputDevice;
 	bool useDeviceTiming = false;
 	bool isDefaultDevice = false;
@@ -63,7 +55,7 @@ class WASAPISource {
 	inline void Stop();
 	void Reconnect();
 
-	bool InitDevice();
+	bool InitDevice(IMMDeviceEnumerator *enumerator);
 	void InitName();
 	void InitClient();
 	void InitRender();
@@ -80,59 +72,6 @@ public:
 	inline ~WASAPISource();
 
 	void Update(obs_data_t *settings);
-
-	void SetDefaultDevice(EDataFlow flow, ERole role, LPCWSTR id);
-};
-
-class WASAPINotify : public IMMNotificationClient {
-	long refs = 0; /* auto-incremented to 1 by ComPtr */
-	WASAPISource *source;
-
-public:
-	WASAPINotify(WASAPISource *source_) : source(source_) {}
-
-	STDMETHODIMP_(ULONG) AddRef()
-	{
-		return (ULONG)os_atomic_inc_long(&refs);
-	}
-
-	STDMETHODIMP_(ULONG) STDMETHODCALLTYPE Release()
-	{
-		long val = os_atomic_dec_long(&refs);
-		if (val == 0)
-			delete this;
-		return (ULONG)val;
-	}
-
-	STDMETHODIMP QueryInterface(REFIID riid, void **ptr)
-	{
-		if (riid == IID_IUnknown) {
-			*ptr = (IUnknown *)this;
-		} else if (riid == __uuidof(IMMNotificationClient)) {
-			*ptr = (IMMNotificationClient *)this;
-		} else {
-			*ptr = nullptr;
-			return E_NOINTERFACE;
-		}
-
-		os_atomic_inc_long(&refs);
-		return S_OK;
-	}
-
-	STDMETHODIMP OnDefaultDeviceChanged(EDataFlow flow, ERole role,
-					    LPCWSTR id)
-	{
-		source->SetDefaultDevice(flow, role, id);
-		return S_OK;
-	}
-
-	STDMETHODIMP OnDeviceAdded(LPCWSTR) { return S_OK; }
-	STDMETHODIMP OnDeviceRemoved(LPCWSTR) { return S_OK; }
-	STDMETHODIMP OnDeviceStateChanged(LPCWSTR, DWORD) { return S_OK; }
-	STDMETHODIMP OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY)
-	{
-		return S_OK;
-	}
 };
 
 WASAPISource::WASAPISource(obs_data_t *settings, obs_source_t *source_,
@@ -181,7 +120,6 @@ inline void WASAPISource::Stop()
 
 inline WASAPISource::~WASAPISource()
 {
-	enumerator->UnregisterEndpointNotificationCallback(notify);
 	Stop();
 }
 
@@ -206,7 +144,7 @@ void WASAPISource::Update(obs_data_t *settings)
 		Start();
 }
 
-bool WASAPISource::InitDevice()
+bool WASAPISource::InitDevice(IMMDeviceEnumerator *enumerator)
 {
 	HRESULT res;
 
@@ -215,13 +153,6 @@ bool WASAPISource::InitDevice()
 			isInputDevice ? eCapture : eRender,
 			isInputDevice ? eCommunications : eConsole,
 			device.Assign());
-		if (FAILED(res))
-			return false;
-
-		CoTaskMemPtr<wchar_t> id;
-		res = device->GetId(&id);
-		default_id = id;
-
 	} else {
 		wchar_t *w_id;
 		os_utf8_to_wcs_ptr(device_id.c_str(), device_id.size(), &w_id);
@@ -358,12 +289,12 @@ void WASAPISource::InitCapture()
 	client->Start();
 	active = true;
 
-	blog(LOG_INFO, "WASAPI: Device '%s' [%s Hz] initialized",
-	     device_name.c_str(), device_sample.c_str());
+	blog(LOG_INFO, "WASAPI: Device '%s' initialized", device_name.c_str());
 }
 
 void WASAPISource::Initialize()
 {
+	ComPtr<IMMDeviceEnumerator> enumerator;
 	HRESULT res;
 
 	res = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
@@ -372,35 +303,10 @@ void WASAPISource::Initialize()
 	if (FAILED(res))
 		throw HRError("Failed to create enumerator", res);
 
-	if (!InitDevice())
+	if (!InitDevice(enumerator))
 		return;
 
 	device_name = GetDeviceName(device);
-
-	if (!notify) {
-		notify = new WASAPINotify(this);
-		enumerator->RegisterEndpointNotificationCallback(notify);
-	}
-
-	HRESULT resSample;
-	IPropertyStore *store = nullptr;
-	PWAVEFORMATEX deviceFormatProperties;
-	PROPVARIANT prop;
-	resSample = device->OpenPropertyStore(STGM_READ, &store);
-	if (!FAILED(resSample)) {
-		resSample =
-			store->GetValue(PKEY_AudioEngine_DeviceFormat, &prop);
-		if (!FAILED(resSample)) {
-			if (prop.vt != VT_EMPTY && prop.blob.pBlobData) {
-				deviceFormatProperties =
-					(PWAVEFORMATEX)prop.blob.pBlobData;
-				device_sample = std::to_string(
-					deviceFormatProperties->nSamplesPerSec);
-			}
-		}
-
-		store->Release();
-	}
 
 	InitClient();
 	if (!isInputDevice)
@@ -413,7 +319,7 @@ bool WASAPISource::TryInitialize()
 	try {
 		Initialize();
 
-	} catch (HRError &error) {
+	} catch (HRError error) {
 		if (previouslyFailed)
 			return active;
 
@@ -462,14 +368,7 @@ DWORD WINAPI WASAPISource::ReconnectThread(LPVOID param)
 
 	os_set_thread_name("win-wasapi: reconnect thread");
 
-	const HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-	const bool com_initialized = SUCCEEDED(hr);
-	if (!com_initialized) {
-		blog(LOG_ERROR,
-		     "[WASAPISource::ReconnectThread]"
-		     " CoInitializeEx failed: 0x%08X",
-		     hr);
-	}
+	CoInitializeEx(0, COINIT_MULTITHREADED);
 
 	obs_monitoring_type type =
 		obs_source_get_monitoring_type(source->source);
@@ -482,9 +381,6 @@ DWORD WINAPI WASAPISource::ReconnectThread(LPVOID param)
 	}
 
 	obs_source_set_monitoring_type(source->source, type);
-
-	if (com_initialized)
-		CoUninitialize();
 
 	source->reconnectThread = nullptr;
 	source->reconnecting = false;
@@ -536,8 +432,8 @@ bool WASAPISource::ProcessCaptureData()
 		data.timestamp = useDeviceTiming ? ts * 100 : os_gettime_ns();
 
 		if (!useDeviceTiming)
-			data.timestamp -= util_mul_div64(frames, 1000000000ULL,
-							 sampleRate);
+			data.timestamp -= (uint64_t)frames * 1000000000ULL /
+					  (uint64_t)sampleRate;
 
 		obs_source_output_audio(source, &data);
 
@@ -587,35 +483,6 @@ DWORD WINAPI WASAPISource::CaptureThread(LPVOID param)
 	}
 
 	return 0;
-}
-
-void WASAPISource::SetDefaultDevice(EDataFlow flow, ERole role, LPCWSTR id)
-{
-	if (!isDefaultDevice)
-		return;
-
-	EDataFlow expectedFlow = isInputDevice ? eCapture : eRender;
-	ERole expectedRole = isInputDevice ? eCommunications : eConsole;
-
-	if (flow != expectedFlow || role != expectedRole)
-		return;
-	if (id && default_id.compare(id) == 0)
-		return;
-
-	blog(LOG_INFO, "WASAPI: Default %s device changed",
-	     isInputDevice ? "input" : "output");
-
-	/* reset device only once every 300ms */
-	uint64_t t = os_gettime_ns();
-	if (t - lastNotifyTime < 300000000)
-		return;
-
-	std::thread([this]() {
-		Stop();
-		Start();
-	}).detach();
-
-	lastNotifyTime = t;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -723,7 +590,6 @@ void RegisterWASAPIInput()
 	info.update = UpdateWASAPISource;
 	info.get_defaults = GetWASAPIDefaultsInput;
 	info.get_properties = GetWASAPIPropertiesInput;
-	info.icon_type = OBS_ICON_TYPE_AUDIO_INPUT;
 	obs_register_source(&info);
 }
 
@@ -740,6 +606,5 @@ void RegisterWASAPIOutput()
 	info.update = UpdateWASAPISource;
 	info.get_defaults = GetWASAPIDefaultsOutput;
 	info.get_properties = GetWASAPIPropertiesOutput;
-	info.icon_type = OBS_ICON_TYPE_AUDIO_OUTPUT;
 	obs_register_source(&info);
 }
