@@ -181,11 +181,25 @@ mark_as_advanced(BUILD_TESTS)
 
 
 include_directories(
-        "C:/inst/libwebrtc/include"
+#
+# Replace hardcoded libwebrtc include path with env variable
+# 
+# Terry Walker - 12/13/2021
+# 
+#	"C:/libwebrtc/include"
+#
+	"${libwebrtc_DIR}/../include"
 )
 
 link_directories(
-	"C:/inst/libwebrtc/lib"
+#
+# Replace hardcoded libwebrtc lib path with env variable
+#
+# Terry Walker - 12/13/2021
+# 
+#	"C:/libwebrtc/lib"
+#
+	"${libwebrtc_DIR}/../lib"
 )
 
 # --- Handle source code, UI, package, ....
