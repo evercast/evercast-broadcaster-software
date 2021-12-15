@@ -8,7 +8,7 @@ mkdir EBS.app/Contents/Resources
 mkdir EBS.app/Contents/Frameworks
 
 BUILD_CONFIG=RELEASE
-QT_VERSION=5.15.2
+QT_VERSION=5.15.2_1
 cp -r rundir/$BUILD_CONFIG/bin/ ./EBS.app/Contents/MacOS
 cp -r rundir/$BUILD_CONFIG/data ./EBS.app/Contents/Resources
 cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources
