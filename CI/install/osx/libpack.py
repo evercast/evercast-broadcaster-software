@@ -35,7 +35,12 @@ IGNORE_PATTERNS = [
   'QtMacExtras',
   'QtWidgets',
   'QtGui',
-  'QtCore'
+  'QtCore',
+  'libobs-frontend-api.dylib',
+  'libobs-opengl.so',
+  'libobs.0.dylib',
+  'libobsglad.0.dylib',
+  'obs-ffmpeg-mux'
 ]
 
 ##
@@ -74,18 +79,32 @@ def scanBinary(binary):
       continue
 
     if lib.startswith('@rpath'):
-      
+
       currPath = os.path.dirname(realBinary)
 
-      relPath = lib.replace('@rpath/', '')
-      relPathOnly = os.path.dirname(relPath)
-
       relFullPath = lib.replace('@rpath', currPath)
-      targetPath = str(Path(relFullPath).resolve())
-      relName = targetPath.split('/')[-1]
+      isLink = os.path.islink(relFullPath)
+      target = str(Path(relFullPath).resolve())
+      libname = target.split('/')[-1]
 
-      if relName != filename:
-        rels[relName] = RelPath(relName, lib, targetPath, relPathOnly)
+      print('!!! @rpath !!!')
+      print('libname=' + currPath + ', lib=' + lib + ', target=' + target)
+
+      deps[target] = LibPath(libname, isLink, lib, target)
+
+    elif lib.startswith('@loader_path'):
+
+      currPath = os.path.dirname(realBinary)
+
+      relFullPath = lib.replace('@loader_path', currPath)
+      isLink = os.path.islink(relFullPath)
+      target = str(Path(relFullPath).resolve())
+      libname = target.split('/')[-1]
+
+      print('!!! @loader_path !!!')
+      print('libname=' + currPath + ', lib=' + lib + ', target=' + target)
+
+      deps[target] = LibPath(libname, isLink, lib, target)
 
     else:
 
@@ -129,7 +148,7 @@ def getFullDepsTree(binary):
 ##
 # Print all dependencies
 ##
-def prtinDepsTree(libs):
+def printDepsTree(libs):
 
   print(len(libs))
 
@@ -215,7 +234,7 @@ print("Pack library")
 print("Arguments:")
 
 if os.path.islink(args.file):
-  realFile = str(Path(binary).resolve())
+  realFile = str(Path(args.file).resolve())
   print('Library: ' + args.file + ': ' + realFile)
 else:
   print("Library: " + args.file)
@@ -226,7 +245,7 @@ print('Package path: ' + args.pack + '/<dependency-lib>')
 os.makedirs(args.dest, exist_ok=True)
 
 libs = getFullDepsTree(args.file)
-#prtinDepsTree(libs)
+#printDepsTree(libs)
 packToDestination(libs, args.dest, args.pack)
 
 
