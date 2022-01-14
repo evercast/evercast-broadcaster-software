@@ -66,7 +66,10 @@ void VideoRoomMessageProcessor::close()
 
 void VideoRoomMessageProcessor::processServerMessage(nlohmann::json &msg)
 {
-	last_message_recd_time = chrono::system_clock::now();
+	{
+		std::lock_guard<std::mutex> lockGuard(timeoutMutex);
+		last_message_recd_time = chrono::system_clock::now();
+	}
 
 	if (msg.find("janus") == msg.end())
 		return;
@@ -371,8 +374,10 @@ void VideoRoomMessageProcessor::keepConnectionAlive()
 
 bool VideoRoomMessageProcessor::hasTimedOut()
 {
+    std::lock_guard<std::mutex> lockGuard(timeoutMutex);
     auto current_time = chrono::system_clock::now();
-    chrono::duration<double> gap = current_time - last_message_recd_time;
+    chrono::seconds gap = chrono::duration_cast<std::chrono::seconds>(current_time - last_message_recd_time);
+    info("KeepAlive timeout gap.count()=%d", gap.count());
     return gap.count() > MESSAGE_TIMEOUT;
 }
 
