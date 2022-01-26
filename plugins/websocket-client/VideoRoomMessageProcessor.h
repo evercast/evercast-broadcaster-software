@@ -12,7 +12,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#define MESSAGE_TIMEOUT 5.0
+#define MESSAGE_TIMEOUT 5
 #define SUCCESS_CODE 0
 
 using namespace std;
@@ -80,6 +80,7 @@ private:
 	atomic<bool> is_running;
 	thread keepAliveThread;
 	chrono::time_point<chrono::system_clock> last_message_recd_time;
+	mutex timeoutMutex;
 	mutex stateMutex;
 	VideoRoomState currentState;
 	condition_variable stateListener;
