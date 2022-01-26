@@ -4,7 +4,7 @@ mkdir build
 cd build
 cmake \
 -DENABLE_SCRIPTING=OFF \
--DDepsPath=~/obsdeps \
+-DDepsPath=$EBS_DEPS_PATH \
 -DCMAKE_BUILD_TYPE=RELEASE \
 -DCMAKE_INSTALL_PREFIX=/opt/ebs \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \

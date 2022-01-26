@@ -26,14 +26,23 @@ install_name_tool -change @rpath/QtCore @executable_path/../Frameworks/QtCore.fr
 
 rm -rf ./tmp-libs/
 python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/EBS -d ./tmp-libs/ -p @executable_path/../Frameworks
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/libobs-frontend-api.dylib -d ./tmp-libs/ -p @executable_path/../Frameworks
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/libobs-opengl.so -d ./tmp-libs/ -p @executable_path/../Frameworks
 python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/libobs.0.dylib -d ./tmp-libs/ -p @executable_path/../Frameworks
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/libobsglad.0.dylib -d ./tmp-libs/ -p @executable_path/../Frameworks
 python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/obs-ffmpeg-mux -d ./tmp-libs/ -p @executable_path/../Frameworks
 
+rm ./EBS.app/Contents/MacOS/libobs-frontend-api.dylib
+rm ./EBS.app/Contents/MacOS/libobs-opengl.so
+rm ./EBS.app/Contents/MacOS/libobs.0.dylib
+rm ./EBS.app/Contents/MacOS/libobsglad.0.dylib
+rm ./EBS.app/Contents/MacOS/obs-ffmpeg-mux
+
 mv -f ./tmp-libs/EBS ./EBS.app/Contents/MacOS/EBS
-mv -f ./tmp-libs/libobs.0.dylib ./EBS.app/Contents/MacOS/libobs.0.dylib
-mv -f ./tmp-libs/obs-ffmpeg-mux ./EBS.app/Contents/MacOS/obs-ffmpeg-mux
 
 mv -f ./tmp-libs/* ./EBS.app/Contents/Frameworks/
+
+cp -r $EBS_DEPS_PATH/lib/ ./EBS.app/Contents/Frameworks/
 
 chmod +x ./EBS.app/Contents/MacOS/EBS
 

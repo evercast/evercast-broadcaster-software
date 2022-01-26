@@ -35,12 +35,31 @@ IGNORE_PATTERNS = [
   'QtMacExtras',
   'QtWidgets',
   'QtGui',
-  'QtCore',
-  'libobs-frontend-api.dylib',
-  'libobs-opengl.so',
-  'libobs.0.dylib',
-  'libobsglad.0.dylib',
-  'obs-ffmpeg-mux'
+  'QtCore'
+]
+
+IGNORE_RELATIVES = [
+    'coreaudio-encoder.so',
+    'decklink-ouput-ui.so',
+    'frontend-tools.so',
+    'image-source.so',
+    'linux-jack.so',
+    'mac-avcapture.so',
+    'mac-capture.so',
+    'mac-decklink.so',
+    'mac-syphon.so',
+    'mac-vth264.so',
+    'obs-ffmpeg.so',
+    'obs-filters.so',
+    'obs-ndi.so',
+    'obs-outputs.so',
+    'obs-transitions.so',
+    'obs-vst.so',
+    'obs-x264.so',
+    'rtmp-services.so',
+    'text-freetype2.so',
+    'vlc-video.so',
+    'websocketclient.dylib'
 ]
 
 ##
@@ -82,15 +101,15 @@ def scanBinary(binary):
 
       currPath = os.path.dirname(realBinary)
 
+      relPath = lib.replace('@rpath/', '')
+      relPathOnly = os.path.dirname(relPath)
+
       relFullPath = lib.replace('@rpath', currPath)
-      isLink = os.path.islink(relFullPath)
-      target = str(Path(relFullPath).resolve())
-      libname = target.split('/')[-1]
+      targetPath = str(Path(relFullPath).resolve())
+      relName = targetPath.split('/')[-1]
 
-      print('!!! @rpath !!!')
-      print('libname=' + currPath + ', lib=' + lib + ', target=' + target)
-
-      deps[target] = LibPath(libname, isLink, lib, target)
+      if relName != filename:
+        rels[relName] = RelPath(relName, lib, targetPath, relPathOnly)
 
     elif lib.startswith('@loader_path'):
 
@@ -100,9 +119,6 @@ def scanBinary(binary):
       isLink = os.path.islink(relFullPath)
       target = str(Path(relFullPath).resolve())
       libname = target.split('/')[-1]
-
-      print('!!! @loader_path !!!')
-      print('libname=' + currPath + ', lib=' + lib + ', target=' + target)
 
       deps[target] = LibPath(libname, isLink, lib, target)
 
@@ -195,9 +211,21 @@ def packToDestination(libs, dest, packPath):
       for rel in lib.rels:
         relLib = lib.rels[rel]
         if relLib.relPathOnly:
-          print('    ' + relLib.relPathOnly + '/' + relLib.name)
+          fromName = '@rpath/' + relLib.relPathOnly + '/' + relLib.name
+          toName = packPath + '/' + relLib.name
         else:
-          print('    ' + relLib.name)
+          fromName = '@rpath/' + relLib.name
+          toName = packPath + '/' + relLib.name
+
+        if isInIgnoreList(IGNORE_RELATIVES, relLib.name):
+          print('    ' + fromName + ' -> ' + toName + ' [IGNORED]')
+          continue
+
+        print('    ' + fromName + ' -> ' + toName)
+
+        output = subprocess.check_output(['install_name_tool', '-change', fromName, toName, dst]).decode('utf8')
+        if output:
+          print(output)
 
       print('  },')
 
