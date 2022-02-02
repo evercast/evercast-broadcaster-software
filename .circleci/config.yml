@@ -15,8 +15,21 @@ jobs:
       - run:
           command: |
             brew install cmake
+            mkdir /tmp
+            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-2022-01-31-universal.tar.xz -o /tmp/obs-deps.tar.xz
+            mkdir -p /tmp/obs-deps
+            tar -xzf /tmp/obs-deps.tar.xz -C /tmp/obs-deps
+          working_directory: deps-install
       - run:
           working_directory: .
+          environment:
+            NDI_PATH:
+            NDI_RUNTIME:
+            NDI_M1_RUNTIME:
+            EBS_DEPS_PATH: /tmp/obs-deps
+            EBS_VERSION: 3.0.0
+            NOTARIZE_PASS:
+
           command: |
             ./CI/before-script-osx.sh
 
