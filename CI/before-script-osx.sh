@@ -9,7 +9,7 @@ cmake \
 -DCMAKE_INSTALL_PREFIX=/opt/ebs \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1 \
--Dlibwebrtc_DIR=~/libwebrtc-87/cmake \
+-Dlibwebrtc_DIR=$EBS_LIBWEBRTC_PATH \
 -DBUILD_BROWSER=false \
 -DOBS_WEBRTC_VENDOR_NAME=Evercast \
 -DOBS_VERSION_OVERRIDE=$EBS_VERSION \

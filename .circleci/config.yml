@@ -24,8 +24,20 @@ jobs:
             
             mkdir -p /tmp/obs-deps
             tar -xzf /tmp/obs-deps.tar.xz -C /tmp/obs-deps
-            
           working_directory: deps-install
+
+      - run:
+          name: get libwebrtc
+          command: |
+            destFile="/tmp/libwebrtc"
+            fileid="1VDw0m8lYj_pOnF2Ao_8OOZ8UrEyWhisG"
+            filename="libwebrtc.zip"
+
+            curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+            curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${filename}
+            unzip -o ${filename} -d ${destFile}
+          working_directory: deps-install
+
       - run:
           working_directory: .
           environment:
@@ -33,6 +45,7 @@ jobs:
             NDI_RUNTIME:
             NDI_M1_RUNTIME:
             EBS_DEPS_PATH: /tmp/obs-deps
+            EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
             EBS_VERSION: 3.0.0
             NOTARIZE_PASS:
 
