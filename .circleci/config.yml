@@ -39,6 +39,7 @@ jobs:
           working_directory: deps-install
 
       - run:
+          name: build
           working_directory: .
           environment:
             NDI_PATH:
@@ -51,6 +52,10 @@ jobs:
 
           command: |
             ./CI/before-script-osx.sh
+            cd build
+            cmake --build . --config RELEASE
+            cd ../
+            sudo -E ./CI/before-deploy-osx.sh
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
