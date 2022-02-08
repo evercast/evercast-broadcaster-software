@@ -3,11 +3,11 @@ FULL_NAME=./EBS.app/Contents/PlugIns/$FILE_NAME
 
 echo "Fixing Plugin $FILE_NAME: $FULL_NAME"
 
-install_name_tool -change /usr/local/opt/qt@5/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui $FULL_NAME
-install_name_tool -change /usr/local/opt/qt@5/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore $FULL_NAME
-install_name_tool -change /usr/local/opt/qt@5/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets $FULL_NAME
-install_name_tool -change /usr/local/opt/qt@5/lib/QtMacExtras.framework/Versions/5/QtMacExtras @executable_path/../Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras $FULL_NAME
-install_name_tool -change /usr/local/opt/qt@5/lib/QtSvg.framework/Versions/5/QtSvg @executable_path/../Frameworks/QtSvg.framework/Versions/5/QtSvg $FULL_NAME
+#install_name_tool -change $EBS_DEPS_QT_PATH/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui $FULL_NAME
+#install_name_tool -change $EBS_DEPS_QT_PATH/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore $FULL_NAME
+#install_name_tool -change $EBS_DEPS_QT_PATH/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets $FULL_NAME
+#install_name_tool -change $EBS_DEPS_QT_PATH/lib/QtMacExtras.framework/Versions/5/QtMacExtras @executable_path/../Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras $FULL_NAME
+#install_name_tool -change $EBS_DEPS_QT_PATH/lib/QtSvg.framework/Versions/5/QtSvg @executable_path/../Frameworks/QtSvg.framework/Versions/5/QtSvg $FULL_NAME
 
 python3 ../CI/install/osx/libpack.py -f $FULL_NAME -d ./tmp-libs/ -p @executable_path/../Frameworks
 
