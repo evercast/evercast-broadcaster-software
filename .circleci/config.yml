@@ -16,14 +16,15 @@ jobs:
           name: install deps
           command: |
             brew install cmake
-            brew install qt@5
             
             mkdir -p /tmp
-            
             curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-2022-01-31-universal.tar.xz -o /tmp/obs-deps.tar.xz
+            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-qt-2022-01-31-universal.tar.xz -o /tmp/obs-deps-qt.tar.xz
             
             mkdir -p /tmp/obs-deps
+            mkdir -p /tmp/obs-deps-qt
             tar -xzf /tmp/obs-deps.tar.xz -C /tmp/obs-deps
+            tar -xzf /tmp/obs-deps-qt.tar.xz -C /tmp/obs-deps-qt
           working_directory: deps-install
 
       - run:
@@ -39,13 +40,14 @@ jobs:
           working_directory: deps-install
 
       - run:
-          name: build
+          name: build_EBS
           working_directory: .
           environment:
             NDI_PATH:
             NDI_RUNTIME:
             NDI_M1_RUNTIME:
             EBS_DEPS_PATH: /tmp/obs-deps
+            EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
             EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
             EBS_VERSION: 3.0.0
             NOTARIZE_PASS:
@@ -54,8 +56,30 @@ jobs:
             ./CI/before-script-osx.sh
             cd build
             cmake --build . --config RELEASE
-            cd ../
-            sudo -E ./CI/before-deploy-osx.sh
+
+      - run:
+          name: build_NDI_PLUGIN
+          working_directory: deps-install
+          environment:
+            EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
+
+          command: |
+            git clone -b 4.9.1 https://github.com/Palakis/obs-ndi.git
+            cd obs-ndi
+            mkdir build
+            cd build
+            cmake \
+                -DLIBOBS_INCLUDE_DIR=../../../libobs \
+                -DLIBOBS_LIB=../../../build/libobs/libobs.0.dylib \
+                -DOBS_FRONTEND_LIB=../../../build/UI/obs-frontend-api/libobs-frontend-api.dylib \
+                -DQt5Core_DIR=$EBS_DEPS_QT_PATH/lib/cmake/Qt5Core \
+                -DQt5Widgets_DIR=$EBS_DEPS_QT_PATH/lib/cmake/Qt5Widgets \
+                -DQTDIR=$EBS_DEPS_QT_PATH \
+                ../
+            
+            make
+            
+
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
