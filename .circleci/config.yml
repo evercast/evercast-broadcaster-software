@@ -58,6 +58,13 @@ jobs:
             cmake --build . --config RELEASE
 
       - run:
+          name: check built libs
+          command: |
+            ls ~/project/build/UI/obs-frontend-api/
+            ls ~/project/build/libobs/
+            echo $TEST_KEY
+
+      - run:
           name: build_NDI_PLUGIN
           working_directory: deps-install
           environment:
