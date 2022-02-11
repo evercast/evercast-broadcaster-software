@@ -16,7 +16,7 @@ jobs:
           name: install deps
           command: |
             brew install cmake
-            python3 pip install dmgbuild
+            pip install dmgbuild
             
             mkdir -p /tmp
             curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-2022-01-31-universal.tar.xz -o /tmp/obs-deps.tar.xz
