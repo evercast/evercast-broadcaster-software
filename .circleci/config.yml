@@ -9,9 +9,18 @@ jobs:
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
-      - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
+      - checkout:
+        working_directory: /tmp/ebs-project
+      - run:
+          command: | 
+            git submodule sync
+          working_directory: /tmp/ebs-project
+
+      - run:
+          command: |
+            git submodule update --init
+          working_directory: /tmp/ebs-project
+
       - run:
           name: install deps
           command: |
