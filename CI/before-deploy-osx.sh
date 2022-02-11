@@ -32,13 +32,13 @@ plutil -insert CFBundleVersion -string $EBS_VERSION ./EBS.app/Contents/Info.plis
 plutil -insert CFBundleShortVersionString -string $EBS_VERSION ./EBS.app/Contents/Info.plist
 plutil -insert SUPublicDSAKeyFile -string OBSPublicDSAKey.pem ./EBS.app/Contents/Info.plist
 
-dmgbuild "EBS" ebs.dmg
-
-# Package app
-hr "Generating .pkg"
-packagesbuild ../CI/install/osx/CMakeLists.pkgproj
-
-# Move to the folder that travis uses to upload artifacts from
-hr "Moving package to nightly folder for distribution"
-mkdir -p ./nightly
-sudo mv EBS.pkg ./nightly/$FILENAME
+#dmgbuild "EBS" ebs.dmg
+#
+## Package app
+#hr "Generating .pkg"
+#packagesbuild ../CI/install/osx/CMakeLists.pkgproj
+#
+## Move to the folder that travis uses to upload artifacts from
+#hr "Moving package to nightly folder for distribution"
+#mkdir -p ./nightly
+#sudo mv EBS.pkg ./nightly/$FILENAME

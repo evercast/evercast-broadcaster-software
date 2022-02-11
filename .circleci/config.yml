@@ -94,6 +94,9 @@ jobs:
             NDI_M1_RUNTIME:
           command: |
             sudo -E ./CI/before-deploy-osx.sh
+            cd build/
+            sudo -E sh ../CI/install/osx/app2dmg.sh
+            
             
 
 
