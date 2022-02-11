@@ -43,14 +43,10 @@ jobs:
           name: build_EBS
           working_directory: .
           environment:
-            NDI_PATH:
-            NDI_RUNTIME:
-            NDI_M1_RUNTIME:
             EBS_DEPS_PATH: /tmp/obs-deps
             EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
             EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
             EBS_VERSION: 3.0.0
-            NOTARIZE_PASS:
 
           command: |
             ./CI/before-script-osx.sh
@@ -87,6 +83,16 @@ jobs:
                 ../
             
             make
+
+      - run:
+          name: pack .app
+          working_directory: .
+          environment:
+            NDI_PATH: ~/project/deps-install/obs-ndi
+            NDI_RUNTIME:
+            NDI_M1_RUNTIME:
+          command: |
+            sudo -E ./CI/before-deploy-osx.sh
             
 
 
