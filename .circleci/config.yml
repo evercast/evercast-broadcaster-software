@@ -16,7 +16,6 @@ jobs:
           name: install deps
           command: |
             brew install cmake
-            pip3 install dmgbuild
             
             mkdir -p /tmp
             curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-2022-01-31-universal.tar.xz -o /tmp/obs-deps.tar.xz
@@ -29,6 +28,28 @@ jobs:
           working_directory: deps-install
 
       - run:
+          name: get ndi runtime
+          command: |
+            destFile="ndi-runtime.pkg"
+            fileid="1ah95-16da1LBqEeHSHki1nOZseHwm3jx"
+
+            curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+            curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
+            ls
+          working_directory: deps-install
+
+      - run:
+          name: get ndi runtime m1
+          command: |
+            destFile="ndi-runtime-m1.pkg"
+            fileid="11ZTydsR4lH9uUZMVjo7wlJA_ezfwQOzX"
+
+            curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+            curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
+            ls
+          working_directory: deps-install
+
+      - run:
           name: get libwebrtc
           command: |
             destFile="/tmp/libwebrtc"
@@ -38,6 +59,7 @@ jobs:
             curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${filename}
             unzip -o ${filename} -d ${destFile}
+            ls
           working_directory: deps-install
 
       - run:
@@ -47,7 +69,6 @@ jobs:
             EBS_DEPS_PATH: /tmp/obs-deps
             EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
             EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
-            EBS_VERSION: 3.0.0
 
           command: |
             ./CI/before-script-osx.sh
@@ -90,15 +111,14 @@ jobs:
           working_directory: .
           environment:
             NDI_PATH: ~/project/deps-install/obs-ndi
-            NDI_RUNTIME:
-            NDI_M1_RUNTIME:
+            NDI_RUNTIME: ~/project/deps-install/ndi-runtime.pkg
+            NDI_M1_RUNTIME: ~/project/deps-install/ndi-runtime-m1.pkg
           command: |
             sudo -E ./CI/before-deploy-osx.sh
             cd build/
             sudo -E sh ../CI/install/osx/app2dmg.sh
+            ls
             
-            
-
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
