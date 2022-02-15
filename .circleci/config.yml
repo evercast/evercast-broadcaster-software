@@ -3,7 +3,7 @@
 version: 2.1
 
 jobs:
-  say-hello:
+  build-ebs-mac:
     macos:
       xcode: 13.2.1
     # Add steps to the job
@@ -119,11 +119,15 @@ jobs:
             cd build/
             sudo -E sh ../CI/install/osx/app2dmg.sh
             ls
+
+      - store_artifacts:
+          working_directory: build
+          path: EBS_$EBS_VERSION_Install.dmg
             
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  say-hello-workflow:
+  build-ebs-mac-workflow:
     jobs:
-      - say-hello
+      - build-ebs-mac
