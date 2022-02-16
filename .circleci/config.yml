@@ -10,8 +10,10 @@ jobs:
         type: string
     macos:
       xcode: <<parameters.xcode_version>>
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+    environment:
+      EBS_DEPS_PATH: /tmp/obs-deps
+      EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
+      EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
     steps:
       - checkout
       - run: git submodule sync
@@ -25,10 +27,10 @@ jobs:
             curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-2022-01-31-universal.tar.xz -o /tmp/obs-deps.tar.xz
             curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-qt-2022-01-31-universal.tar.xz -o /tmp/obs-deps-qt.tar.xz
             
-            mkdir -p /tmp/obs-deps
-            mkdir -p /tmp/obs-deps-qt
-            tar -xzf /tmp/obs-deps.tar.xz -C /tmp/obs-deps
-            tar -xzf /tmp/obs-deps-qt.tar.xz -C /tmp/obs-deps-qt
+            mkdir -p $EBS_DEPS_PATH
+            mkdir -p $EBS_DEPS_QT_PATH
+            tar -xzf /tmp/obs-deps.tar.xz -C $EBS_DEPS_PATH
+            tar -xzf /tmp/obs-deps-qt.tar.xz -C $EBS_DEPS_QT_PATH
           working_directory: deps-install
 
       - run:
@@ -70,11 +72,6 @@ jobs:
       - run:
           name: build_EBS
           working_directory: .
-          environment:
-            EBS_DEPS_PATH: /tmp/obs-deps
-            EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
-            EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
-
           command: |
             ./CI/before-script-osx.sh
             cd build
@@ -90,9 +87,6 @@ jobs:
       - run:
           name: build_NDI_PLUGIN
           working_directory: deps-install
-          environment:
-            EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
-
           command: |
             MY_DIR=`eval echo ~$USER`
             echo $MY_DIR
