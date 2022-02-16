@@ -43,19 +43,12 @@ jobs:
       - run:
           name: get ndi runtime
           working_directory: /tmp
+          environment:
+            fileid: 1ah95-16da1LBqEeHSHki1nOZseHwm3jx
           command: |
             destFile="ndi-runtime.pkg"
-            fileid="1ah95-16da1LBqEeHSHki1nOZseHwm3jx"
             
-            while true ; do
-              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"
-              cookie=`cat cookie | grep google`
-              if [ "$cookie" != "" ]; then
-                break
-              fi
-              echo "waiting cookie..."
-              sleep 1
-            done
+            ~/project/CI/util/gd_wait_cookie.sh 
             
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
             ls
@@ -63,19 +56,12 @@ jobs:
       - run:
           name: get ndi runtime m1
           working_directory: /tmp
+          environment:
+            fileid: 11ZTydsR4lH9uUZMVjo7wlJA_ezfwQOzX
           command: |
             destFile="ndi-runtime-m1.pkg"
-            fileid="11ZTydsR4lH9uUZMVjo7wlJA_ezfwQOzX"
-
-            while true ; do
-              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"
-              cookie=`cat cookie | grep google`
-              if [ "$cookie" != "" ]; then
-                break
-              fi
-              echo "waiting cookie..."
-              sleep 1
-            done
+            
+            ~/project/CI/util/gd_wait_cookie.sh
             
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
             ls
@@ -83,20 +69,13 @@ jobs:
       - run:
           name: get libwebrtc
           working_directory: /tmp
+          environment:
+            fileid: 1rBo-FxE90uJx0f2N6eDvPIofd0YLCDn0
           command: |
             destFile="/tmp/libwebrtc"
-            fileid="1rBo-FxE90uJx0f2N6eDvPIofd0YLCDn0"
             filename="libwebrtc.zip"
-
-            while true ; do
-              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"
-              cookie=`cat cookie | grep google`
-              if [ "$cookie" != "" ]; then
-                break
-              fi
-              echo "waiting cookie..."
-              sleep 1
-            done
+            
+            ~/project/CI/util/gd_wait_cookie.sh 
   
             curl -v -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${filename}
             ls
