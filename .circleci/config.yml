@@ -67,10 +67,19 @@ jobs:
           working_directory: /tmp
           command: |
             destFile="/tmp/libwebrtc"
-            fileid="17Q99bZSNaScqqWzSCfazcixgYReA3428"
+            fileid="1T_2gD5qAe-dTU0BS2qD22RYkSo-B2f_2"
             filename="libwebrtc.zip"
 
-            curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+            while true ; do
+              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+              cookie=`cat cookie | grep google`
+              if [ "$cookie" != "" ]; then
+                break
+              fi
+              echo "waiting cookie..."
+              sleep 1
+            done
+  
             curl -v -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${filename}
             ls
             unzip -o ${filename} -d ${destFile}
