@@ -11,6 +11,9 @@ jobs:
     macos:
       xcode: <<parameters.xcode_version>>
     environment:
+      EBS_VERSION: 3.0.0
+      NDI_PLUGIN_RELEASE_TAG: 4.9.1
+
       EBS_DEPS_PATH: /tmp/obs-deps
       EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
       EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
@@ -82,7 +85,6 @@ jobs:
           command: |
             ls ~/project/build/UI/obs-frontend-api/
             ls ~/project/build/libobs/
-            echo $TEST_KEY
 
       - run:
           name: build_NDI_PLUGIN
@@ -90,7 +92,7 @@ jobs:
           command: |
             MY_DIR=`eval echo ~$USER`
             echo $MY_DIR
-            git clone -b 4.9.1 https://github.com/Palakis/obs-ndi.git
+            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
             cd obs-ndi
             mkdir build
             cd build
@@ -107,7 +109,6 @@ jobs:
 
       - run:
           name: pack .app
-          working_directory: .
           environment:
             NDI_PATH: ~/project/deps-install/obs-ndi
             NDI_RUNTIME: ~/project/deps-install/ndi-runtime.pkg
