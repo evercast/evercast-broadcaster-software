@@ -109,11 +109,14 @@ jobs:
 
       - run:
           name: pack .app
-          environment:
-            NDI_PATH: ~/project/deps-install/obs-ndi
-            NDI_RUNTIME: ~/project/deps-install/ndi-runtime.pkg
-            NDI_M1_RUNTIME: ~/project/deps-install/ndi-runtime-m1.pkg
           command: |
+            MY_DIR=`eval echo ~$USER`
+            echo $MY_DIR
+            
+            NDI_PATH=$MY_DIR/project/deps-install/obs-ndi
+            NDI_RUNTIME=$MY_DIR/project/deps-install/ndi-runtime.pkg
+            NDI_M1_RUNTIME=$MY_DIR/project/deps-install/ndi-runtime-m1.pkg
+            
             sudo -E ./CI/before-deploy-osx.sh
             cd build/
             sudo -E sh ../CI/install/osx/app2dmg.sh
