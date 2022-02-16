@@ -46,8 +46,17 @@ jobs:
           command: |
             destFile="ndi-runtime.pkg"
             fileid="1ah95-16da1LBqEeHSHki1nOZseHwm3jx"
-
-            curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+            
+            while true ; do
+              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"
+              cookie=`cat cookie | grep google`
+              if [ "$cookie" != "" ]; then
+                break
+              fi
+              echo "waiting cookie..."
+              sleep 1
+            done
+            
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
             ls
 
@@ -58,7 +67,16 @@ jobs:
             destFile="ndi-runtime-m1.pkg"
             fileid="11ZTydsR4lH9uUZMVjo7wlJA_ezfwQOzX"
 
-            curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+            while true ; do
+              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"
+              cookie=`cat cookie | grep google`
+              if [ "$cookie" != "" ]; then
+                break
+              fi
+              echo "waiting cookie..."
+              sleep 1
+            done
+            
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
             ls
 
@@ -71,7 +89,7 @@ jobs:
             filename="libwebrtc.zip"
 
             while true ; do
-              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
+              curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"
               cookie=`cat cookie | grep google`
               if [ "$cookie" != "" ]; then
                 break
