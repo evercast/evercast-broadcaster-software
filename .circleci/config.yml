@@ -118,11 +118,13 @@ jobs:
             sudo -E ./CI/before-deploy-osx.sh
             cd build/
             sudo -E sh ../CI/install/osx/app2dmg.sh
+            mkdir -p artifacts
+            cp ./EBS_"$EBS_VERSION"_Install.dmg ./artifacts/EBS_"$EBS_VERSION"_Install.dmg
+            cd artifacts/
             ls
 
       - store_artifacts:
-          working_directory: build
-          path: EBS_$EBS_VERSION_Install.dmg
+          path: build/artifacts
             
 
 # Invoke jobs via workflows
