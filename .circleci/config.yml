@@ -4,8 +4,12 @@ version: 2.1
 
 jobs:
   build-ebs-mac:
+    parameters:
+      xcode_version:
+        default: "13.3.0"
+        type: string
     macos:
-      xcode: 13.2.1
+      xcode: <<parameters.xcode_version>>
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
@@ -132,4 +136,9 @@ jobs:
 workflows:
   build-ebs-mac-workflow:
     jobs:
-      - build-ebs-mac
+      - build-ebs-mac:
+          matrix:
+            parameters:
+              xcode_version:
+                - 13.3.0
+                - 13.2.1
