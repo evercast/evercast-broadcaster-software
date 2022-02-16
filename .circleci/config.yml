@@ -38,30 +38,29 @@ jobs:
 
       - run:
           name: get ndi runtime
+          working_directory: /tmp
           command: |
             destFile="ndi-runtime.pkg"
             fileid="1ah95-16da1LBqEeHSHki1nOZseHwm3jx"
 
             curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
-            rm cookie
             ls
-          working_directory: deps-install
 
       - run:
           name: get ndi runtime m1
+          working_directory: /tmp
           command: |
             destFile="ndi-runtime-m1.pkg"
             fileid="11ZTydsR4lH9uUZMVjo7wlJA_ezfwQOzX"
 
             curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
-            rm cookie
             ls
-          working_directory: deps-install
 
       - run:
           name: get libwebrtc
+          working_directory: /tmp
           command: |
             destFile="/tmp/libwebrtc"
             fileid="17Q99bZSNaScqqWzSCfazcixgYReA3428"
@@ -69,11 +68,9 @@ jobs:
 
             curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}" > /dev/null
             curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${filename}
-            rm cookie
             ls
             unzip -o ${filename} -d ${destFile}
             ls
-          working_directory: deps-install
 
       - run:
           name: build_EBS
@@ -88,10 +85,11 @@ jobs:
           command: |
             ls ~/project/build/UI/obs-frontend-api/
             ls ~/project/build/libobs/
+            ls /tmp/
 
       - run:
           name: build_NDI_PLUGIN
-          working_directory: deps-install
+          working_directory: /tmp
           command: |
             MY_DIR=`eval echo ~$USER`
             echo $MY_DIR
@@ -112,14 +110,11 @@ jobs:
 
       - run:
           name: pack .app
+          environment:
+            NDI_PATH: /tmp/obs-ndi
+            NDI_RUNTIME: /tmp/ndi-runtime.pkg
+            NDI_M1_RUNTIME: /tmp/ndi-runtime-m1.pkg
           command: |
-            MY_DIR=`eval echo ~$USER`
-            echo $MY_DIR
-            
-            NDI_PATH=$MY_DIR/project/deps-install/obs-ndi
-            NDI_RUNTIME=$MY_DIR/project/deps-install/ndi-runtime.pkg
-            NDI_M1_RUNTIME=$MY_DIR/project/deps-install/ndi-runtime-m1.pkg
-            
             sudo -E ./CI/before-deploy-osx.sh
             cd build/
             sudo -E sh ../CI/install/osx/app2dmg.sh
