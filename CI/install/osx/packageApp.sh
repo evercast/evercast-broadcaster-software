@@ -19,9 +19,6 @@ cp ../CI/install/osx/entitlements.plist ./EBS.app/Contents
 cp $NDI_PATH/build/obs-ndi.so ./EBS.app/Contents/PlugIns
 mkdir -p ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
 cp -r $NDI_PATH/data/locale ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
-#install_name_tool -change @rpath/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-ndi.so
-#install_name_tool -change @rpath/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/PlugIns/obs-ndi.so
-#install_name_tool -change @rpath/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/PlugIns/obs-ndi.so
 
 rm -rf ./tmp-libs/
 python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/EBS -d ./tmp-libs/ -p @executable_path/../Frameworks
@@ -67,7 +64,7 @@ echo "################################################"
 echo "## AVAILABLE PLUGINS"
 echo " "
 
-ls ./plugins/
+ls ./rundir/$BUILD_CONFIG/obs-plugins/
 
 echo " "
 echo "################################################"
@@ -96,3 +93,6 @@ echo "################################################"
 ../CI/install/osx/fix-plugin.sh text-freetype2.so
 ../CI/install/osx/fix-plugin.sh vlc-video.so
 ../CI/install/osx/fix-plugin.sh websocketclient.dylib
+
+echo "packageApp DONE"
+echo " "
