@@ -32,6 +32,8 @@ plutil -insert CFBundleVersion -string $EBS_VERSION ./EBS.app/Contents/Info.plis
 plutil -insert CFBundleShortVersionString -string $EBS_VERSION ./EBS.app/Contents/Info.plist
 plutil -insert SUPublicDSAKeyFile -string OBSPublicDSAKey.pem ./EBS.app/Contents/Info.plist
 
+echo "before deploy DONE"
+
 #dmgbuild "EBS" ebs.dmg
 #
 ## Package app
