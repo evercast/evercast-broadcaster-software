@@ -117,6 +117,23 @@ jobs:
             cd artifacts/
             ls
 
+      - run:
+          name: ckeck .app libs
+          command: |
+            echo "################################################"
+            echo "## LIBS"
+            echo " "
+            ls ./build/EBS.app/Contents/Frameworks
+            echo " "
+            echo "################################################"
+            echo "################################################"
+            echo "## PLUGINS"
+            echo " "
+            ls ./build/EBS.app/Contents/PlugIns
+            echo " "
+            echo "################################################"
+            
+
       - store_artifacts:
           path: build/artifacts
             
