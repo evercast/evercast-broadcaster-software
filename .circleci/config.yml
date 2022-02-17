@@ -43,42 +43,26 @@ jobs:
       - run:
           name: get ndi runtime
           working_directory: /tmp
-          environment:
-            fileid: 1ah95-16da1LBqEeHSHki1nOZseHwm3jx
           command: |
             destFile="ndi-runtime.pkg"
-            
-            ~/project/CI/util/gd_wait_cookie.sh 
-            
-            curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
+            curl -L https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0/ndi-runtime-4.5.1-macOS.pkg -o $destFile
             ls
 
       - run:
           name: get ndi runtime m1
           working_directory: /tmp
-          environment:
-            fileid: 11ZTydsR4lH9uUZMVjo7wlJA_ezfwQOzX
           command: |
             destFile="ndi-runtime-m1.pkg"
-            
-            ~/project/CI/util/gd_wait_cookie.sh
-            
-            curl -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${destFile}
+            curl -L https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0/ndi-runtime-m1.pkg -o $destFile
             ls
 
       - run:
           name: get libwebrtc
           working_directory: /tmp
-          environment:
-            fileid: 1rBo-FxE90uJx0f2N6eDvPIofd0YLCDn0
           command: |
             destFile="/tmp/libwebrtc"
             filename="libwebrtc.zip"
-            
-            ~/project/CI/util/gd_wait_cookie.sh 
-  
-            curl -v -Lb ./cookie "https://drive.google.com/uc?export=download&confirm=`awk '/download/ {print $NF}' ./cookie`&id=${fileid}" -o ${filename}
-            ls
+            curl -L https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0/libwebrtc-87.zip -o $filename
             unzip -o ${filename} -d ${destFile}
             ls
 
