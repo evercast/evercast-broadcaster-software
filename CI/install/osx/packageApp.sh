@@ -63,6 +63,15 @@ python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/PlugIns/styles/libqma
 ../CI/install/osx/fix-qt-component.sh QtDBus
 ../CI/install/osx/fix-qt-component.sh QtPrintSupport
 
+echo "################################################"
+echo "## AVAILABLE PLUGINS"
+echo " "
+
+ls ./plugins/
+
+echo " "
+echo "################################################"
+
 ../CI/install/osx/fix-plugin.sh coreaudio-encoder.so
 ../CI/install/osx/fix-plugin.sh decklink-ouput-ui.so
 ../CI/install/osx/fix-plugin.sh frontend-tools.so
