@@ -69,6 +69,15 @@ ls ./rundir/$BUILD_CONFIG/obs-plugins/
 echo " "
 echo "################################################"
 
+echo "################################################"
+echo "## CHECK LINUX-JACK PLUGIN"
+echo " "
+
+ls ./plugins/linux-jack/
+
+echo " "
+echo "################################################"
+
 ../CI/install/osx/fix-plugin.sh coreaudio-encoder.so
 ../CI/install/osx/fix-plugin.sh decklink-ouput-ui.so
 ../CI/install/osx/fix-plugin.sh frontend-tools.so
