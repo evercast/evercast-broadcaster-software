@@ -2,6 +2,9 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+orbs:
+  win: circleci/windows@2.4
+
 jobs:
   build-ebs-mac-xcode:
     parameters:
@@ -133,7 +136,22 @@ jobs:
 
       - store_artifacts:
           path: build/artifacts
-            
+
+  build-ebs-win:
+    executor:
+      name: win/default
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
+      - run:
+          name: install deps
+          command: |
+            choco install cmake -y
+            brew install jack
+
+          working_directory: deps-install
+
 
 workflows:
   build-ebs-mac-workflow:
@@ -145,3 +163,7 @@ workflows:
                 - 13.3.0
                 - 13.2.1
                 - 12.4.0
+
+  build-ebs-win-workflow:
+    jobs:
+      - build-ebs-win
