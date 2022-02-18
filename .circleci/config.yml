@@ -20,7 +20,7 @@ jobs:
     steps:
       - checkout
       - run: git submodule sync
-      - run: git submodule update --init
+      - run: git -c http.sslVerify=false submodule update --init
       - run:
           name: install deps
           command: |
