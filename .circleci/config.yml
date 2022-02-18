@@ -26,13 +26,9 @@ jobs:
           command: |
             brew install cmake
             
-            brew install libxcb
-            brew install libxau
-            brew install libxdmcp
-            
             mkdir -p /tmp
-            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-2022-01-31-universal.tar.xz -o /tmp/obs-deps.tar.xz
-            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-01-31/macos-deps-qt-2022-01-31-universal.tar.xz -o /tmp/obs-deps-qt.tar.xz
+            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-02-13/macos-deps-2022-02-13-universal.tar.xz -o /tmp/obs-deps.tar.xz
+            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-02-13/macos-deps-qt-2022-02-13-universal.tar.xz -o /tmp/obs-deps-qt.tar.xz
             
             mkdir -p $EBS_DEPS_PATH
             mkdir -p $EBS_DEPS_QT_PATH
