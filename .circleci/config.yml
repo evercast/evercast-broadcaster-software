@@ -3,7 +3,7 @@
 version: 2.1
 
 jobs:
-  build-ebs-mac:
+  build-ebs-mac-xcode:
     parameters:
       xcode_version:
         default: "13.3.0"
@@ -25,6 +25,7 @@ jobs:
           name: install deps
           command: |
             brew install cmake
+            brew install jack
             
             mkdir -p /tmp
             curl -L https://github.com/obsproject/obs-deps/releases/download/2022-02-13/macos-deps-2022-02-13-universal.tar.xz -o /tmp/obs-deps.tar.xz
@@ -134,16 +135,13 @@ jobs:
           path: build/artifacts
             
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   build-ebs-mac-workflow:
     jobs:
-      - build-ebs-mac:
+      - build-ebs-mac-xcode:
           matrix:
             parameters:
               xcode_version:
                 - 13.3.0
                 - 13.2.1
                 - 12.4.0
-                - 10.3.0
