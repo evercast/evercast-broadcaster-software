@@ -148,7 +148,10 @@ jobs:
           name: install deps
           command: |
             choco install cmake -y
-            brew install jack
+            choco install nmake -y
+            
+            curl -L https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip -o obs-deps.zip
+            7z x obs-deps.zip -o obs-deps
 
           working_directory: deps-install
 
