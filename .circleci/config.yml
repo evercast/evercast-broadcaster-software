@@ -149,22 +149,22 @@ jobs:
           command: |
             choco install cmake -y
             
-            curl -kLO https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip -z obs-deps.zip
+            Invoke-WebRequest -OutFile obs-deps.zip https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip
             7z x obs-deps.zip -o obs-deps
 
           working_directory: deps-install
 
 
 workflows:
-  build-ebs-mac-workflow:
-    jobs:
-      - build-ebs-mac-xcode:
-          matrix:
-            parameters:
-              xcode_version:
-                - 13.3.0
-                - 13.2.1
-                - 12.4.0
+#  build-ebs-mac-workflow:
+#    jobs:
+#      - build-ebs-mac-xcode:
+#          matrix:
+#            parameters:
+#              xcode_version:
+#                - 13.3.0
+#                - 13.2.1
+#                - 12.4.0
 
   build-ebs-win-workflow:
     jobs:
