@@ -151,10 +151,11 @@ jobs:
             choco install cmake -y
             choco install 7zip 
             
-            curl -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" --output "obs-deps.zip"
+            curl -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" -o "obs-deps.zip"
             ls
             echo "unzip..."
             7z x obs-deps.zip -o obs-deps
+            ls
 
           working_directory: deps-install
 
