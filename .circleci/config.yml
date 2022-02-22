@@ -155,7 +155,8 @@ jobs:
             ls
             echo "unzip..."
             7z x "obs-deps.zip" -o"obs-deps"
-            ls
+            echo "7z done"
+            ls obs-deps/
 
           working_directory: deps-install
 
