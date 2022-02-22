@@ -142,8 +142,8 @@ jobs:
       name: win/default
     steps:
       - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
+      #- run: git submodule sync
+      #- run: git submodule update --init
       - run:
           name: install deps
           shell: bash.exe
