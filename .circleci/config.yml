@@ -142,8 +142,8 @@ jobs:
       name: win/default
     steps:
       - checkout
-      #- run: git submodule sync
-      #- run: git submodule update --init
+      - run: git submodule sync
+      - run: git submodule update --init
       - run:
           name: install deps
           shell: bash.exe
@@ -229,6 +229,29 @@ jobs:
             
             echo "## CONTENT:"
             ls
+
+      - run:
+          name: build
+          shell: bash.exe
+          working_directory: build
+          environment:
+            build_config: Release
+            EBS_VERSION: 3.0.0
+            EBS_VERSION_MAJOR: 3
+            EBS_VERSION_MINOR: 0
+            EBS_VERSION_PATCH: 0
+
+            libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
+            opensslPath: ~/project/deps-install/openssl-1.1/x64
+            QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
+            ffmpegPath: ~/project/deps-install/ffmpeg
+            DepsPath64: ~/project/deps-install/obs-deps/win64
+            VLCPath: ~/project/deps-install/vlc
+            NDIPath:
+
+          command: |
+            ..\CI\configure-script-win.cmd
+            nmake
 
 workflows:
 #  build-ebs-mac-workflow:
