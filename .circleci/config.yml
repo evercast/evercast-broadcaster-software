@@ -151,12 +151,39 @@ jobs:
             choco install cmake -y
             choco install 7zip 
             
+            echo "#####################################################"
+            echo "## DOWNLOADING obs-deps"
             curl -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" -o "obs-deps.zip"
-            ls
-            echo "unzip..."
+            echo "## DOWNLOAD COMPLETED"
             7z x "obs-deps.zip" -o"obs-deps"
-            echo "7z done"
-            ls obs-deps/
+            echo "## UNZIP COMPLETED"
+            ls
+            echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING libwebrtc"
+            curl -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/libwebrtc.7z" -o "libwebrtc.7z"
+            echo "## DOWNLOAD COMPLETED"
+            7z x "libwebrtc.7z" -o"libwebrtc"
+            echo "## UNZIP COMPLETED"
+            ls
+            echo "##########################"
+            ls libwebrtc/
+            echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING ndi runtime"            
+            curl -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/ndi-runtime-5.0-Windows.exe" -o "ndi-runtime-5.0-Windows.exe"
+            echo "## DOWNLOAD COMPLETED"
+            ls
+            echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING vc_redist.x64.exe"
+            curl -L "https://aka.ms/vs/17/release/vc_redist.x64.exe" -o "vc_redist.x64.exe"
+            echo "## DOWNLOAD COMPLETED"
+            ls
+            echo "##########################"
 
           working_directory: deps-install
 
