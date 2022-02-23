@@ -184,6 +184,38 @@ jobs:
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING Qt_5.15.2.7z"
+            curl -L "https://cdn-fastly.obsproject.com/downloads/Qt_5.15.2.7z" -o "Qt_5.15.2.7z"
+            7z x Qt_5.15.2.7z -oQt
+            echo "## DOWNLOAD COMPLETED"
+            ls
+            echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING openssl-1.1.tgz"
+            curl -L "https://libwebrtc-community-builds.s3.amazonaws.com/openssl-1.1.tgz" -o "openssl-1.1.tgz"
+            tar -xzf openssl-1.1.tgz
+            echo "## DOWNLOAD COMPLETED"
+            ls
+            echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING vlc.zip"
+            curl -L "https://cdn-fastly.obsproject.com/downloads/vlc.zip" -o "vlc.zip"
+            7z x vlc.zip -ovlc
+            echo "## DOWNLOAD COMPLETED"
+            ls
+            echo "##########################"
+            
+            echo "#####################################################"
+            echo "## DOWNLOADING ffmpeg-4.4.1-full_build.7z"
+            curl -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.4.1-full_build.7z" -o "ffmpeg.7z"
+            7z x ffmpeg.7z -offmpeg
+            echo "## DOWNLOAD COMPLETED"
+            ls
+            echo "##########################"
 
           working_directory: deps-install
 
