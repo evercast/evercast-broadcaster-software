@@ -147,6 +147,7 @@ jobs:
       - run:
           name: install deps
           shell: bash.exe
+          working_directory: deps-install
           command: |
             choco install cmake -y
             choco install 7zip 
@@ -217,8 +218,17 @@ jobs:
             ls
             echo "##########################"
 
-          working_directory: deps-install
-
+      - run:
+          name: prepare build folder
+          shell: bash.exe
+          working_directory: build
+          command: |
+            cp ../deps-install/vc_redist.x64.exe vc_redist.x64.exe
+            cp ../deps-install/ndi-runtime-5.0-Windows.exe ndi-runtime-5.0-Windows.exe
+            cp ../CI/install/win/ebs.ico ebs.ico
+            
+            echo "## CONTENT:"
+            ls
 
 workflows:
 #  build-ebs-mac-workflow:
