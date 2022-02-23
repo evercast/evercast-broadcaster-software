@@ -250,7 +250,7 @@ jobs:
             NDIPath:
 
           command: |
-            ..\CI\configure-script-win.cmd
+            ../CI/configure-script-win.cmd
             nmake
 
 workflows:
