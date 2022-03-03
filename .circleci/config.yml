@@ -232,7 +232,7 @@ jobs:
 
       - run:
           name: build
-          shell: cmd.exe
+          shell: bash.exe
           working_directory: build
           environment:
             build_config: Release
@@ -250,7 +250,10 @@ jobs:
             NDIPath:
 
           command: |
-            ..\CI\configure-script-win.cmd
+            pwd
+            ls /c/
+            ls /c/ProgramFiles/
+            ../CI/configure-script-win.cmd
             nmake
 
 workflows:
