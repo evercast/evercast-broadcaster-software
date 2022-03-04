@@ -251,8 +251,10 @@ jobs:
 
           command: |
             pwd
+            echo "path=%Path"
+            export Path="$Path:\\c\\Program Files\\CMake\\bin"
+            echo "path=%Path"
             ls /c/
-            ls "/c/Program Files/"
             ../CI/configure-script-win.cmd
             nmake
 
