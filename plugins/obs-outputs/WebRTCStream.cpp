@@ -498,7 +498,7 @@ void WebRTCStream::OnIceConnectionChange(webrtc::PeerConnectionInterface::IceCon
                 obs_output_set_last_error(
                         output,
                         "Evercast found your room, but streaming failed.  Are you behind a firewall?\n\n"
-                        "Visit Evercast's <a href=\"https://guides.evercast.us/troubleshooting/security-and-data/security-whitelisting\">security whitelisting page</a> for firewall configuration help.");
+                        "Visit Evercast's <a href=\"https://support.evercast.us/hc/en-us/articles/4407349671955-Firewall-access-rules\">security whitelisting page</a> for firewall configuration help.");
 
                 // Disconnect, this will call stop on main thread
                 obs_output_signal_stop(output, OBS_OUTPUT_ERROR);
