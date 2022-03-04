@@ -252,7 +252,7 @@ jobs:
           command: |
             pwd
             ls /c/
-            ls /c/ProgramFiles/
+            ls "/c/Program Files/"
             ../CI/configure-script-win.cmd
             nmake
 
