@@ -31,11 +31,11 @@ class RelPath:
     self.relPathOnly = relPathOnly
 
 IGNORE_PATTERNS = [
-  'QtSvg',
-  'QtMacExtras',
-  'QtWidgets',
-  'QtGui',
-  'QtCore'
+  # 'QtSvg',
+  # 'QtMacExtras',
+  # 'QtWidgets',
+  # 'QtGui',
+  # 'QtCore'
 ]
 
 IGNORE_RELATIVES = [
@@ -199,9 +199,12 @@ def packToDestination(libs, dest, packPath):
 
     lib = libs[libname]
     src = lib.path
-    dst = dest + '/' + libname
 
-    copyfile(src, dst)
+    if dest:
+      dst = dest + '/' + libname
+      copyfile(src, dst)
+    else:
+      dst = src
 
     print(libname + ': {')
 
@@ -212,7 +215,7 @@ def packToDestination(libs, dest, packPath):
         relLib = lib.rels[rel]
         if relLib.relPathOnly:
           fromName = '@rpath/' + relLib.relPathOnly + '/' + relLib.name
-          toName = packPath + '/' + relLib.name
+          toName = packPath + '/' + relLib.relPathOnly + '/' + relLib.name
         else:
           fromName = '@rpath/' + relLib.name
           toName = packPath + '/' + relLib.name
@@ -267,10 +270,13 @@ if os.path.islink(args.file):
 else:
   print("Library: " + args.file)
 
-print('Destination: ' + args.dest)
-print('Package path: ' + args.pack + '/<dependency-lib>')
+if args.dest:
+  print('Destination: ' + args.dest)
+  os.makedirs(args.dest, exist_ok=True)
+else:
+  print('Destination: ' + args.file + ' [same-file]')
 
-os.makedirs(args.dest, exist_ok=True)
+print('Package path: ' + args.pack + '/<dependency-lib>')
 
 libs = getFullDepsTree(args.file)
 #printDepsTree(libs)

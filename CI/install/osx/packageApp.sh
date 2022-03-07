@@ -8,7 +8,6 @@ mkdir EBS.app/Contents/Resources
 mkdir EBS.app/Contents/Frameworks
 
 BUILD_CONFIG=RELEASE
-QT_VERSION=5.15.2_1
 cp -r rundir/$BUILD_CONFIG/bin/ ./EBS.app/Contents/MacOS
 cp -r rundir/$BUILD_CONFIG/data ./EBS.app/Contents/Resources
 cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources
@@ -20,9 +19,6 @@ cp ../CI/install/osx/entitlements.plist ./EBS.app/Contents
 cp $NDI_PATH/build/obs-ndi.so ./EBS.app/Contents/PlugIns
 mkdir -p ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
 cp -r $NDI_PATH/data/locale ./EBS.app/Contents/Resources/data/obs-plugins/obs-ndi
-install_name_tool -change @rpath/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/PlugIns/obs-ndi.so
-install_name_tool -change @rpath/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/PlugIns/obs-ndi.so
-install_name_tool -change @rpath/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/PlugIns/obs-ndi.so
 
 rm -rf ./tmp-libs/
 python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/MacOS/EBS -d ./tmp-libs/ -p @executable_path/../Frameworks
@@ -47,43 +43,40 @@ cp -r $EBS_DEPS_PATH/lib/ ./EBS.app/Contents/Frameworks/
 chmod +x ./EBS.app/Contents/MacOS/EBS
 
 #echo "Deploying QT..."
-/usr/local/Cellar/qt@5/$QT_VERSION/bin/macdeployqt ./EBS.app
+$EBS_DEPS_QT_PATH/bin/macdeployqt ./EBS.app
 
-# put qt network in here becasuse streamdeck uses it
-cp -R /usr/local/opt/qt5/lib/QtCore.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtCore.framework/Versions/5/QtCore
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/PlugIns/platforms/libqcocoa.dylib -p @executable_path/../Frameworks
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/PlugIns/printsupport/libcocoaprintersupport.dylib -p @executable_path/../Frameworks
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/PlugIns/iconengines/libqsvgicon.dylib -p @executable_path/../Frameworks
+python3 ../CI/install/osx/libpack.py -f ./EBS.app/Contents/PlugIns/styles/libqmacstyle.dylib -p @executable_path/../Frameworks
 
-cp -R /usr/local/opt/qt5/lib/QtWidgets.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Frameworks/QtWidgets.framework/Versions/5/QtWidgets
+../CI/install/osx/fix-qt-component.sh QtCore
+../CI/install/osx/fix-qt-component.sh QtWidgets
+../CI/install/osx/fix-qt-component.sh QtNetwork
+../CI/install/osx/fix-qt-component.sh QtMacExtras
+../CI/install/osx/fix-qt-component.sh QtGui
+../CI/install/osx/fix-qt-component.sh QtSvg
 
-cp -R /usr/local/opt/qt5/lib/QtNetwork.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtNetwork.framework/Versions/5/QtNetwork
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtNetwork.framework/Versions/5/QtNetwork
+../CI/install/osx/fix-qt-component.sh QtDBus
+../CI/install/osx/fix-qt-component.sh QtPrintSupport
 
-cp -R /usr/local/opt/qt5/lib/QtMacExtras.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras
+echo "################################################"
+echo "## AVAILABLE PLUGINS"
+echo " "
 
-cp -R /usr/local/opt/qt5/lib/QtGui.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtGui.framework/Versions/5/QtGui
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtGui.framework/Versions/5/QtGui
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Frameworks/QtGui.framework/Versions/5/QtGui
+ls ./rundir/$BUILD_CONFIG/obs-plugins/
 
-cp -R /usr/local/opt/qt5/lib/QtSvg.framework ./EBS.app/Contents/Frameworks
-chmod +w ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
-install_name_tool -change /usr/local/Cellar/qt@5/$QT_VERSION/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/Frameworks/QtSvg.framework/Versions/5/QtSvg
+echo " "
+echo "################################################"
 
-install_name_tool -change /usr/local/opt/qt5/lib/QtGui.framework/Versions/5/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/5/QtGui ./EBS.app/Contents/MacOs/ebs
-install_name_tool -change /usr/local/opt/qt5/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ./EBS.app/Contents/MacOs/ebs
-install_name_tool -change /usr/local/opt/qt5/lib/QtWidgets.framework/Versions/5/QtWidgets @executable_path/../Frameworks/QtWidgets.framework/Versions/5/QtWidgets ./EBS.app/Contents/MacOs/ebs
-install_name_tool -change /usr/local/opt/qt5/lib/QtMacExtras.framework/Versions/5/QtMacExtras @executable_path/../Frameworks/QtMacExtras.framework/Versions/5/QtMacExtras ./EBS.app/Contents/MacOs/ebs
-install_name_tool -change /usr/local/opt/qt5/lib/QtSvg.framework/Versions/5/QtSvg @executable_path/../Frameworks/QtSvg.framework/Versions/5/QtSvg ./EBS.app/Contents/MacOs/ebs
+echo "################################################"
+echo "## CHECK LINUX-JACK PLUGIN"
+echo " "
+
+ls ./plugins/linux-jack/
+
+echo " "
+echo "################################################"
 
 ../CI/install/osx/fix-plugin.sh coreaudio-encoder.so
 ../CI/install/osx/fix-plugin.sh decklink-ouput-ui.so
@@ -109,3 +102,6 @@ install_name_tool -change /usr/local/opt/qt5/lib/QtSvg.framework/Versions/5/QtSv
 ../CI/install/osx/fix-plugin.sh text-freetype2.so
 ../CI/install/osx/fix-plugin.sh vlc-video.so
 ../CI/install/osx/fix-plugin.sh websocketclient.dylib
+
+echo "packageApp DONE"
+echo " "

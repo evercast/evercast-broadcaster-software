@@ -1,0 +1,147 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+jobs:
+  build-ebs-mac-xcode:
+    parameters:
+      xcode_version:
+        default: "13.3.0"
+        type: string
+    macos:
+      xcode: <<parameters.xcode_version>>
+    environment:
+      EBS_VERSION: 3.0.0
+      NDI_PLUGIN_RELEASE_TAG: 4.9.1
+
+      EBS_DEPS_PATH: /tmp/obs-deps
+      EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
+      EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git -c http.sslVerify=false submodule update --init
+      - run:
+          name: install deps
+          command: |
+            brew install cmake
+            brew install jack
+            
+            mkdir -p /tmp
+            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-02-13/macos-deps-2022-02-13-universal.tar.xz -o /tmp/obs-deps.tar.xz
+            curl -L https://github.com/obsproject/obs-deps/releases/download/2022-02-13/macos-deps-qt-2022-02-13-universal.tar.xz -o /tmp/obs-deps-qt.tar.xz
+            
+            mkdir -p $EBS_DEPS_PATH
+            mkdir -p $EBS_DEPS_QT_PATH
+            tar -xzf /tmp/obs-deps.tar.xz -C $EBS_DEPS_PATH
+            tar -xzf /tmp/obs-deps-qt.tar.xz -C $EBS_DEPS_QT_PATH
+          working_directory: deps-install
+
+      - run:
+          name: get ndi runtime
+          working_directory: /tmp
+          command: |
+            destFile="ndi-runtime.pkg"
+            curl -L https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0/ndi-runtime-4.5.1-macOS.pkg -o $destFile
+            ls
+
+      - run:
+          name: get ndi runtime m1
+          working_directory: /tmp
+          command: |
+            destFile="ndi-runtime-m1.pkg"
+            curl -L https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0/ndi-runtime-m1.pkg -o $destFile
+            ls
+
+      - run:
+          name: get libwebrtc
+          working_directory: /tmp
+          command: |
+            destFile="/tmp/libwebrtc"
+            filename="libwebrtc.zip"
+            curl -L https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0/libwebrtc-87.zip -o $filename
+            unzip -o ${filename} -d ${destFile}
+            ls
+
+      - run:
+          name: build_EBS
+          working_directory: .
+          command: |
+            ./CI/before-script-osx.sh
+            cd build
+            cmake --build . --config RELEASE
+
+      - run:
+          name: check built libs
+          command: |
+            ls ~/project/build/UI/obs-frontend-api/
+            ls ~/project/build/libobs/
+            ls /tmp/
+
+      - run:
+          name: build_NDI_PLUGIN
+          working_directory: /tmp
+          command: |
+            MY_DIR=`eval echo ~$USER`
+            echo $MY_DIR
+            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
+            cd obs-ndi
+            mkdir build
+            cd build
+            cmake \
+                -DLIBOBS_INCLUDE_DIR=$MY_DIR/project/libobs \
+                -DLIBOBS_LIB=$MY_DIR/project/build/libobs/libobs.0.dylib \
+                -DOBS_FRONTEND_LIB=$MY_DIR/project/build/UI/obs-frontend-api/libobs-frontend-api.dylib \
+                -DQt5Core_DIR=$EBS_DEPS_QT_PATH/lib/cmake/Qt5Core \
+                -DQt5Widgets_DIR=$EBS_DEPS_QT_PATH/lib/cmake/Qt5Widgets \
+                -DQTDIR=$EBS_DEPS_QT_PATH \
+                ../
+            
+            make
+
+      - run:
+          name: pack .app
+          environment:
+            NDI_PATH: /tmp/obs-ndi
+            NDI_RUNTIME: /tmp/ndi-runtime.pkg
+            NDI_M1_RUNTIME: /tmp/ndi-runtime-m1.pkg
+          command: |
+            sudo -E ./CI/before-deploy-osx.sh
+            cd build/
+            sudo -E sh ../CI/install/osx/app2dmg.sh
+            mkdir -p artifacts
+            cp ./EBS_"$EBS_VERSION"_Install.dmg ./artifacts/EBS_"$EBS_VERSION"_Install.dmg
+            cd artifacts/
+            ls
+
+      - run:
+          name: ckeck .app libs
+          command: |
+            echo "################################################"
+            echo "## LIBS"
+            echo " "
+            ls ./build/EBS.app/Contents/Frameworks
+            echo " "
+            echo "################################################"
+            echo "################################################"
+            echo "## PLUGINS"
+            echo " "
+            ls ./build/EBS.app/Contents/PlugIns
+            echo " "
+            echo "################################################"
+            
+
+      - store_artifacts:
+          path: build/artifacts
+            
+
+workflows:
+  build-ebs-mac-workflow:
+    jobs:
+      - build-ebs-mac-xcode:
+          matrix:
+            parameters:
+              xcode_version:
+                - 13.3.0
+                - 13.2.1
+                - 12.4.0
