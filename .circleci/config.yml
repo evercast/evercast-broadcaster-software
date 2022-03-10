@@ -231,6 +231,22 @@ jobs:
             ls
 
       - run:
+          name: try-cmake
+          shell: powershell.exe
+          command: |
+            choco install cmake -y
+
+      - run:
+          name: try-cmake2
+          shell: powershell.exe
+          working_directory: build
+          command: |
+            $env:Path+=";$Env:ProgramFiles\CMake\bin";
+            ..\CI\configure-script-win.cmd
+      
+      
+
+      - run:
           name: build
           shell: bash.exe
           working_directory: build
