@@ -237,18 +237,8 @@ jobs:
             choco install cmake -y
 
       - run:
-          name: try-cmake2
-          shell: powershell.exe
-          working_directory: build
-          command: |
-            $env:Path+=";$Env:ProgramFiles\CMake\bin";
-            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
-            
-            ..\CI\configure-script-win.cmd
-
-      - run:
           name: build
-          shell: bash.exe
+          shell: powershell.exe
           working_directory: build
           environment:
             build_config: Release
@@ -266,17 +256,10 @@ jobs:
             NDIPath:
 
           command: |
-            pwd
-            ls /c/
-            ls "/c/Program Files/"
-            ls "/c/Program Files/CMake/bin/"
-            echo "try cmake"
-            cmake .
+            $env:Path+=";$Env:ProgramFiles\CMake\bin";
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
             
-            echo "try cmake.exe"
-            cmake.exe . 
-            echo "---"
-            ../CI/configure-script-win.cmd
+            ..\CI\configure-script-win.cmd
             nmake
 
 workflows:
