@@ -253,6 +253,7 @@ jobs:
             pwd
             ls /c/
             ls "/c/Program Files/"
+            alias cmake='/c/Program Files/CMake/bin/cmake.exe'
             echo "try cmake"
             cmake .
             
