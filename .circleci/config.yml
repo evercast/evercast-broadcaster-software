@@ -230,7 +230,7 @@ jobs:
             echo "## CONTENT:"
             ls
             
-            ls "C:\Program Files (x86)\Microsoft Visual Studio\2019\"
+            ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/"
 
       - run:
           name: try-cmake
@@ -258,7 +258,6 @@ jobs:
             NDIPath:
 
           command: |
-            $env:Path+=";$Env:ProgramFiles\CMake\bin";
             
             "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
             
