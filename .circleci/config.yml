@@ -229,6 +229,8 @@ jobs:
             
             echo "## CONTENT:"
             ls
+            
+            ls "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.25.28610\bin\Hostx64\x64"
 
       - run:
           name: try-cmake
@@ -257,9 +259,9 @@ jobs:
 
           command: |
             $env:Path+=";$Env:ProgramFiles\CMake\bin";
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
             
-            for %%s in (Community, Professional) do call "C:\Program Files (x86)\Microsoft Visual Studio\2019\%%s\VC\Auxiliary\Build\vcvars64.bat"
-            for %%s in (Community, Professional) do PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\%%s\VC\Tools\MSVC\14.25.28610\bin\Hostx64\x64
+            cmd.exe /c "C:\Program Files (x86)\Microsoft Visual Studio\2019\%%s\VC\Auxiliary\Build\vcvars64.bat"
             
             ..\CI\configure-script-win.cmd
             nmake
