@@ -229,6 +229,8 @@ jobs:
             
             echo "## CONTENT:"
             ls
+            
+            ls "C:\Program Files (x86)\Microsoft Visual Studio\2019\"
 
       - run:
           name: try-cmake
@@ -257,6 +259,7 @@ jobs:
 
           command: |
             $env:Path+=";$Env:ProgramFiles\CMake\bin";
+            
             "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
             
             ..\CI\configure-script-win.cmd
