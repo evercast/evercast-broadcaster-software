@@ -264,6 +264,13 @@ jobs:
             ..\CI\configure-script-win.cmd
             nmake
 
+      - run:
+          name: build
+          shell: bash.exe
+          working_directory: build
+          command: |
+            ls
+
 workflows:
 #  build-ebs-mac-workflow:
 #    jobs:
