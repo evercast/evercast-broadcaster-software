@@ -259,13 +259,13 @@ jobs:
 
           command: |
             
-            "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
+            'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat'
             
-            "..\\CI\\configure-script-win.cmd"
+            ..\CI\configure-script-win.cmd
             nmake
 
       - run:
-          name: build
+          name: check build dir
           shell: bash.exe
           working_directory: build
           command: |
