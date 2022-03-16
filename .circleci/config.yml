@@ -248,7 +248,7 @@ jobs:
           name: check VC
           shell: cmd.exe
           command: |  
-            "CD C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build"
+            CD "\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build"
             
             DIR
             
