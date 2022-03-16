@@ -240,12 +240,15 @@ jobs:
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/" 
             echo "## 3"
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/"
+            echo "## 4"
+            pwd
+            
 
       - run:
           name: check VC
           shell: cmd.exe
           command: |  
-            cd "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build"
+            CD 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build'
             
             DIR
             
