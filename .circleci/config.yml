@@ -246,9 +246,17 @@ jobs:
 
       - run:
           name: check VC
-          shell: cmd.exe
+          shell: bash.exe
           command: |
-            nmake
+
+            cd "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+            
+            ls
+            
+            ./vcvars64.bat
+            
+            ls
+      
 
       - run:
           name: try-cmake
