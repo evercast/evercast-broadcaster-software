@@ -141,7 +141,7 @@ jobs:
     executor:
       name: win/default
     steps:
-      - checkout
+#      - checkout
 #      - run: git submodule sync
 #      - run: git submodule update --init
 #      - run:
@@ -248,18 +248,6 @@ jobs:
           name: check VC
           shell: cmd.exe
           command: |
-            CD C:
-            
-            DIR
-            
-            CD "Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build"
-            
-            DIR
-            
-            .\vcvars64.bat
-            
-            DIR
-            
             nmake
 
       - run:
