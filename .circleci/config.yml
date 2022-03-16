@@ -141,7 +141,7 @@ jobs:
     executor:
       name: win/default
     steps:
-#      - checkout
+      - checkout
 #      - run: git submodule sync
 #      - run: git submodule update --init
 #      - run:
@@ -262,7 +262,7 @@ jobs:
 
       - run:
           name: build
-          shell: cmd.exe
+          shell: powershell.exe
           working_directory: build
           environment:
             build_config: Release
@@ -281,7 +281,7 @@ jobs:
 
           command: |
             
-            set "PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64"
+            set PATH=C:\Program Files\CMake\bin;%PATH%
             
             ..\CI\configure-script-win.cmd
             nmake
