@@ -248,7 +248,7 @@ jobs:
           name: check VC
           shell: cmd.exe
           command: |
-            CD "C:"
+            CD C:
             
             DIR
             
