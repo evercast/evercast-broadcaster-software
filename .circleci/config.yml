@@ -238,6 +238,8 @@ jobs:
             ls "/c/Program Files (x86)/"
             echo "## 2"
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/" 
+            echo "## 3"
+            ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/"
 
       - run:
           name: try-cmake
