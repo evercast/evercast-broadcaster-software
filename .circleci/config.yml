@@ -244,12 +244,12 @@ jobs:
       - run:
           name: check VC
           shell: cmd.exe
-          command: |
-            DIR
-            
+          command: |  
             call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
             
-            REM "## DONE"
+            DIR
+            
+            nmake
 
       - run:
           name: try-cmake
