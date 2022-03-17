@@ -150,6 +150,7 @@ jobs:
           working_directory: deps-install
           command: |
             choco install cmake -y
+            choco install boost-msvc-14.2
             choco install 7zip
 
             echo "#####################################################"
@@ -253,12 +254,6 @@ jobs:
             ./vcvars64.bat
             
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/"
-
-      - run:
-          name: try-cmake
-          shell: powershell.exe
-          command: |
-            choco install cmake -y
 
       - run:
           name: build
