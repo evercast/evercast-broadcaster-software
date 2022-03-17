@@ -257,7 +257,7 @@ jobs:
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC"
             echo "###"
             
-            ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/"
+            ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/"
 
       - run:
           name: build
@@ -281,7 +281,7 @@ jobs:
           command: |
             
             $env:Path+=";$Env:ProgramFiles\CMake\bin";
-            $env:Path+=";${Env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64";
+            $env:Path+=";${Env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64";
             
             ..\CI\configure-script-win.cmd
             nmake
