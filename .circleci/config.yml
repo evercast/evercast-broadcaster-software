@@ -264,12 +264,12 @@ jobs:
       - run:
           name: add cmake to path
           shell: cmd.exe
-          command: set PATH=%PATH%;'C:\Program Files\CMake\bin'
+          command: 'set PATH=%PATH%;"C:\Program Files\CMake\bin"'
 
       - run:
           name: add MSVC tools to path
           shell: cmd.exe
-          command: set PATH=%PATH%;'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64'
+          command: 'set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64"'
 
       - run:
           name: run vcvars
