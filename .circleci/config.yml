@@ -263,7 +263,7 @@ jobs:
 
       - run:
           name: build
-          shell: powershell.exe
+          shell: cmd.exe
           working_directory: build
           environment:
             build_config: Release
@@ -281,15 +281,11 @@ jobs:
             NDIPath:
 
           command: |
-            
-            $env:Path+=";$Env:ProgramFiles\CMake\bin";
-            $env:Path+=";${Env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64";
-            
-            Start-Process "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat";
-            
+            set PATH=%PATH%;"C:\Program Files\CMake\bin"
+            set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64"
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
             ..\CI\configure-script-win.cmd
             nmake
-            
 
       - run:
           name: check build dir
