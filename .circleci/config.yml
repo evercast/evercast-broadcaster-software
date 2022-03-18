@@ -237,7 +237,7 @@ jobs:
             echo "## 1"
             ls "/c/Program Files (x86)/"
             echo "## 1.1"
-            choco install boost-msvc-14.2
+            choco install visualstudio2019buildtools
             ls "/c/Program Files (x86)/"
             echo "## 2"
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/" 
