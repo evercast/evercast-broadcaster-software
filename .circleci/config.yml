@@ -296,7 +296,7 @@ jobs:
             NDIPath:
 
           command: |
-            ..\CI\util\win_build_ci.cmd
+            ..\CI\util\win_build_ci.bat
 
       - run:
           name: check build dir
