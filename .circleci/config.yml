@@ -297,7 +297,7 @@ jobs:
 
           command: |
             cd ..\CI\util 
-            Start-Process -FilePath "win_build_ci.bat"
+            cmd.exe /c 'win_build_ci.bat'
 
       - run:
           name: check build dir
