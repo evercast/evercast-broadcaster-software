@@ -295,7 +295,9 @@ jobs:
             VLCPath: ~/project/deps-install/vlc
             NDIPath:
 
-          command: cd ..\CI\util & win_build_ci.bat
+          command: |
+          cd ..\CI\util 
+          win_build_ci.bat
 
       - run:
           name: check build dir
