@@ -139,7 +139,7 @@ jobs:
 
   build-ebs-win:
     executor:
-      name: windows
+      name: win/windows
     steps:
       - checkout
       - run: git submodule sync
