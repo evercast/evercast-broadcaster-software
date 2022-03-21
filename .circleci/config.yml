@@ -278,7 +278,7 @@ jobs:
 
       - run:
           name: build
-          shell: cmd.exe
+          shell: powershell.exe
           working_directory: build
           environment:
             build_config: Release
