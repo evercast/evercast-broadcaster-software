@@ -278,7 +278,7 @@ jobs:
 
       - run:
           name: build
-          shell: powershell.exe
+          shell: cmd.exe
           working_directory: build
           environment:
             build_config: Release
@@ -296,8 +296,7 @@ jobs:
             NDIPath:
 
           command: |
-            cd ..\CI\util 
-            cmd.exe /c 'win_build_ci.bat'
+            ..\CI\util\win_build_ci.cmd
 
       - run:
           name: check build dir
