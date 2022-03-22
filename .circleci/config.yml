@@ -279,7 +279,7 @@ jobs:
       - run:
           name: build
           shell: cmd.exe
-          working_directory: build
+          working_directory: CI/util
           environment:
             build_config: Release
             EBS_VERSION: 3.0.0
@@ -295,9 +295,7 @@ jobs:
             VLCPath: ~/project/deps-install/vlc
             NDIPath:
 
-          command: |
-            
-            ..\CI\util\win_build_ci.cmd
+          command: .\win_build_ci.cmd
             
 
       - run:
