@@ -291,16 +291,16 @@ jobs:
             ls
 
 workflows:
-#  build-ebs-mac-workflow:
-#    jobs:
-#      - build-ebs-mac-xcode:
-#          matrix:
-#            parameters:
-#              xcode_version:
-#                - 13.3.0
-#                - 13.2.1
-#                - 12.4.0
-
-  build-ebs-win-workflow:
+  build-ebs-mac-workflow:
     jobs:
-      - build-ebs-win
+      - build-ebs-mac-xcode:
+          matrix:
+            parameters:
+              xcode_version:
+                - 13.3.0
+                - 13.2.1
+                - 12.4.0
+
+#  build-ebs-win-workflow:
+#    jobs:
+#      - build-ebs-win
