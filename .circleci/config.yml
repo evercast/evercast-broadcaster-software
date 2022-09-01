@@ -297,9 +297,10 @@ workflows:
           matrix:
             parameters:
               xcode_version:
+                - 14.0.0
+                - 13.4.1
                 - 13.3.0
-                - 13.2.1
-                - 12.4.0
+
 
 #  build-ebs-win-workflow:
 #    jobs:
