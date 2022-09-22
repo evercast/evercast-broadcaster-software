@@ -688,15 +688,36 @@ webrtc::VideoFrame WebRTCStream::constructOutputFrame(video_data* frame)
 
 	buffer = i444Buffer;
     } else {
-        videoType = webrtc::VideoType::kNV12;
-        uint32_t size = outputWidth * outputHeight * 3 / 2;
-        int stride_y = outputWidth;
-        int stride_uv = (outputWidth + 1) / 2;
+
+	uint8_t* frameData = frame->data[0];
+	std::unique_ptr<uint8_t[]> convertedFrameData;
+
+	switch (videoFormat) {
+	case VIDEO_FORMAT_NV12:
+	    videoType = webrtc::VideoType::kNV12;
+	    break;
+
+	case VIDEO_FORMAT_I420:
+	    videoType = webrtc::VideoType::kI420;
+	    break;
+	case VIDEO_FORMAT_RGBA:
+	    videoType = webrtc::VideoType::kARGB;
+	    unsigned int frameSizeBytes = frame->linesize[0] * outputHeight * 4;
+	    convertedFrameData.reset(new uint8_t[frameSizeBytes]);
+	    libyuv::ARGBToABGR(frameData, frame->linesize[0], convertedFrameData.get(), frame->linesize[0], outputWidth, outputHeight);
+	    frameData = convertedFrameData.get();
+	    break;
+	}
+
+	uint32_t size = outputWidth * outputHeight * 3 / 2;
+	int stride_y = outputWidth;
+	int stride_uv = (outputWidth + 1) / 2;
+
         // Convert frame
         rtc::scoped_refptr<webrtc::I420Buffer> i420Buffer = webrtc::I420Buffer::Create(target_width, target_height, stride_y, stride_uv, stride_uv);
 
         const int conversionResult = libyuv::ConvertToI420(
-            frame->data[0], size,
+	    frameData, size,
             i420Buffer.get()->MutableDataY(), i420Buffer.get()->StrideY(),
             i420Buffer.get()->MutableDataU(), i420Buffer.get()->StrideU(),
             i420Buffer.get()->MutableDataV(), i420Buffer.get()->StrideV(), 0, 0,
