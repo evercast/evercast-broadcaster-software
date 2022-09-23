@@ -211,8 +211,8 @@ jobs:
             echo "##########################"
 
             echo "#####################################################"
-            echo "## DOWNLOADING ffmpeg-4.4.1-full_build.7z"
-            curl -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.4.1-full_build.7z" -o "ffmpeg.7z"
+            echo "## DOWNLOADING ffmpeg-5.0.1-full_build.7z"
+            curl -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-5.0.1-full_build.7z" -o "ffmpeg.7z"
             7z x ffmpeg.7z -offmpeg
             echo "## DOWNLOAD COMPLETED"
             ls
