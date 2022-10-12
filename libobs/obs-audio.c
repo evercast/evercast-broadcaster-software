@@ -28,6 +28,22 @@ struct ts_info {
 #define DEBUG_LAGGED_AUDIO 1
 #define MAX_BUFFERING_TICKS 45
 
+#define AUDIO_CALLBACK_INDEX 0
+#define MIX_AUDIO_INDEX 1
+
+#if DEBUG_AUDIO == 1
+#include "util/counter_log.h"
+#define ablog(index, flags) cl_record(index, flags)
+#else
+#define ablog(index, flags)
+#endif
+
+#if DEBUG_AUDIO == 1
+#define flag_or(flag, index) flag |= 1 << index
+#else
+#define flag_or(flag, index) 
+#endif
+
 static void push_audio_tree(obs_source_t *parent, obs_source_t *source, void *p)
 {
         struct obs_core_audio *audio = p;
@@ -50,23 +66,33 @@ static inline void mix_audio(struct audio_output_data *mixes,
                              obs_source_t *source, size_t channels,
                              size_t sample_rate, struct ts_info *ts)
 {
+        int log_flag = 0;
         size_t total_floats = AUDIO_OUTPUT_FRAMES;
         size_t start_point = 0;
 
-        if (source->audio_ts < ts->start || ts->end <= source->audio_ts)
+        if (source->audio_ts < ts->start || ts->end <= source->audio_ts) {
+                flag_or(log_flag, 0);
+                ablog(MIX_AUDIO_INDEX, log_flag);
                 return;
+        }
 
         if (source->audio_ts != ts->start) {
+                flag_or(log_flag, 1);
                 start_point = convert_time_to_frames(
                         sample_rate, source->audio_ts - ts->start);
-                if (start_point == AUDIO_OUTPUT_FRAMES)
+                if (start_point == AUDIO_OUTPUT_FRAMES) {
+                        flag_or(log_flag, 2);
+                        ablog(MIX_AUDIO_INDEX, log_flag);
                         return;
+                }
 
                 total_floats -= start_point;
         }
 
         for (size_t mix_idx = 0; mix_idx < MAX_AUDIO_MIXES; mix_idx++) {
+                flag_or(log_flag, 3);
                 for (size_t ch = 0; ch < channels; ch++) {
+                        flag_or(log_flag, 4);
                         register float *mix = mixes[mix_idx].data[ch];
                         register float *aud =
                                 source->audio_output_buf[mix_idx][ch];
@@ -79,6 +105,8 @@ static inline void mix_audio(struct audio_output_data *mixes,
                                 *(mix++) += *(aud++);
                 }
         }
+
+        ablog(MIX_AUDIO_INDEX, log_flag);
 }
 
 static bool ignore_audio(obs_source_t *source, size_t channels,
@@ -453,6 +481,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
         struct ts_info ts = {start_ts_in, end_ts_in};
         size_t audio_size;
         uint64_t min_ts;
+        int log_flag = 0;
 
         da_resize(audio->render_order, 0);
         da_resize(audio->root_nodes, 0);
@@ -471,8 +500,10 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
         /* build audio render order
          * NOTE: these are source channels, not audio channels */
         for (uint32_t i = 0; i < MAX_CHANNELS; i++) {
+                flag_or(log_flag, 0);
                 obs_source_t *source = obs_get_output_source(i);
                 if (source) {
+                        flag_or(log_flag, 1);
                         obs_source_enum_active_tree(source, push_audio_tree,
                                                     audio);
                         push_audio_tree(NULL, source, audio);
@@ -485,6 +516,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
 
         source = data->first_audio_source;
         while (source) {
+                flag_or(log_flag, 2);
                 push_audio_tree(NULL, source, audio);
                 source = (struct obs_source *)source->next_audio_source;
         }
@@ -494,6 +526,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
         /* ------------------------------------------------ */
         /* render audio data */
         for (size_t i = 0; i < audio->render_order.num; i++) {
+                flag_or(log_flag, 3);
                 obs_source_t *source = audio->render_order.array[i];
                 obs_source_audio_render(source, mixers, channels, sample_rate,
                                         audio_size);
@@ -502,6 +535,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
                  * longer buffer, drop some or all of its audio */
                 if (audio->total_buffering_ticks == MAX_BUFFERING_TICKS &&
                     source->audio_ts < ts.start) {
+                        flag_or(log_flag, 4);
 
                         blog(LOG_INFO, "A dirty hack in the middle");
                         source->audio_pending = true;
@@ -509,6 +543,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
                         source->timing_set = false;
 
                         if (source->info.audio_render) {
+                                flag_or(log_flag, 5);
                                 blog(LOG_DEBUG,
                                      "render audio source %s timestamp has "
                                      "gone backwards",
@@ -545,18 +580,24 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
 
 	/* ------------------------------------------------ */
 	/* if a source has gone backward in time, buffer */
-	if (min_ts < ts.start)
+	if (min_ts < ts.start) {
+                flag_or(log_flag, 6);
 		add_audio_buffering(audio, sample_rate, &ts, min_ts,
 				    buffering_name);
+        }
 
         /* ------------------------------------------------ */
         /* mix audio */
         if (!audio->buffering_wait_ticks) {
+                flag_or(log_flag, 7);
                 for (size_t i = 0; i < audio->root_nodes.num; i++) {
+                        flag_or(log_flag, 8);
                         obs_source_t *source = audio->root_nodes.array[i];
 
-                        if (source->audio_pending)
+                        if (source->audio_pending) {
+                                flag_or(log_flag, 9);
                                 continue;
+                        }
 
                         pthread_mutex_lock(&source->audio_buf_mutex);
 
@@ -574,6 +615,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
 
         source = data->first_audio_source;
         while (source) {
+                flag_or(log_flag, 10);
                 pthread_mutex_lock(&source->audio_buf_mutex);
                 discard_audio(audio, source, channels, sample_rate, &ts);
                 pthread_mutex_unlock(&source->audio_buf_mutex);
@@ -592,10 +634,21 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
         *out_ts = ts.start;
 
         if (audio->buffering_wait_ticks) {
+                flag_or(log_flag, 11);
+                ablog(AUDIO_CALLBACK_INDEX, log_flag);
                 audio->buffering_wait_ticks--;
                 return false;
         }
 
         UNUSED_PARAMETER(param);
+        ablog(AUDIO_CALLBACK_INDEX, log_flag);
         return true;
+}
+
+void audio_preinit() {
+        #if DEBUG_AUDIO == 1
+        cl_init();
+        cl_assign_label(AUDIO_CALLBACK_INDEX, "audio_callback");
+        cl_assign_label(MIX_AUDIO_INDEX, "mix_audio");
+        #endif
 }

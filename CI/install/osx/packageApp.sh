@@ -7,7 +7,7 @@ mkdir EBS.app/Contents/PlugIns
 mkdir EBS.app/Contents/Resources
 mkdir EBS.app/Contents/Frameworks
 
-BUILD_CONFIG=RELEASE
+BUILD_CONFIG=Debug
 cp -r rundir/$BUILD_CONFIG/bin/ ./EBS.app/Contents/MacOS
 cp -r rundir/$BUILD_CONFIG/data ./EBS.app/Contents/Resources
 cp ../CI/install/osx/EBS.icns ./EBS.app/Contents/Resources

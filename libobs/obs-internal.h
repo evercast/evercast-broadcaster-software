@@ -459,6 +459,8 @@ obs_graphics_thread_loop_autorelease(struct obs_graphics_context *context);
 
 extern gs_effect_t *obs_load_effect(gs_effect_t **effect, const char *file);
 
+extern void audio_preinit();
+
 extern bool audio_callback(void *param, uint64_t start_ts_in,
 			   uint64_t end_ts_in, uint64_t *out_ts,
 			   uint32_t mixers, struct audio_output_data *mixes);

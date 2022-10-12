@@ -560,6 +560,7 @@ static void obs_free_graphics(void)
 
 static bool obs_init_audio(struct audio_output_info *ai)
 {
+	audio_preinit();
 	struct obs_core_audio *audio = &obs->audio;
 	int errorcode;
 

@@ -48,6 +48,13 @@ void EvercastAudioSource::OnAudioData(audio_data *frame)
 	size_t i = 0;
 	uint8_t *position;
 
+    const int64_t obs_timestamp_us =
+            (int64_t)frame->timestamp / rtc::kNumNanosecsPerMicrosec;
+
+    // As with video, align timestamps from OBS capturer with rtc::TimeMicros timebase
+    const int64_t aligned_timestamp_us =
+            timestamp_aligner_.TranslateTimestamp(obs_timestamp_us, rtc::TimeMicros());
+
 	if (pending_remainder) {
 		// Copy missing chunks
 		i = chunk - pending_remainder;
@@ -55,7 +62,7 @@ void EvercastAudioSource::OnAudioData(audio_data *frame)
 		       i * sample_size * num_channels);
 
 		// Send
-		sink->OnData(pending, 16, sample_rate, num_channels, chunk);
+		sink->OnData(pending, 16, sample_rate, num_channels, chunk, aligned_timestamp_us);
 
 		// No pending chunks
 		pending_remainder = 0;
@@ -63,7 +70,7 @@ void EvercastAudioSource::OnAudioData(audio_data *frame)
 
 	while (i + chunk < frame->frames) {
 		position = data + i * sample_size * num_channels;
-		sink->OnData(position, 16, sample_rate, num_channels, chunk);
+		sink->OnData(position, 16, sample_rate, num_channels, chunk, aligned_timestamp_us);
 		i += chunk;
 	}
 

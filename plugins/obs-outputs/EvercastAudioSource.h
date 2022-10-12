@@ -7,6 +7,7 @@
 #include "api/media_stream_interface.h"
 #include "media-io/audio-io.h"
 #include "rtc_base/ref_counted_object.h"
+#include "rtc_base/timestamp_aligner.h"
 
 using namespace webrtc;
 
@@ -35,6 +36,7 @@ protected:
 	uint8_t *pending;
 	cricket::AudioOptions options_;
 	AudioTrackSinkInterface *sink_;
+	rtc::TimestampAligner timestamp_aligner_;
 	EvercastAudioSource();
 	void Initialize(audio_t *audio, cricket::AudioOptions *options);
 };
