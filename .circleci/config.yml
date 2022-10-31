@@ -280,7 +280,11 @@ jobs:
             VLCPath: ~/project/deps-install/vlc
             NDIPath:
 
-          command: .\win_build_ci.cmd
+          command: |
+            cd "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+            ./vcvars64.bat
+            cd CI/util
+            .\win_build_ci.cmd
             
 
       - run:
