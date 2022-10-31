@@ -148,7 +148,7 @@ jobs:
       - restore_cache:
           name: restoring cache
           keys:
-            - deps-cache-{{ .Branch }}
+            - deps-cache-zips-{{ .Branch }}
 
       - run:
           name: install deps
@@ -158,20 +158,22 @@ jobs:
             choco install cmake -y
             choco install 7zip
 
+            mkdir archives || true
+
             echo "#####################################################"
             echo "## DOWNLOADING obs-deps"
-            curl -C - -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" -o "obs-deps.zip"
+            curl -C - -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" -o "archives/obs-deps.zip"
             echo "## DOWNLOAD COMPLETED"
-            7z x "obs-deps.zip" -o"obs-deps"
+            7z x "archives/obs-deps.zip" -o"obs-deps"
             echo "## UNZIP COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING libwebrtc"
-            curl -C - -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/libwebrtc.7z" -o "libwebrtc.7z"
+            curl -C - -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/libwebrtc.7z" -o "archives/libwebrtc.7z"
             echo "## DOWNLOAD COMPLETED"
-            7z x "libwebrtc.7z" -o"libwebrtc"
+            7z x "archives/libwebrtc.7z" -o"libwebrtc"
             echo "## UNZIP COMPLETED"
             ls
             echo "##########################"
@@ -180,56 +182,58 @@ jobs:
 
             echo "#####################################################"
             echo "## DOWNLOADING ndi runtime"
-            curl -C - -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/ndi-runtime-5.0-Windows.exe" -o "ndi-runtime-5.0-Windows.exe"
+            curl -C - -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/ndi-runtime-5.0-Windows.exe" -o "archives/ndi-runtime-5.0-Windows.exe"
             echo "## DOWNLOAD COMPLETED"
+            mv "archives/ndi-runtime-5.0-Windows.exe" .
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING vc_redist.x64.exe"
-            curl -C - -L "https://aka.ms/vs/17/release/vc_redist.x64.exe" -o "vc_redist.x64.exe"
+            curl -C - -L "https://aka.ms/vs/17/release/vc_redist.x64.exe" -o "archives/vc_redist.x64.exe"
             echo "## DOWNLOAD COMPLETED"
+            mv archives/vc_redist.x64.exe .
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING Qt_5.15.2.7z"
-            curl -C - -L "https://cdn-fastly.obsproject.com/downloads/Qt_5.15.2.7z" -o "Qt_5.15.2.7z"
-            7z x Qt_5.15.2.7z -oQt
+            curl -C - -L "https://cdn-fastly.obsproject.com/downloads/Qt_5.15.2.7z" -o "archives/Qt_5.15.2.7z"
+            7z x archives/Qt_5.15.2.7z -oQt
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING openssl-1.1.tgz"
-            curl -C - -L "https://libwebrtc-community-builds.s3.amazonaws.com/openssl-1.1.tgz" -o "openssl-1.1.tgz"
-            tar -xzf openssl-1.1.tgz
+            curl -C - -L "https://libwebrtc-community-builds.s3.amazonaws.com/openssl-1.1.tgz" -o "archives/openssl-1.1.tgz"
+            tar -xzf archives/openssl-1.1.tgz
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING vlc.zip"
-            curl -C - -L "https://cdn-fastly.obsproject.com/downloads/vlc.zip" -o "vlc.zip"
-            7z x vlc.zip -ovlc
+            curl -C - -L "https://cdn-fastly.obsproject.com/downloads/vlc.zip" -o "archives/vlc.zip"
+            7z x archives/vlc.zip -ovlc
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
-            echo "## DOWNLOADING ffmpeg-4.4.1-full_build.7z"
-            curl -C - -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.4.1-full_build.7z" -o "ffmpeg.7z"
-            7z x ffmpeg.7z -offmpeg
+            echo "## DOWNLOADING ffmpeg-5.0.1-full_build.7z"
+            curl -C - -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-5.0.1-full_build.7z" -o "archives/ffmpeg.7z"
+            7z x archives/ffmpeg.7z -offmpeg
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
       - save_cache:
-          key: deps-cache-{{ .Branch }}
+          key: deps-cache-zips-{{ .Branch }}
           name: saving cache
           when: always
           paths:
-            - deps-install
+            - deps-install/archives
 
       - run:
           name: prepare build folder
