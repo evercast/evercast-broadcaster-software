@@ -5,11 +5,7 @@ SET PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC
 
 ECHO %PATH%
 
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
-echo "Done init"
+CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
 CD ..\..\build
-echo %cd%
 ..\CI\configure-script-win.cmd
-echo "Done configuring"
 nmake
-
