@@ -705,6 +705,9 @@ static inline void output_video_data(struct obs_core_video *video,
 			copy_rgbx_frame(&output_frame, input_frame, info);
 		}
 
+		blog(LOG_DEBUG, "main video ts: %lu", input_frame->timestamp);
+		blog(LOG_DEBUG, "main video data: %u", input_frame->data[0][0]);
+
 		video_output_unlock_frame(video->video);
 	}
 }

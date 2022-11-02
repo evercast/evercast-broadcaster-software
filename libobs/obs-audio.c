@@ -34,13 +34,9 @@ struct ts_info {
 #if DEBUG_AUDIO == 1
 #include "util/counter_log.h"
 #define ablog(index, flags) cl_record(index, flags)
-#else
-#define ablog(index, flags)
-#endif
-
-#if DEBUG_AUDIO == 1
 #define flag_or(flag, index) flag |= 1 << index
 #else
+#define ablog(index, flags)
 #define flag_or(flag, index) 
 #endif
 
@@ -493,7 +489,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
         audio_size = AUDIO_OUTPUT_FRAMES * sizeof(float);
 
 #if DEBUG_AUDIO == 1
-        blog(LOG_DEBUG, "ts %llu-%llu", ts.start, ts.end);
+        blog(LOG_DEBUG, "ats %llu-%llu", ts.start, ts.end);
 #endif
 
         /* ------------------------------------------------ */
@@ -553,7 +549,7 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
                                 source->audio_pending = true;
 #if DEBUG_AUDIO == 1
                                 /* this should really be fixed */
-				assert(false);
+				// assert(false);
 #endif
                         } else {
                                 pthread_mutex_lock(&source->audio_buf_mutex);
@@ -571,6 +567,22 @@ bool audio_callback(void *param, uint64_t start_ts_in, uint64_t end_ts_in,
                         }
                 }
         }
+
+#if DEBUG_AUDIO == 1
+                if (audio->render_order.num > 0) {
+                        obs_source_t *debug_source = audio->render_order.array[0];
+                        blog(LOG_DEBUG, "mixed audio ts: %lu", debug_source->audio_ts);
+                        blog(LOG_DEBUG, "mixed audio data: %f %f %f %f %f %f %f %f",
+                                ((float*)debug_source->audio_output_buf[0][0])[0],
+                                ((float*)debug_source->audio_output_buf[0][0])[1],
+                                ((float*)debug_source->audio_output_buf[0][0])[2],
+                                ((float*)debug_source->audio_output_buf[0][0])[3],
+                                ((float*)debug_source->audio_output_buf[0][0])[4],
+                                ((float*)debug_source->audio_output_buf[0][0])[5],
+                                ((float*)debug_source->audio_output_buf[0][0])[6],
+                                ((float*)debug_source->audio_output_buf[0][0])[7]);
+                }
+#endif
 
 	/* ------------------------------------------------ */
 	/* get minimum audio timestamp */
@@ -650,5 +662,6 @@ void audio_preinit() {
         cl_init();
         cl_assign_label(AUDIO_CALLBACK_INDEX, "audio_callback");
         cl_assign_label(MIX_AUDIO_INDEX, "mix_audio");
+        cl_assign_label(2, "source_output_audio_data");
         #endif
 }

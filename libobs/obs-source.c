@@ -30,6 +30,16 @@
 #include "obs.h"
 #include "obs-internal.h"
 
+#define DEBUG_AUDIO 1
+#if DEBUG_AUDIO == 1
+#include "util/counter_log.h"
+#define ablog(index, flags) cl_record(index, flags)
+#define flag_or(flag, index) flag |= 1 << index
+#else
+#define ablog(index, flags)
+#define flag_or(flag, index) 
+#endif
+
 static inline bool data_valid(const struct obs_source *source, const char *f)
 {
 	return obs_source_valid(source, f) && source->context.data;
@@ -1110,6 +1120,7 @@ static inline void reset_audio_timing(obs_source_t *source, uint64_t timestamp,
 {
 	source->timing_set = true;
 	source->timing_adjust = os_time - timestamp;
+	blog(LOG_DEBUG, "reset audio timing: %llu - %llu = %llu", os_time, timestamp, source->timing_adjust);
 }
 
 static void reset_audio_data(obs_source_t *source, uint64_t os_time)
@@ -1243,6 +1254,7 @@ static inline bool source_muted(obs_source_t *source, uint64_t os_time)
 static void source_output_audio_data(obs_source_t *source,
 				     const struct audio_data *data)
 {
+	int log_flag = 0;
 	size_t sample_rate = audio_output_get_sample_rate(obs->audio.audio);
 	struct audio_data in = *data;
 	uint64_t diff;
@@ -1250,26 +1262,35 @@ static void source_output_audio_data(obs_source_t *source,
 	int64_t sync_offset;
 	bool using_direct_ts = false;
 	bool push_back = false;
+	uint64_t original_ts = data->timestamp;
 
 	/* detects 'directly' set timestamps as long as they're within
 	 * a certain threshold */
 	if (uint64_diff(in.timestamp, os_time) < MAX_TS_VAR) {
+		flag_or(log_flag, 0);
 		source->timing_adjust = 0;
 		source->timing_set = true;
 		using_direct_ts = true;
 	}
 
 	if (!source->timing_set) {
+		// ********* //
+		flag_or(log_flag, 1);
 		reset_audio_timing(source, in.timestamp, os_time);
 
 	} else if (source->next_audio_ts_min != 0) {
+		// >>>>>>>>> //
+		flag_or(log_flag, 2);
 		diff = uint64_diff(source->next_audio_ts_min, in.timestamp);
 
 		/* smooth audio if within threshold */
-		if (diff > MAX_TS_VAR && !using_direct_ts)
+		if (diff > MAX_TS_VAR && !using_direct_ts) {
+			flag_or(log_flag, 3);
 			handle_ts_jump(source, source->next_audio_ts_min,
 				       in.timestamp, diff, os_time);
-		else if (diff < TS_SMOOTHING_THRESHOLD) {
+		} else if (diff < TS_SMOOTHING_THRESHOLD) {
+			// >>>>>>>>> //
+			flag_or(log_flag, 4);
 			if (source->async_unbuffered && source->async_decoupled)
 				source->timing_adjust = os_time - in.timestamp;
 			in.timestamp = source->next_audio_ts_min;
@@ -1285,12 +1306,17 @@ static void source_output_audio_data(obs_source_t *source,
 	pthread_mutex_lock(&source->audio_buf_mutex);
 
 	if (source->next_audio_sys_ts_min == in.timestamp) {
+		flag_or(log_flag, 5);
 		push_back = true;
 
 	} else if (source->next_audio_sys_ts_min) {
+		// ********* //
+		// >>>>>>>>> //
+		flag_or(log_flag, 6);
 		diff = uint64_diff(source->next_audio_sys_ts_min, in.timestamp);
 
 		if (diff < TS_SMOOTHING_THRESHOLD) {
+			flag_or(log_flag, 7);
 			push_back = true;
 
 			/* This typically only happens if used with async video when
@@ -1300,6 +1326,8 @@ static void source_output_audio_data(obs_source_t *source,
 		 * just clear the audio data in that small window and force a
 		 * resync.  This handles all cases rather than just looping. */
 		} else if (diff > MAX_TS_VAR) {
+			// ********* //
+			flag_or(log_flag, 8);
 			reset_audio_timing(source, data->timestamp, os_time);
 			in.timestamp = data->timestamp + source->timing_adjust;
 		}
@@ -1313,21 +1341,33 @@ static void source_output_audio_data(obs_source_t *source,
 		source->next_audio_ts_min + source->timing_adjust;
 
 	if (source->last_sync_offset != sync_offset) {
+		flag_or(log_flag, 9);
 		if (source->last_sync_offset)
 			push_back = false;
 		source->last_sync_offset = sync_offset;
 	}
 
 	if (source->monitoring_type != OBS_MONITORING_TYPE_MONITOR_ONLY) {
-		if (push_back && source->audio_ts)
+		// ********* //
+		// >>>>>>>>> //
+		flag_or(log_flag, 10);
+		if (push_back && source->audio_ts) {
+			flag_or(log_flag, 11);
 			source_output_audio_push_back(source, &in);
-		else
+		} else {
+			// ********* //
+			// >>>>>>>>> //
+			flag_or(log_flag, 12);
 			source_output_audio_place(source, &in);
+		}
 	}
 
 	pthread_mutex_unlock(&source->audio_buf_mutex);
 
 	source_signal_audio_data(source, data, source_muted(source, os_time));
+	blog(LOG_DEBUG, "incoming audio ts: %llu converted: %llu, offset: %lld",
+		original_ts, in.timestamp, in.timestamp - original_ts);
+	ablog(2, log_flag);
 }
 
 enum convert_type {

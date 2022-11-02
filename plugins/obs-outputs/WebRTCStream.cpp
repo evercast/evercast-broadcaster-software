@@ -715,12 +715,14 @@ webrtc::VideoFrame WebRTCStream::constructOutputFrame(video_data* frame)
     // Align timestamps from OBS capturer with rtc::TimeMicros timebase
     const int64_t aligned_timestamp_us =
             timestamp_aligner_.TranslateTimestamp(obs_timestamp_us, rtc::TimeMicros());
+    debug("Send video timestamps: %lu; %lu", obs_timestamp_us, aligned_timestamp_us);
+    debug("Send video data: %u", frame->data[0][0]);
 
     // Create a webrtc::VideoFrame to pass to the capturer
     return webrtc::VideoFrame::Builder()
             .set_video_frame_buffer(buffer)
             .set_rotation(webrtc::kVideoRotation_0)
-            .set_timestamp_us(aligned_timestamp_us)
+            .set_timestamp_us(obs_timestamp_us)
             .set_id(++frame_id)
             .build();
 }
