@@ -283,27 +283,27 @@ jobs:
           keys:
             - temp-build-cache-zips-{{ .Branch }}
 
-      - run:
-          name: build
-          shell: cmd.exe
-          working_directory: CI/util
-          environment:
-            build_config: Release
-            EBS_VERSION: 3.0.0
-            EBS_VERSION_MAJOR: 3
-            EBS_VERSION_MINOR: 0
-            EBS_VERSION_PATCH: 0
+      #- run:
+          #name: build
+          #shell: cmd.exe
+          #working_directory: CI/util
+          #environment:
+            #build_config: Release
+            #EBS_VERSION: 3.0.0
+            #EBS_VERSION_MAJOR: 3
+            #EBS_VERSION_MINOR: 0
+            #EBS_VERSION_PATCH: 0
 
-            libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
-            opensslPath: ~/project/deps-install/openssl-1.1/x64
-            QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
-            ffmpegPath: ~/project/deps-install/ffmpeg
-            DepsPath64: ~/project/deps-install/obs-deps/win64
-            VLCPath: ~/project/deps-install/vlc
-            NDIPath:
+            #libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
+            #opensslPath: ~/project/deps-install/openssl-1.1/x64
+            #QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
+            #ffmpegPath: ~/project/deps-install/ffmpeg
+            #DepsPath64: ~/project/deps-install/obs-deps/win64
+            #VLCPath: ~/project/deps-install/vlc
+            #NDIPath:
 
-          command: |
-            .\win_build_ci.cmd
+          #command: |
+            #.\win_build_ci.cmd
 
       - save_cache:
           key: temp-build-cache-zips-{{ .Branch }}
