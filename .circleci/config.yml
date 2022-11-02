@@ -278,6 +278,11 @@ jobs:
 
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/"
 
+      - restore_cache:
+          name: restoring build cache TODO REMOVE
+          keys:
+            - temp-build-cache-zips-{{ .Branch }}
+
       - run:
           name: build
           shell: cmd.exe
@@ -299,7 +304,13 @@ jobs:
 
           command: |
             .\win_build_ci.cmd
-            
+
+      - save_cache:
+          key: temp-build-cache-zips-{{ .Branch }}
+          name: saving build cache TODO REMOVE
+          when: always
+          paths:
+            - build
 
       - run:
           name: check build dir
