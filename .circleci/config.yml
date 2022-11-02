@@ -308,6 +308,19 @@ jobs:
           command: |
             ls
 
+      - run:
+          name: package
+          shell: cmd.exe
+          working_directory: CI/util
+          command: .\package-installer.cmd
+
+      - run:
+          name: check build dir
+          shell: bash.exe
+          working_directory: build
+          command: |
+            ls
+
 workflows:
 #  build-ebs-mac-workflow:
 #    jobs:
