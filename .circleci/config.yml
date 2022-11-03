@@ -320,8 +320,6 @@ jobs:
             ls
 
       - run:
-          environment:
-            WIX: ~$USER/project/CI/tools/wix
           name: package
           shell: cmd.exe
           working_directory: CI/util
