@@ -330,7 +330,7 @@ jobs:
             EBS_VERSION_MINOR: 0
             EBS_VERSION_PATCH: 0
 
-          command: ..\CI\installer\package-installer.cmd
+          command: ..\CI\util\package-installer.cmd
 
       - run:
           name: check build dir
