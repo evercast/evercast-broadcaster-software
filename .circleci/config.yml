@@ -322,8 +322,15 @@ jobs:
       - run:
           name: package
           shell: cmd.exe
-          working_directory: CI/util
-          command: .\package-installer.cmd
+          working_directory: build
+          environment:
+            build_config: Release
+            EBS_VERSION: 3.0.0
+            EBS_VERSION_MAJOR: 3
+            EBS_VERSION_MINOR: 0
+            EBS_VERSION_PATCH: 0
+
+          command: ..\CI\installer\package-installer.cmd
 
       - run:
           name: check build dir
