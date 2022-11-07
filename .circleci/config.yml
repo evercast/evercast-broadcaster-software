@@ -140,10 +140,26 @@ jobs:
   build-ebs-win:
     executor:
       name: win/windows
+    environment:
+      NDI_PLUGIN_RELEASE_TAG: 4.9.1
+      build_config: Release
+      EBS_VERSION: 3.0.0
+      EBS_VERSION_MAJOR: 3
+      EBS_VERSION_MINOR: 0
+      EBS_VERSION_PATCH: 0
     steps:
       - checkout
       - run: git submodule sync
       - run: git submodule update --init
+
+      - fetch_ndi:
+          name: fetch NDI source
+          shell: bash.exe
+          command: |
+            NDI_DIR=`eval echo ~$USER`/deps-install
+            echo $NDI_DIR
+            cd $NDI_DIR
+            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
 
       - restore_cache:
           name: restoring cache
@@ -283,27 +299,27 @@ jobs:
           keys:
             - temp-build-cache-zips-{{ .Branch }}
 
-      #- run:
-          #name: build
-          #shell: cmd.exe
-          #working_directory: CI/util
-          #environment:
-            #build_config: Release
-            #EBS_VERSION: 3.0.0
-            #EBS_VERSION_MAJOR: 3
-            #EBS_VERSION_MINOR: 0
-            #EBS_VERSION_PATCH: 0
+      - run:
+          name: build
+          shell: cmd.exe
+          working_directory: CI/util
+          environment:
+            libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
+            opensslPath: ~/project/deps-install/openssl-1.1/x64
+            QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
+            ffmpegPath: ~/project/deps-install/ffmpeg
+            DepsPath64: ~/project/deps-install/obs-deps/win64
+            VLCPath: ~/project/deps-install/vlc
+            NDIPath: ~/project/deps-install/obs-ndi
 
-            #libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
-            #opensslPath: ~/project/deps-install/openssl-1.1/x64
-            #QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
-            #ffmpegPath: ~/project/deps-install/ffmpeg
-            #DepsPath64: ~/project/deps-install/obs-deps/win64
-            #VLCPath: ~/project/deps-install/vlc
-            #NDIPath:
+          command: |
+            .\win_build_ci.cmd
 
-          #command: |
-            #.\win_build_ci.cmd
+      - build_ndi:
+          name: build NDI plugin
+          shell: cmd.exe
+          working_directory: CI\util
+          command: .\build_ndi.cmd
 
       - save_cache:
           key: temp-build-cache-zips-{{ .Branch }}
@@ -323,13 +339,6 @@ jobs:
           name: package
           shell: cmd.exe
           working_directory: build
-          environment:
-            build_config: Release
-            EBS_VERSION: 3.0.0
-            EBS_VERSION_MAJOR: 3
-            EBS_VERSION_MINOR: 0
-            EBS_VERSION_PATCH: 0
-
           command: ..\CI\util\package-installer.cmd
 
       - run:

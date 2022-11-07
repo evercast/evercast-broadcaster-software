@@ -21,3 +21,4 @@ cmake ^
   -DNDI_PATH=%NDIPath% ^
   -DVLCPath=%VLCPath% ^
   ..
+

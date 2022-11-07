@@ -1,4 +1,4 @@
-SET WIX=%USERPROFILE%\project\CI\tools\wix
+SET WIX=%USERPROFILE%\project\CI\tools
 ECHO %WIX%
 SET PATH=%PATH%;%WIX%
 SET PATH=%PATH%;C:\Program Files\CMake\bin
