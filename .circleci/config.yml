@@ -155,10 +155,8 @@ jobs:
       - run:
           name: fetch NDI source
           shell: bash.exe
+          working_directory: deps-install
           command: |
-            NDI_DIR=~/project/deps-install
-            echo $NDI_DIR
-            cd $NDI_DIR
             git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
             pwd
             ls
