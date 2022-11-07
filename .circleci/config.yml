@@ -152,7 +152,7 @@ jobs:
       - run: git submodule sync
       - run: git submodule update --init
 
-      - fetch_ndi:
+      - run:
           name: fetch NDI source
           shell: bash.exe
           command: |
@@ -315,11 +315,11 @@ jobs:
           command: |
             .\win_build_ci.cmd
 
-      - build_ndi:
+      - run:
           name: build NDI plugin
           shell: cmd.exe
           working_directory: CI\util
-          command: .\build_ndi.cmd
+          command: .\win_build_ndi.cmd
 
       - save_cache:
           key: temp-build-cache-zips-{{ .Branch }}
