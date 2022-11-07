@@ -6,6 +6,9 @@ SET QTDIR64=C:\Users\circleci\project\deps-install\Qt\5.15.2\msvc2019_64
 
 CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
 
+rem echo off likely called by above script
+ECHO ON
+
 CD ..\..\deps-install\obs-ndi
 MKDIR build
 CD build
