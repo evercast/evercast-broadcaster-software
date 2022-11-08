@@ -157,7 +157,8 @@ jobs:
           shell: bash.exe
           working_directory: deps-install
           command: |
-            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
+            git clone -b build-experiment https://github.com/evercast/obs-ndi.git
+            # git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
             pwd
             ls
 
@@ -294,26 +295,26 @@ jobs:
 
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/"
 
-      #- restore_cache:
-          #name: restoring build cache TODO REMOVE
-          #keys:
-            #- temp-build-cache-zips-{{ .Branch }}
+      - restore_cache:
+          name: restoring build cache TODO REMOVE
+          keys:
+            - temp-build-cache-zips-{{ .Branch }}
 
-      - run:
-          name: build
-          shell: cmd.exe
-          working_directory: CI/util
-          environment:
-            libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
-            opensslPath: ~/project/deps-install/openssl-1.1/x64
-            QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
-            ffmpegPath: ~/project/deps-install/ffmpeg
-            DepsPath64: ~/project/deps-install/obs-deps/win64
-            VLCPath: ~/project/deps-install/vlc
-            NDIPath: ~/project/deps-install/obs-ndi
+      #- run:
+          #name: build
+          #shell: cmd.exe
+          #working_directory: CI/util
+          #environment:
+            #libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
+            #opensslPath: ~/project/deps-install/openssl-1.1/x64
+            #QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
+            #ffmpegPath: ~/project/deps-install/ffmpeg
+            #DepsPath64: ~/project/deps-install/obs-deps/win64
+            #VLCPath: ~/project/deps-install/vlc
+            #NDIPath: ~/project/deps-install/obs-ndi
 
-          command: |
-            .\win_build_ci.cmd
+          #command: |
+            #.\win_build_ci.cmd
 
       - run:
           name: build NDI plugin
@@ -321,12 +322,12 @@ jobs:
           working_directory: CI\util
           command: .\win_build_ndi.cmd
 
-      #- save_cache:
-          #key: temp-build-cache-zips-{{ .Branch }}
-          #name: saving build cache TODO REMOVE
-          #when: always
-          #paths:
-            #- build
+      - save_cache:
+          key: temp-build-cache-zips-{{ .Branch }}
+          name: saving build cache TODO REMOVE
+          when: always
+          paths:
+            - build
 
       - run:
           name: check build dir
