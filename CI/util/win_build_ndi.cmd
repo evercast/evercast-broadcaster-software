@@ -16,7 +16,7 @@ CD build
 cmake ^
   -G "NMake Makefiles" ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%\libobs ^
-  -DLIBOBS_DIR=%EBS_DIR%\libobs ^
+  -DLibObs_DIR=%EBS_DIR%\build\libobs ^
   -DLIBOBS_LIB=%EBS_DIR%\build\libobs\obs.lib ^
   -DOBS_FRONTEND_LIB=%EBS_DIR%\build\UI\obs-frontend-api\obs-frontend-api.lib ^
   -DQt5Core_DIR=%QTDIR64%/lib/cmake/Qt5Core ^
