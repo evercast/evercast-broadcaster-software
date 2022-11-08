@@ -13,20 +13,16 @@ CD ..\..\deps-install\obs-ndi
 MKDIR build
 CD build
 
-DIR %EBS_DIR%
-DIR %EBS_DIR%\build
-DIR %EBS_DIR%\libobs
-DIR %EBS_DIR%\build\libobs
 
 cmake ^
   -G "NMake Makefiles" ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%\libobs ^
-  -DLibObs_DIR=%EBS_DIR%\build\libobs ^
   -DLIBOBS_LIB=%EBS_DIR%\build\libobs\obs.lib ^
   -DOBS_FRONTEND_LIB=%EBS_DIR%\build\UI\obs-frontend-api\obs-frontend-api.lib ^
   -DQt5Core_DIR=%QTDIR64%/lib/cmake/Qt5Core ^
   -DQt5Widgets_DIR=%QTDIR64%/lib/cmake/Qt5Widgets ^
   -DQTDIR=%QTDIR64% ^
+  -DWIN32=true ^
   ..
 
 nmake
