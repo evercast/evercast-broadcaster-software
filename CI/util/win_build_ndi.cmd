@@ -13,6 +13,11 @@ CD ..\..\deps-install\obs-ndi
 MKDIR build
 CD build
 
+DIR %EBS_DIR%
+DIR %EBS_DIR%\build
+DIR %EBS_DIR%\libobs
+DIR %EBS_DIR%\build\libobs
+
 cmake ^
   -G "NMake Makefiles" ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%\libobs ^
