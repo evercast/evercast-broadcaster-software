@@ -17,7 +17,7 @@ cmake ^
   -G "NMake Makefiles" ^
   -DCMAKE_BUILD_TYPE=Release ^
   -DCMAKE_MODULE_PATH=C:/Users/circleci/project/deps-install/obs-ndi/external ^
-  -DCMAKE_PREFIX_PATH=%EBS_DIR%/build/deps/w32-pthreads/CMakeFiles ^
+  -DCMAKE_PREFIX_PATH=C:/Users/circleci/project/build/deps/w32-pthreads/CMakeFiles ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%\libobs ^
   -DLIBOBS_LIB=%EBS_DIR%\build\libobs\obs.lib ^
   -DOBS_FRONTEND_LIB=%EBS_DIR%\build\UI\obs-frontend-api\obs-frontend-api.lib ^
