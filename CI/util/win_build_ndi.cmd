@@ -13,11 +13,10 @@ CD ..\..\deps-install\obs-ndi
 MKDIR build
 CD build
 
-COPY ..\external\FindLibObs.cmake ..
-
 cmake ^
   -G "NMake Makefiles" ^
   -DCMAKE_BUILD_TYPE=Release ^
+  -DCMAKE_MODULE_PATH=C:/Users/circleci/project/deps-install/obs-ndi/external ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%\libobs ^
   -DLIBOBS_LIB=%EBS_DIR%\build\libobs\obs.lib ^
   -DOBS_FRONTEND_LIB=%EBS_DIR%\build\UI\obs-frontend-api\obs-frontend-api.lib ^
