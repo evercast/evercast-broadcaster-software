@@ -20,6 +20,7 @@ cmake ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%/libobs ^
   -DLIBOBS_LIB=%EBS_DIR%/build/libobs/obs.lib ^
   -DLIBOBS_DIR=%EBS_DIR%/build/libobs ^
+  -DLibObs_ROOT=%EBS_DIR%/build/libobs ^
   -DOBS_FRONTEND_LIB=%EBS_DIR%/build/UI/obs-frontend-api/obs-frontend-api.lib ^
   -DQt5Core_DIR=%QTDIR64%/lib/cmake/Qt5Core ^
   -DQt5Widgets_DIR=%QTDIR64%/lib/cmake/Qt5Widgets ^
