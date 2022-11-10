@@ -13,10 +13,11 @@ CD ..\..\deps-install\obs-ndi
 MKDIR build
 CD build
 
+rem -DCMAKE_MODULE_PATH=C:/Users/circleci/project/deps-install/obs-ndi/external ^
+
 cmake ^
   -G "NMake Makefiles" ^
   -DCMAKE_BUILD_TYPE=Release ^
-  -DCMAKE_MODULE_PATH=C:/Users/circleci/project/deps-install/obs-ndi/external ^
   -DLIBOBS_INCLUDE_DIR=%EBS_DIR%/libobs ^
   -DLIBOBS_LIB=%EBS_DIR%/build/libobs/obs.lib ^
   -Dlibobs_ROOT=%EBS_DIR%/build/libobs ^
