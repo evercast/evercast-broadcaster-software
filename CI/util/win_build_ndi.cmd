@@ -37,4 +37,4 @@ MKDIR plugin\data\obs-plugins\obs-ndi\locale
 MKDIR plugin\obs-plugins\64bit
 XCOPY ..\data\locale\* plugin\data\obs-plugins\obs-ndi\locale
 XCOPY .\obs-ndi.dll plugin\obs-plugins\64bit
-XCOPY /E /I plugin\* %EBS_DIR%\build\rundir\%build_config%\
+XCOPY /E /I plugin\* ..\..\..\build\rundir\%build_config%\
