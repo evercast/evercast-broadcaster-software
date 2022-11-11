@@ -5,6 +5,11 @@ elseif(WIN32 AND NOT CPACK_GENERATOR)
 	set(CPACK_GENERATOR "NSIS")
 endif()
 
+# CPack will hang on a build server if using the default of Makefiles
+if (WIN32)
+	set(CPACK_CMAKE_GENERATOR Ninja)
+endif()
+
 set(CPACK_PACKAGE_NAME "EBS")
 set(CPACK_PACKAGE_VENDOR "evercast.us")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "EBS - Live video and audio streaming and recording software")
