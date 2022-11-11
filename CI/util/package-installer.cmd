@@ -8,7 +8,7 @@ ECHO %PATH%
 
 CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
 
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cpack.exe" -G WIX --verbose
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cpack.exe" -G WIX --verbose --debug
 
 ECHO "****************************** Preinstall log ******************************"
 TYPE .\_CPack_Packages\win64\WIX\PreinstallOutput.log
