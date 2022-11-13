@@ -29,10 +29,11 @@ cmake ^
 
 nmake
 
-DIR
-
 MKDIR plugin\data\obs-plugins\obs-ndi\locale
 MKDIR plugin\obs-plugins\64bit
 XCOPY ..\data\locale\* plugin\data\obs-plugins\obs-ndi\locale
 XCOPY .\obs-ndi.dll plugin\obs-plugins\64bit
-XCOPY /E /I plugin\* ..\..\..\build\rundir\%build_config%\
+
+SET NDI_DIR=..\..\..\project\deps-install\obs-ndi
+MKDIR %NDI_DIR%
+XCOPY /E /I plugin\* %NDI_DIR%
