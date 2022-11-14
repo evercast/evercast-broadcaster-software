@@ -34,6 +34,7 @@ MKDIR plugin\obs-plugins\64bit
 XCOPY ..\data\locale\* plugin\data\obs-plugins\obs-ndi\locale
 XCOPY .\obs-ndi.dll plugin\obs-plugins\64bit
 
-SET NDI_DIR=..\..\..\project\deps-install\obs-ndi
+SET NDI_DIR=..\obs-plugins
 MKDIR %NDI_DIR%
 XCOPY /E /I plugin\* %NDI_DIR%
+DIR %NDI_DIR%
