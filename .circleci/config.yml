@@ -305,13 +305,13 @@ jobs:
           shell: cmd.exe
           working_directory: CI/util
           environment:
-            libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
-            opensslPath: ~/project/deps-install/openssl-1.1/x64
-            QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
-            ffmpegPath: ~/project/deps-install/ffmpeg
-            DepsPath64: ~/project/deps-install/obs-deps/win64
-            VLCPath: ~/project/deps-install/vlc
-            NDIPath: ~/project/deps-install/obs-ndi
+            libwebrtcPath: deps-install/libwebrtc/cmake
+            opensslPath: deps-install/openssl-1.1/x64
+            QTDIR64: deps-install/Qt/5.15.2/msvc2019_64
+            ffmpegPath: deps-install/ffmpeg
+            DepsPath64: deps-install/obs-deps/win64
+            VLCPath: deps-install/vlc
+            NDIPath: deps-install/obs-ndi
 
           command: |
             .\win_build_ci.cmd
