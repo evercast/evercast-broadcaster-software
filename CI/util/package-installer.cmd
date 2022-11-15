@@ -24,3 +24,8 @@ TYPE .\CMakeFiles\CMakeError.log
 "%WIX%\candle.exe" "..\CI\install\win\Install EBS.wxs" -ext WixBalExtension -ext WixUtilExtension
 "%WIX%\light.exe" "Install EBS.wixobj" -ext WixBalExtension -ext WixUtilExtension
 MOVE "Install EBS.exe" "Install EBS %EBS_VERSION%.exe"
+
+rem store installer as artifact
+MKDIR artifacts
+COPY "Install EBS %EBS_VERSION%.exe" artifacts
+DIR artifacts

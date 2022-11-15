@@ -330,12 +330,8 @@ jobs:
           working_directory: build
           command: ..\CI\util\package-installer.cmd
 
-      - run:
-          name: check build dir
-          shell: bash.exe
-          working_directory: build
-          command: |
-            ls
+      - store_artifacts:
+          path: build\artifacts
 
 workflows:
 #  build-ebs-mac-workflow:
