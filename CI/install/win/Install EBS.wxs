@@ -18,7 +18,7 @@
 
 		<util:FileSearch
 		  Id="HasNDIRuntime"
-		  Path="[ProgramFiles64Folder]\NewTek\NDI 4 Runtime\v4\Processing.NDI.Lib.x64.dll"
+		  Path="[ProgramFiles64Folder]\NDI\NDI 5 Runtime\v5\Processing.NDI.Lib.x64.dll"
 		  Result="exists"
 		  Variable="HasNDIRuntime" />
 		
