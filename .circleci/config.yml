@@ -295,32 +295,32 @@ jobs:
 
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/"
 
-      - restore_cache:
-          name: restoring build cache TODO REMOVE
-          keys:
-            - temp-build-cache-zips-{{ .Branch }}
+      #- restore_cache:
+          #name: restoring build cache TODO REMOVE
+          #keys:
+            #- temp-build-cache-zips-{{ .Branch }}
 
-      #- run:
-          #name: build
-          #shell: cmd.exe
-          #working_directory: CI/util
-          #environment:
-            #libwebrtcPath: C:/Users/circleci/project/deps-install/libwebrtc/cmake
-            #opensslPath: C:/Users/circleci/project/deps-install/openssl-1.1/x64
-            #QTDIR64: C:/Users/circleci/project/deps-install/Qt/5.15.2/msvc2019_64
-            #ffmpegPath: C:/Users/circleci/project/deps-install/ffmpeg
-            #DepsPath64: C:/Users/circleci/project/deps-install/obs-deps/win64
-            #VLCPath: C:/Users/circleci/project/deps-install/vlc
-            #NDIPath: C:/Users/circleci/project/deps-install/obs-ndi
+      - run:
+          name: build
+          shell: cmd.exe
+          working_directory: CI/util
+          environment:
+            libwebrtcPath: C:/Users/circleci/project/deps-install/libwebrtc/cmake
+            opensslPath: C:/Users/circleci/project/deps-install/openssl-1.1/x64
+            QTDIR64: C:/Users/circleci/project/deps-install/Qt/5.15.2/msvc2019_64
+            ffmpegPath: C:/Users/circleci/project/deps-install/ffmpeg
+            DepsPath64: C:/Users/circleci/project/deps-install/obs-deps/win64
+            VLCPath: C:/Users/circleci/project/deps-install/vlc
+            NDIPath: C:/Users/circleci/project/deps-install/obs-ndi
 
-          #command: |
-            #.\win_build_ci.cmd
+          command: |
+            .\win_build_ci.cmd
 
-      #- run:
-          #name: build NDI plugin
-          #shell: cmd.exe
-          #working_directory: CI\util
-          #command: .\win_build_ndi.cmd
+      - run:
+          name: build NDI plugin
+          shell: cmd.exe
+          working_directory: CI\util
+          command: .\win_build_ndi.cmd
 
       #- save_cache:
           #key: temp-build-cache-zips-{{ .Branch }}
