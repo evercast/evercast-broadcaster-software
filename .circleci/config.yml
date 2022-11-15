@@ -157,8 +157,8 @@ jobs:
           shell: bash.exe
           working_directory: deps-install
           command: |
-            git clone -b build-experiment https://github.com/evercast/obs-ndi.git
-            # git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
+            # git clone -b build-experiment https://github.com/evercast/obs-ndi.git
+            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
             pwd
             ls
 
@@ -295,11 +295,6 @@ jobs:
 
             ls "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/"
 
-      #- restore_cache:
-          #name: restoring build cache TODO REMOVE
-          #keys:
-            #- temp-build-cache-zips-{{ .Branch }}
-
       - run:
           name: build
           shell: cmd.exe
@@ -321,13 +316,6 @@ jobs:
           shell: cmd.exe
           working_directory: CI\util
           command: .\win_build_ndi.cmd
-
-      #- save_cache:
-          #key: temp-build-cache-zips-{{ .Branch }}
-          #name: saving build cache TODO REMOVE
-          #when: always
-          #paths:
-            #- build
 
       - run:
           name: check build dir
