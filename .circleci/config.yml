@@ -157,7 +157,6 @@ jobs:
           shell: bash.exe
           working_directory: deps-install
           command: |
-            # git clone -b build-experiment https://github.com/evercast/obs-ndi.git
             git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
             pwd
             ls
@@ -334,15 +333,16 @@ jobs:
           path: build\artifacts
 
 workflows:
-#  build-ebs-mac-workflow:
-#    jobs:
-#      - build-ebs-mac-xcode:
-#          matrix:
-#            parameters:
-#              xcode_version:
-#                - 14.0.0
-#                - 13.4.1
-#                - 13.3.0
+  build-ebs-mac-workflow:
+    jobs:
+      - build-ebs-mac-xcode:
+          matrix:
+            parameters:
+              xcode_version:
+                - 14.0.0
+                - 13.4.1
+                - 13.3.0
   build-ebs-win-workflow:
     jobs:
       - build-ebs-win
+

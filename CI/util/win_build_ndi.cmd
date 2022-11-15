@@ -1,3 +1,5 @@
+@ECHO OFF
+
 SET PATH=%PATH%;C:\Program Files\CMake\bin
 SET PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64
 
@@ -5,9 +7,6 @@ SET EBS_DIR=../../..
 SET QTDIR64=C:/Users/circleci/project/deps-install/Qt/5.15.2/msvc2019_64
 
 CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
-
-rem echo off likely called by above script
-ECHO ON
 
 CD ..\..\deps-install\obs-ndi
 MKDIR build
