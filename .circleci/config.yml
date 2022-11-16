@@ -333,15 +333,15 @@ jobs:
           path: build\artifacts
 
 workflows:
-  #build-ebs-mac-workflow:
-    #jobs:
-      #- build-ebs-mac-xcode:
-          #matrix:
-            #parameters:
-              #xcode_version:
-                #- 14.0.0
-                #- 13.4.1
-                #- 13.3.0
+  build-ebs-mac-workflow:
+    jobs:
+      - build-ebs-mac-xcode:
+          matrix:
+            parameters:
+              xcode_version:
+                - 14.0.0
+                - 13.4.1
+                - 13.3.0
   build-ebs-win-workflow:
     jobs:
       - build-ebs-win
