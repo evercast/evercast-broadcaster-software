@@ -305,7 +305,7 @@ jobs:
             ffmpegPath: C:/Users/circleci/project/deps-install/ffmpeg
             DepsPath64: C:/Users/circleci/project/deps-install/obs-deps/win64
             VLCPath: C:/Users/circleci/project/deps-install/vlc
-            NDIPath: C:/Users/circleci/project/deps-install/obs-ndi
+            NDIPath: C:/Users/circleci/project/deps-install/obs-ndi/obs-plugins
 
           command: |
             .\win_build_ci.cmd
