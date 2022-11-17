@@ -96,6 +96,3 @@ UI/webrtcVersion.h
 /out
 CMakeSettings.json
 
-# Exception added to end of file to override all prior ignores
-!CI/tools/**
-

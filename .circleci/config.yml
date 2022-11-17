@@ -175,6 +175,16 @@ jobs:
             choco install 7zip
 
             mkdir archives || true
+            mkdir ../CI/tools
+
+            echo "#####################################################"
+            echo "## DOWNLOADING WIX tools"
+            curl -C - -L "https://github.com/wixtoolset/wix3/releases/download/wix311rtm/wix311-binaries.zip" -o "archives/wix311-binaries.zip"
+            echo "## DOWNLOAD COMPLETED"
+            7z x "archives/wix311-binaries.zip" -o"../CI/tools"
+            echo "## UNZIP COMPLETED"
+            ls
+            echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING obs-deps"
