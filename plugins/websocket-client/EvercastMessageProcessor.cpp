@@ -33,6 +33,38 @@ bool EvercastMessageProcessor::sendLoginMessage()
 	return sender->sendMessage(login, "login");
 }
 
+bool EvercastMessageProcessor::sendStartStreamMessage(string room)
+{
+	json startStream = {
+		{"event", START_NATIVE_DESKTOP_STREAM},
+		{"transaction", to_string(rand())},
+		{"body", {
+			{"platform", "EBS"},
+			{"streamType", ""},
+			{"os", ""},
+			{"userId", ""},
+			{"roomId", ""},
+			{"resolution", ""},
+			{"framerate", ""},
+			{"colorSpace", ""},
+			{"streamId", ""}
+	    }},
+	};
+
+	return sender->sendMessage(startStream, START_NATIVE_DESKTOP_STREAM);
+}
+
+bool EvercastMessageProcessor::sendEndStreamMessage(string room)
+{
+	json endStream = {
+		{"event", END_NATIVE_DESKTOP_STREAM},
+		{"transaction", to_string(rand())},
+        {"body", {{"streamId", ""}}}
+	};
+
+    return sender->sendMessage(endStream, END_NATIVE_DESKTOP_STREAM);
+}
+
 bool EvercastMessageProcessor::sendAttachMessage()
 {
 	// Create handle command
