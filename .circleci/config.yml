@@ -140,10 +140,32 @@ jobs:
   build-ebs-win:
     executor:
       name: win/windows
+    environment:
+      NDI_PLUGIN_RELEASE_TAG: 4.9.1
+      build_config: Release
+      EBS_VERSION: 3.0.0
+      EBS_VERSION_MAJOR: 3
+      EBS_VERSION_MINOR: 0
+      EBS_VERSION_PATCH: 0
     steps:
       - checkout
       - run: git submodule sync
       - run: git submodule update --init
+
+      - run:
+          name: fetch NDI source
+          shell: bash.exe
+          working_directory: deps-install
+          command: |
+            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
+            pwd
+            ls
+
+      - restore_cache:
+          name: restoring cache
+          keys:
+            - deps-cache-zips-{{ .Branch }}
+
       - run:
           name: install deps
           shell: bash.exe
@@ -152,20 +174,32 @@ jobs:
             choco install cmake -y
             choco install 7zip
 
+            mkdir archives || true
+            mkdir ../CI/tools
+
+            echo "#####################################################"
+            echo "## DOWNLOADING WIX tools"
+            curl -C - -L "https://github.com/wixtoolset/wix3/releases/download/wix311rtm/wix311-binaries.zip" -o "archives/wix311-binaries.zip"
+            echo "## DOWNLOAD COMPLETED"
+            7z x "archives/wix311-binaries.zip" -o"../CI/tools"
+            echo "## UNZIP COMPLETED"
+            ls
+            echo "##########################"
+
             echo "#####################################################"
             echo "## DOWNLOADING obs-deps"
-            curl -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" -o "obs-deps.zip"
+            curl -C - -L "https://github.com/obsproject/obs-deps/releases/download/win-2022-02-13/windows-deps-2022-02-13.zip" -o "archives/obs-deps.zip"
             echo "## DOWNLOAD COMPLETED"
-            7z x "obs-deps.zip" -o"obs-deps"
+            7z x "archives/obs-deps.zip" -o"obs-deps"
             echo "## UNZIP COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING libwebrtc"
-            curl -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/libwebrtc.7z" -o "libwebrtc.7z"
+            curl -C - -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/libwebrtc.7z" -o "archives/libwebrtc.7z"
             echo "## DOWNLOAD COMPLETED"
-            7z x "libwebrtc.7z" -o"libwebrtc"
+            7z x "archives/libwebrtc.7z" -o"libwebrtc"
             echo "## UNZIP COMPLETED"
             ls
             echo "##########################"
@@ -174,49 +208,58 @@ jobs:
 
             echo "#####################################################"
             echo "## DOWNLOADING ndi runtime"
-            curl -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/ndi-runtime-5.0-Windows.exe" -o "ndi-runtime-5.0-Windows.exe"
+            curl -C - -L "https://github.com/evercast/evercast-broadcaster-software/releases/download/3.0.0-win/ndi-runtime-5.0-Windows.exe" -o "archives/ndi-runtime-5.0-Windows.exe"
             echo "## DOWNLOAD COMPLETED"
+            mv "archives/ndi-runtime-5.0-Windows.exe" .
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING vc_redist.x64.exe"
-            curl -L "https://aka.ms/vs/17/release/vc_redist.x64.exe" -o "vc_redist.x64.exe"
+            curl -C - -L "https://aka.ms/vs/17/release/vc_redist.x64.exe" -o "archives/vc_redist.x64.exe"
             echo "## DOWNLOAD COMPLETED"
+            mv archives/vc_redist.x64.exe .
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING Qt_5.15.2.7z"
-            curl -L "https://cdn-fastly.obsproject.com/downloads/Qt_5.15.2.7z" -o "Qt_5.15.2.7z"
-            7z x Qt_5.15.2.7z -oQt
+            curl -C - -L "https://cdn-fastly.obsproject.com/downloads/Qt_5.15.2.7z" -o "archives/Qt_5.15.2.7z"
+            7z x archives/Qt_5.15.2.7z -oQt
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING openssl-1.1.tgz"
-            curl -L "https://libwebrtc-community-builds.s3.amazonaws.com/openssl-1.1.tgz" -o "openssl-1.1.tgz"
-            tar -xzf openssl-1.1.tgz
+            curl -C - -L "https://libwebrtc-community-builds.s3.amazonaws.com/openssl-1.1.tgz" -o "archives/openssl-1.1.tgz"
+            tar -xzf archives/openssl-1.1.tgz
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
             echo "## DOWNLOADING vlc.zip"
-            curl -L "https://cdn-fastly.obsproject.com/downloads/vlc.zip" -o "vlc.zip"
-            7z x vlc.zip -ovlc
+            curl -C - -L "https://cdn-fastly.obsproject.com/downloads/vlc.zip" -o "archives/vlc.zip"
+            7z x archives/vlc.zip -ovlc
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
 
             echo "#####################################################"
-            echo "## DOWNLOADING ffmpeg-4.4.1-full_build.7z"
-            curl -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.4.1-full_build.7z" -o "ffmpeg.7z"
-            7z x ffmpeg.7z -offmpeg
+            echo "## DOWNLOADING ffmpeg-5.0.1-full_build.7z"
+            curl -C - -L "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-5.0.1-full_build.7z" -o "archives/ffmpeg.7z"
+            7z x archives/ffmpeg.7z -offmpeg
             echo "## DOWNLOAD COMPLETED"
             ls
             echo "##########################"
+
+      - save_cache:
+          key: deps-cache-zips-{{ .Branch }}
+          name: saving cache
+          when: always
+          paths:
+            - deps-install/archives
 
       - run:
           name: prepare build folder
@@ -248,7 +291,7 @@ jobs:
 
 
       - run:
-          name: check VC
+          name: check vars
           shell: bash.exe
           command: |
 
@@ -266,22 +309,22 @@ jobs:
           shell: cmd.exe
           working_directory: CI/util
           environment:
-            build_config: Release
-            EBS_VERSION: 3.0.0
-            EBS_VERSION_MAJOR: 3
-            EBS_VERSION_MINOR: 0
-            EBS_VERSION_PATCH: 0
+            libwebrtcPath: C:/Users/circleci/project/deps-install/libwebrtc/cmake
+            opensslPath: C:/Users/circleci/project/deps-install/openssl-1.1/x64
+            QTDIR64: C:/Users/circleci/project/deps-install/Qt/5.15.2/msvc2019_64
+            ffmpegPath: C:/Users/circleci/project/deps-install/ffmpeg
+            DepsPath64: C:/Users/circleci/project/deps-install/obs-deps/win64
+            VLCPath: C:/Users/circleci/project/deps-install/vlc
+            NDIPath: C:/Users/circleci/project/deps-install/obs-ndi/obs-plugins
 
-            libwebrtcPath: ~/project/deps-install/libwebrtc/cmake
-            opensslPath: ~/project/deps-install/openssl-1.1/x64
-            QTDIR64: ~/project/deps-install/Qt/5.15.2/msvc2019_64
-            ffmpegPath: ~/project/deps-install/ffmpeg
-            DepsPath64: ~/project/deps-install/obs-deps/win64
-            VLCPath: ~/project/deps-install/vlc
-            NDIPath:
+          command: |
+            .\win_build_ci.cmd
 
-          command: .\win_build_ci.cmd
-            
+      - run:
+          name: build NDI plugin
+          shell: cmd.exe
+          working_directory: CI\util
+          command: .\win_build_ndi.cmd
 
       - run:
           name: check build dir
@@ -289,6 +332,15 @@ jobs:
           working_directory: build
           command: |
             ls
+
+      - run:
+          name: package
+          shell: cmd.exe
+          working_directory: build
+          command: ..\CI\util\package-installer.cmd
+
+      - store_artifacts:
+          path: build\artifacts
 
 workflows:
   build-ebs-mac-workflow:
@@ -300,8 +352,7 @@ workflows:
                 - 14.0.0
                 - 13.4.1
                 - 13.3.0
+  build-ebs-win-workflow:
+    jobs:
+      - build-ebs-win
 
-
-#  build-ebs-win-workflow:
-#    jobs:
-#      - build-ebs-win
