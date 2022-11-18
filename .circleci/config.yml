@@ -15,8 +15,8 @@ jobs:
       xcode: <<parameters.xcode_version>>
     environment:
       EBS_VERSION: 3.0.0
-      NDI_PLUGIN_RELEASE_TAG: 4.9.1
-
+      NDI_PLUGIN_RELEASE_TAG: 4.9.1-custom
+      NDI_PLUGIN_REPO: https://github.com/evercast/obs-ndi.git
       EBS_DEPS_PATH: /tmp/obs-deps
       EBS_DEPS_QT_PATH: /tmp/obs-deps-qt
       EBS_LIBWEBRTC_PATH: /tmp/libwebrtc/cmake
@@ -87,7 +87,7 @@ jobs:
           command: |
             MY_DIR=`eval echo ~$USER`
             echo $MY_DIR
-            git clone -b $NDI_PLUGIN_RELEASE_TAG https://github.com/Palakis/obs-ndi.git
+            git clone -b $NDI_PLUGIN_RELEASE_TAG $NDI_PLUGIN_REPO
             cd obs-ndi
             mkdir build
             cd build
