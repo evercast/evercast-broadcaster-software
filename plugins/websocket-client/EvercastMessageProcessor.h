@@ -33,13 +33,19 @@ public:
 	bool sendLoginMessage() override;
 	bool sendAttachMessage() override;
 	bool sendJoinMessage(string room) override;
-	bool sendStartStreamMessage(string room);
-	bool sendEndStreamMessage(string room);
+	bool sendStartStreamMessage();
+	bool sendEndStreamMessage();
 	bool sendDestroyMessage() override;
 
 protected:
 	void processErrorEvent(int errorCode, json &msg) override;
 	void processResponseEvent(json &msg) override;
+
+	void afterStreamStarted() override;
+	void beforeStreamEnded() override;
+
+	void startStreamInfoNotifications();
+	void endStreamInfoNotifications();
 
 private:
 	bool processPluginData(json& msg);

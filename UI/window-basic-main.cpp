@@ -33,6 +33,7 @@
 #include <util/util.hpp>
 #include <util/platform.h>
 #include <util/profiler.hpp>
+#include <util/stream-config.h>
 #include <util/dstr.hpp>
 
 #include "obs-app.hpp"
@@ -311,6 +312,7 @@ OBSBasic::OBSBasic(QWidget *parent)
 	renameSource->setShortcut({Qt::Key_F2});
 #endif
 
+	sceneListener = new SceneListener(this);
 	auto addNudge = [this](const QKeySequence &seq, const char *s) {
 		QAction *nudge = new QAction(ui->preview);
 		nudge->setShortcut(seq);
@@ -1125,6 +1127,10 @@ extern void CheckExistingCookieId();
 
 bool OBSBasic::InitBasicConfigDefaults()
 {
+    if (!stream_config_init()) {
+		return false;
+	}
+
 	QList<QScreen *> screens = QGuiApplication::screens();
 
 	if (!screens.size()) {
@@ -1530,6 +1536,7 @@ void OBSBasic::OBSInit()
 
 	if (!InitBasicConfig())
 		throw "Failed to load basic.ini";
+
 	if (!ResetAudio())
 		throw "Failed to initialize audio";
 
@@ -2246,6 +2253,7 @@ OBSBasic::~OBSBasic()
 	delete trayMenu;
 	delete programOptions;
 	delete program;
+	delete sceneListener;
 
 	/* XXX: any obs data must be released before calling obs_shutdown.
 	 * currently, we can't automate this with C++ RAII because of the
@@ -2634,6 +2642,8 @@ void OBSBasic::AddSceneItem(OBSSceneItem item)
 		obs_scene_enum_items(scene, select_one,
 				     (obs_sceneitem_t *)item);
 	}
+
+	api->on_event(OBS_FRONTEND_EVENT_SCENE_ITEM_LIST_CHANGED);
 }
 
 void OBSBasic::UpdateSceneSelection(OBSSource source)
@@ -4752,12 +4762,17 @@ void OBSBasic::on_actionRemoveSource_triggered()
 		OBSSceneItem &item = items[0];
 		obs_source_t *source = obs_sceneitem_get_source(item);
 
-		if (source && QueryRemoveSource(source))
+		if (source && QueryRemoveSource(source)) {
 			obs_sceneitem_remove(item);
+			api->on_event(
+				OBS_FRONTEND_EVENT_SCENE_ITEM_LIST_CHANGED);
+		}
 	} else {
 		if (removeMultiple(items.size())) {
 			for (auto &item : items)
 				obs_sceneitem_remove(item);
+			api->on_event(
+				OBS_FRONTEND_EVENT_SCENE_ITEM_LIST_CHANGED);
 		}
 	}
 }
@@ -5040,6 +5055,9 @@ void OBSBasic::StartStreaming()
 		sysTrayStream->setEnabled(false);
 		sysTrayStream->setText(ui->streamButton->text());
 	}
+
+	// Set config just before it's needed
+	stream_config_assign(basicConfig);
 
 	if (!outputHandler->StartStreaming(service)) {
 		ui->streamButton->setText(QTStr("Basic.Main.StartStreaming"));

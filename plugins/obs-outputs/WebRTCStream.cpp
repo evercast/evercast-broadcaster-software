@@ -17,6 +17,9 @@
 #include <libyuv.h>
 #include "Evercast.h"
 #include "EvercastSessionData.h"
+#include "EvercastStreamInfo.h"
+
+#include "stdlib.h"
 
 #include <algorithm>
 #include <chrono>
@@ -159,6 +162,8 @@ bool WebRTCStream::start(WebRTCStream::Type type)
     password = obs_service_get_password(service) ? obs_service_get_password(service) : "";
     video_codec = obs_service_get_codec(service) ? obs_service_get_codec(service) : "";
     protocol = obs_service_get_protocol(service) ? obs_service_get_protocol(service) : "";
+
+    initializeStreamData();
 
     // Stream settings sanity check
     // NOTE: Username checks out of scope for Evercast and not implemented here
@@ -930,4 +935,11 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 
     rtc::scoped_refptr<const webrtc::RTCStatsReport> result = stats_callback->report();
     return result;
+}
+
+void WebRTCStream::initializeStreamData() {
+	EvercastStreamInfo::instance()->assignStreamConfig();
+	EvercastStreamInfo::instance()->assignStreamSettings(this->output);
+	EvercastStreamInfo::instance()->assignStreamId(std::to_string(rand()));
+	EvercastStreamInfo::instance()->refreshStreamType();
 }

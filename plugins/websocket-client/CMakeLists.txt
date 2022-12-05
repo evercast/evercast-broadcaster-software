@@ -47,6 +47,7 @@ include_directories(${CURL_INCLUDE_DIR})
 # WebSocket
 #
 set(websocketclient_SOURCES
+	EvercastStreamInfo.cpp
 	WebsocketClient.cpp
 	JanusWebsocketManager.cpp
 	VideoRoomMessageProcessor.cpp
@@ -64,6 +65,7 @@ endif()
 add_definitions(-DWEBSOCKETCLIENT_EXPORTS)
 
 set(websocketclient_HEADERS
+	EvercastStreamInfo.h
 	WebsocketClient.h
 	JanusWebsocketManager.h
 	JanusMessageProcessor.h

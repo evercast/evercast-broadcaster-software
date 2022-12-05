@@ -192,6 +192,7 @@ private:
   void createOffer();
   void recordConnectionError(std::string message);
   webrtc::VideoFrame constructOutputFrame(video_data* frame);
+  void initializeStreamData();
 };
 
 #endif

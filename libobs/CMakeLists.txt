@@ -338,6 +338,7 @@ set(libobs_util_SOURCES
 	util/text-lookup.c
 	util/cf-parser.c
 	util/profiler.c
+	util/stream-config.c
 	util/bitstream.c)
 set(libobs_util_HEADERS
 	util/curl/curl-helper.h
@@ -365,6 +366,7 @@ set(libobs_util_HEADERS
 	util/platform.h
 	util/profiler.h
 	util/profiler.hpp
+	util/stream-config.h
 	util/bitstream.h
 	util/util.hpp)
 

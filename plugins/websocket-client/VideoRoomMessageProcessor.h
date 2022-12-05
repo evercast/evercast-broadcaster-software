@@ -76,6 +76,9 @@ protected:
 	bool awaitState(VideoRoomState state, int timeoutSeconds);
 	void assignMinimumState(VideoRoomState state);
 
+	virtual void afterStreamStarted();
+	virtual void beforeStreamEnded();
+
 private:
 	atomic<bool> is_running;
 	thread keepAliveThread;
