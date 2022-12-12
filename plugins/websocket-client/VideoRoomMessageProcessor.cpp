@@ -55,9 +55,6 @@ VideoRoomMessageProcessor::~VideoRoomMessageProcessor() {
 void VideoRoomMessageProcessor::close()
 {
 	bool needsJoin = is_running.load();
-	if (needsJoin) {
-		beforeStreamEnded();
-	}
 
 	is_running.store(false);
 	if (needsJoin) {
@@ -418,5 +415,6 @@ void VideoRoomMessageProcessor::afterStreamStarted() {
 }
 
 void VideoRoomMessageProcessor::beforeStreamEnded() {
+	sendDestroyMessage();
 }
 

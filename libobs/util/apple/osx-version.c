@@ -16,15 +16,15 @@
 
 #include "osx-version.h"
 
+#include "obs-internal.h"
+
 const char * getOSXVersion() {
 	Class NSProcessInfo = objc_getClass("NSProcessInfo");
-	id pi = objc_msgSend((id)NSProcessInfo,
+	id pi = ((id (*)(id, SEL))objc_msgSend)((id)NSProcessInfo,
 			     sel_registerName("processInfo"));
 
 	SEL UTF8String = sel_registerName("UTF8String");
-	id vs = objc_msgSend(pi,
+	id vs = ((id (*)(id, SEL))objc_msgSend)(pi,
 			     sel_registerName("operatingSystemVersionString"));
-	return (const char *)objc_msgSend(vs, UTF8String);
+	return (const char *)((id (*)(id, SEL))objc_msgSend)(vs, UTF8String);
 }
-
-

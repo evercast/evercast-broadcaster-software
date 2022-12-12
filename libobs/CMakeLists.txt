@@ -114,10 +114,12 @@ elseif(APPLE)
 		util/threading-posix.c
 		util/pipe-posix.c
 		util/platform-nix.c
-		util/platform-cocoa.m)
+		util/platform-cocoa.m
+		util/apple/osx-version.c)
 	set(libobs_PLATFORM_HEADERS
 		util/threading-posix.h
-		util/apple/cfstring-utils.h)
+		util/apple/cfstring-utils.h
+		util/apple/osx-version.h)
 	set(libobs_audio_monitoring_SOURCES
 		audio-monitoring/osx/coreaudio-enum-devices.c
 		audio-monitoring/osx/coreaudio-output.c

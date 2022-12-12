@@ -37,12 +37,12 @@ public:
 	bool sendEndStreamMessage();
 	bool sendDestroyMessage() override;
 
+	void afterStreamStarted() override;
+	void beforeStreamEnded() override;
+
 protected:
 	void processErrorEvent(int errorCode, json &msg) override;
 	void processResponseEvent(json &msg) override;
-
-	void afterStreamStarted() override;
-	void beforeStreamEnded() override;
 
 	void startStreamInfoNotifications();
 	void endStreamInfoNotifications();

@@ -13,10 +13,9 @@
 
 #ifdef __APPLE__
 
-// TODO: Test
 static string getOperatingSystemVersion()
 {
-	return getOSXVersion();
+	return "OSX " + string(getOSXVersion());
 }
 
 #elif _WIN32
@@ -331,6 +330,7 @@ EvercastSessionData *EvercastMessageProcessor::getSession()
 }
 
 void EvercastMessageProcessor::afterStreamStarted() {
+	VideoRoomMessageProcessor::afterStreamStarted();
 	sendStartStreamMessage();
 	startStreamInfoNotifications();
 }
@@ -338,6 +338,7 @@ void EvercastMessageProcessor::afterStreamStarted() {
 void EvercastMessageProcessor::beforeStreamEnded() {
 	endStreamInfoNotifications();
 	sendEndStreamMessage();
+	VideoRoomMessageProcessor::beforeStreamEnded();
 }
 
 void EvercastMessageProcessor::startStreamInfoNotifications()
