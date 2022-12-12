@@ -938,7 +938,7 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
 }
 
 void WebRTCStream::initializeStreamData() {
-	EvercastStreamInfo::instance()->assignStreamConfig();
+	EvercastStreamInfo::instance()->refreshStreamConfig();
 	EvercastStreamInfo::instance()->assignStreamSettings(this->output);
 	EvercastStreamInfo::instance()->assignStreamId(std::to_string(rand()));
 	EvercastStreamInfo::instance()->refreshStreamType();

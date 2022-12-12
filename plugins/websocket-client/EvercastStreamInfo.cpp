@@ -54,7 +54,7 @@ std::string EvercastStreamInfo::streamId() {
 }
 
 
-bool EvercastStreamInfo::assignStreamConfig() {
+bool EvercastStreamInfo::refreshStreamConfig() {
 	stream_config_t *streamInfo = stream_config_get();
 	this->_resolution = EvercastStreamInfo::ResString(streamInfo->output_resolution_x, streamInfo->output_resolution_y);
 	this->_framerate = streamInfo->framerate;

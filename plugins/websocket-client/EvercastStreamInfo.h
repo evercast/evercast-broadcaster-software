@@ -37,9 +37,9 @@ public:
 
 	bool WEBSOCKETCLIENT_API assignStreamSettings(obs_output_t *output);
 
-	bool WEBSOCKETCLIENT_API assignStreamConfig();
-
 	void WEBSOCKETCLIENT_API assignStreamId(std::string streamId);
+
+	bool WEBSOCKETCLIENT_API refreshStreamConfig();
 
 	void WEBSOCKETCLIENT_API refreshStreamType();
 
