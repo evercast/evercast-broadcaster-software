@@ -1037,17 +1037,17 @@ static obs_properties_t *screen_capture_properties(void *data)
 	else {
 		obs_property_t *audio_warning = obs_properties_add_text(
 			props, "audio_info",
-			obs_module_text("SCK.AudioUnavailable"), OBS_TEXT_DEFAULT);
-		/*obs_property_text_set_info_type(audio_warning,
-						OBS_TEXT_INFO_WARNING);*/
+			obs_module_text("SCK.AudioUnavailable"), OBS_TEXT_INFO);
+		obs_property_text_set_info_type(audio_warning,
+						OBS_TEXT_INFO_WARNING);
 
 		obs_property_t *capture_type_error = obs_properties_add_text(
 			props, "capture_type_info",
 			obs_module_text("SCK.CaptureTypeUnavailable"),
-			OBS_TEXT_DEFAULT);
+			OBS_TEXT_INFO);
 
-		/*obs_property_text_set_info_type(capture_type_error,
-						OBS_TEXT_INFO_ERROR);*/
+		obs_property_text_set_info_type(capture_type_error,
+						OBS_TEXT_INFO_ERROR);
 
 		if (sc) {
 			switch (sc->capture_type) {
