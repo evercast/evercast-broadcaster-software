@@ -964,12 +964,19 @@ static obs_properties_t *screen_capture_properties(void *data)
 		props, "type", obs_module_text("SCK.Method"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 
-	obs_property_list_add_int(capture_type,
-				  obs_module_text("DisplayCapture"), 0);
+    bool isMacOs13Available = @available(macOS 13.0, *);
+	if (isMacOs13Available) {
+        obs_property_list_add_int(capture_type,
+                    obs_module_text("DisplayCapture"), 0);
+    }
+
 	obs_property_list_add_int(capture_type,
 				  obs_module_text("WindowCapture"), 1);
-	obs_property_list_add_int(capture_type,
-				  obs_module_text("ApplicationCapture"), 2);
+
+	if (isMacOs13Available) {
+        obs_property_list_add_int(capture_type,
+                    obs_module_text("ApplicationCapture"), 2);
+    }
 
 	obs_property_set_modified_callback2(capture_type,
 					    content_settings_changed, data);
@@ -1032,7 +1039,7 @@ static obs_properties_t *screen_capture_properties(void *data)
 	obs_properties_add_bool(props, "show_cursor",
 				obs_module_text("DisplayCapture.ShowCursor"));
 
-	if (@available(macOS 13.0, *))
+	if (isMacOs13Available)
 		;
 	else {
 		obs_property_t *audio_warning = obs_properties_add_text(
