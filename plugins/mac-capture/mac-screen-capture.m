@@ -960,11 +960,19 @@ static obs_properties_t *screen_capture_properties(void *data)
 
 	obs_properties_t *props = obs_properties_create();
 
+    bool isMacOs13Available = @available(macOS 13.0, *);
+	if (!isMacOs13Available) {
+		obs_property_t *audio_warning = obs_properties_add_text(
+			props, "audio_info",
+			obs_module_text("SCK.AudioUnavailable"), OBS_TEXT_INFO);
+		obs_property_text_set_info_type(audio_warning,
+						OBS_TEXT_INFO_WARNING);
+    }
+
 	obs_property_t *capture_type = obs_properties_add_list(
 		props, "type", obs_module_text("SCK.Method"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 
-    bool isMacOs13Available = @available(macOS 13.0, *);
 	if (isMacOs13Available) {
         obs_property_list_add_int(capture_type,
                     obs_module_text("DisplayCapture"), 0);
@@ -1038,46 +1046,6 @@ static obs_properties_t *screen_capture_properties(void *data)
 
 	obs_properties_add_bool(props, "show_cursor",
 				obs_module_text("DisplayCapture.ShowCursor"));
-
-	if (isMacOs13Available)
-		;
-	else {
-		obs_property_t *audio_warning = obs_properties_add_text(
-			props, "audio_info",
-			obs_module_text("SCK.AudioUnavailable"), OBS_TEXT_INFO);
-		obs_property_text_set_info_type(audio_warning,
-						OBS_TEXT_INFO_WARNING);
-
-		obs_property_t *capture_type_error = obs_properties_add_text(
-			props, "capture_type_info",
-			obs_module_text("SCK.CaptureTypeUnavailable"),
-			OBS_TEXT_INFO);
-
-		obs_property_text_set_info_type(capture_type_error,
-						OBS_TEXT_INFO_ERROR);
-
-		if (sc) {
-			switch (sc->capture_type) {
-			case ScreenCaptureDisplayStream: {
-				obs_property_set_visible(capture_type_error,
-							 true);
-				break;
-			}
-			case ScreenCaptureWindowStream: {
-				obs_property_set_visible(capture_type_error,
-							 false);
-				break;
-			}
-			case ScreenCaptureApplicationStream: {
-				obs_property_set_visible(capture_type_error,
-							 true);
-				break;
-			}
-			}
-		} else {
-			obs_property_set_visible(capture_type_error, false);
-		}
-	}
 
 	return props;
 }
