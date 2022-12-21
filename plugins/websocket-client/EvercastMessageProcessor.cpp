@@ -82,7 +82,7 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 		{"event", START_NATIVE_DESKTOP_STREAM},
 		{"transaction", to_string(rand())},
 		{"body",
-		 {{"platform", "EBS"},
+		 {{"platform", "EBS " OBS_VERSION},
 		  {"streamType", streamInfo->streamType()},
 		  {"os", os},
 		  {"userId", streamInfo->userId()},
@@ -97,6 +97,7 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 	blog(LOG_ERROR, "Sending %s message...", START_NATIVE_DESKTOP_STREAM);
 	blog(LOG_ERROR, "MESSAGE: %s\n", startStream.dump().c_str());
 	// return sender->sendMessage(startStream, START_NATIVE_DESKTOP_STREAM);
+	return true;
 }
 
 bool EvercastMessageProcessor::sendEndStreamMessage()
@@ -111,6 +112,7 @@ bool EvercastMessageProcessor::sendEndStreamMessage()
 	blog(LOG_ERROR, "Sending %s message...", END_NATIVE_DESKTOP_STREAM);
 	blog(LOG_ERROR, "MESSAGE: %s\n", endStream.dump().c_str());
 	// return sender->sendMessage(endStream, END_NATIVE_DESKTOP_STREAM);
+	return true;
 }
 
 bool EvercastMessageProcessor::sendAttachMessage()

@@ -32,6 +32,27 @@ SceneListener::~SceneListener()
 	obs_frontend_remove_event_callback(frontendEventHandler, this);
 }
 
+static std::string mapSourceIdToName(std::string &sourceId) {
+	if ("av_capture_input" == sourceId || "dshow_input" == sourceId) {
+		return "Device stream";
+	} else if ("ffmpeg_source" == sourceId) {
+		return "File stream";
+	} else if ("ndi_source" == sourceId) {
+		return "NDI";
+	} else if ("decklink-input" == sourceId) {
+		return "DeckLink";
+	} else if ("display_capture" == sourceId ||
+		   "monitor_capture" == sourceId) {
+		// NOTE: Deliberately leaving out window capture and Mac General Capture
+		// in order to ensure problems that arise can be traced to a specific plugin.
+		// This is not a problem for the above two because they are specific to the 
+		// OS on which they are used.
+		return "Screenshare";
+	}
+
+	return obs_source_get_display_name(sourceId.c_str());
+}
+
 static bool AppendName(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 {
 	UNUSED_PARAMETER(scene);
@@ -44,7 +65,8 @@ static bool AppendName(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 			(*names) << ";";
 		}
 		obs_source_t *source = obs_sceneitem_get_source(item);
-		const char *sourceId = obs_source_get_id(source);
+		std::string sourceId = obs_source_get_id(source);
+		std::string sourceDefaultName = mapSourceIdToName(sourceId);
 		(*names) << sourceId;
 	}
 
