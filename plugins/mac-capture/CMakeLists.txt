@@ -5,6 +5,9 @@ find_library(AUDIOUNIT AudioUnit)
 find_library(COREFOUNDATION CoreFoundation)
 find_library(IOSURF IOSurface)
 find_library(COCOA Cocoa)
+find_library(COREVIDEO CoreVideo)
+find_library(COREMEDIA CoreMedia)
+find_library(SCREENCAPTUREKIT ScreenCaptureKit)
 
 include_directories(${COREAUDIO}
                     ${AUDIOUNIT}
@@ -21,6 +24,7 @@ set(mac-capture_SOURCES
 	audio-device-enum.c
 	mac-audio.c
 	mac-display-capture.m
+	mac-screen-capture.m
 	mac-window-capture.m
 	window-utils.m)
 	
@@ -39,5 +43,14 @@ target_link_libraries(mac-capture
 	${COREFOUNDATION}
 	${IOSURF}
 	${COCOA})
+
+if(SCREENCAPTUREKIT)
+  target_link_libraries(mac-capture libobs ${COREVIDEO}
+                                            ${COREMEDIA})
+
+  target_link_options(mac-capture PRIVATE SHELL:-weak_framework
+                      ScreenCaptureKit)
+  target_link_options(libobs PRIVATE SHELL:-weak_framework ScreenCaptureKit)
+endif()
 
 install_obs_plugin_with_data(mac-capture data)
