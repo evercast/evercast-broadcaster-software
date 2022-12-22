@@ -38,8 +38,11 @@ void stream_config_assign(config_t* config) {
 
 	const char *space = config_get_string(config, "Video", "ColorSpace");
 	stream_info.color_space = (char*)bzalloc(strlen(space));
-
 	strcpy(stream_info.color_space, space);
+
+	const char *range = config_get_string(config, "Video", "ColorRange");
+	stream_info.color_range = (char *)bzalloc(strlen(range));
+	strcpy(stream_info.color_range, range);
 }
 
 void stream_config_type(const char* type, size_t size) {

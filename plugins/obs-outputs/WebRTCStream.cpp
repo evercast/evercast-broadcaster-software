@@ -29,6 +29,7 @@
 #include <thread>
 #include <algorithm>
 #include <locale>
+#include <random>
 
 #define debug(format, ...) blog(LOG_DEBUG, format, ##__VA_ARGS__)
 #define info(format, ...) blog(LOG_INFO, format, ##__VA_ARGS__)
@@ -937,9 +938,30 @@ rtc::scoped_refptr<const webrtc::RTCStatsReport> WebRTCStream::NewGetStats()
     return result;
 }
 
+static std::string generateStreamId() {
+	// Generates a non-v5-compliant UUID.  Use for identification purposes only
+	std::random_device device;
+	std::mt19937 generator(device());
+	std::uniform_int_distribution<> distribution(0, 15);
+	std::stringstream output;
+
+	#define GUID_SEGMENT_COUNT 5
+	int lengths[GUID_SEGMENT_COUNT] = {8, 4, 4, 4, 12};
+	for (int i = 0; i < GUID_SEGMENT_COUNT; i++) {
+		if (i > 0)
+			output << "-";
+
+		for (int j = 0; j < lengths[i]; j++) {
+			output << std::hex << int(distribution(generator));
+		}
+	}
+
+	return output.str();
+}
+
 void WebRTCStream::initializeStreamData() {
 	EvercastStreamInfo::instance()->refreshStreamConfig();
 	EvercastStreamInfo::instance()->assignStreamSettings(this->output);
-	EvercastStreamInfo::instance()->assignStreamId(std::to_string(rand()));
+	EvercastStreamInfo::instance()->assignStreamId(generateStreamId());
 	EvercastStreamInfo::instance()->refreshStreamType();
 }

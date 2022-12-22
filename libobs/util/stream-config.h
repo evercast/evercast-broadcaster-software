@@ -27,6 +27,7 @@ struct stream_config {
 	uint64_t output_resolution_y;
 	uint64_t framerate;
 	char *color_space;
+	char *color_range;
 	char *stream_type;
 };
 

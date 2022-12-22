@@ -19,6 +19,11 @@
 #include <sstream>
 #include "util/stream-config.h"
 
+#define COLOR_SPACE_BT_709 "709"
+#define COLOR_SPACE_BT_601 "601"
+#define COLOR_RANGE_FULL "Full"
+#define COLOR_RANGE_PARTIAL "Partial"
+
 EvercastStreamInfo * EvercastStreamInfo::_instance = new EvercastStreamInfo;
 
 EvercastStreamInfo* EvercastStreamInfo::instance() {
@@ -49,16 +54,40 @@ std::string EvercastStreamInfo::colorSpace() {
 	return _colorSpace;
 }
 
+std::string EvercastStreamInfo::colorSpacePrimaries()
+{
+	return webRTCColorSpace();
+}
+
+std::string EvercastStreamInfo::colorSpaceMatrix() {
+	return webRTCColorSpace();
+}
+
+std::string EvercastStreamInfo::colorRange()
+{
+	if (COLOR_RANGE_FULL == _colorRange) {
+		return "FULL";
+	} else if (COLOR_RANGE_PARTIAL == _colorRange) {
+		return "LIMITED";
+	} else {
+		return "UNSPECIFIED";
+	}
+}
+
+std::string EvercastStreamInfo::colorSpaceTransfer() {
+	return webRTCColorSpace();
+}
+
 std::string EvercastStreamInfo::streamId() {
 	return _streamId;
 }
 
-
 bool EvercastStreamInfo::refreshStreamConfig() {
 	stream_config_t *streamInfo = stream_config_get();
-	this->_resolution = EvercastStreamInfo::ResString(streamInfo->output_resolution_x, streamInfo->output_resolution_y);
+	this->_resolution = EvercastStreamInfo::resString(streamInfo->output_resolution_x, streamInfo->output_resolution_y);
 	this->_framerate = streamInfo->framerate;
 	this->_colorSpace = streamInfo->color_space;
+	this->_colorRange = streamInfo->color_range;
 
 	return true;
 }
@@ -82,7 +111,8 @@ bool EvercastStreamInfo::assignStreamSettings(obs_output_t *output) {
 }
 
 void EvercastStreamInfo::assignStreamId(std::string streamId) {
-	this->_streamId = streamId;
+	std::string colorSpaceTag = webRTCColorSpace();
+	this->_streamId = "EBS|" + colorSpaceTag + "|" + streamId;
 }
 
 void EvercastStreamInfo::refreshStreamType() {
@@ -90,10 +120,20 @@ void EvercastStreamInfo::refreshStreamType() {
 	this->_streamType = streamInfo->stream_type;
 }
 
-std::string EvercastStreamInfo::ResString(uint64_t cx, uint64_t cy)
+std::string EvercastStreamInfo::resString(uint64_t cx, uint64_t cy)
 {
 	std::stringstream res;
 	res << cx << "x" << cy;
 	return res.str();
+}
+
+std::string EvercastStreamInfo::webRTCColorSpace() {
+	if (COLOR_SPACE_BT_601 == _colorSpace) {
+		return "SMPTE170M"; // Identical to BT601
+	} else if (COLOR_SPACE_BT_709 == _colorSpace) {
+		return "BT709";
+	} else {
+		return "UNSPECIFIED";
+	}
 }
 

@@ -31,6 +31,10 @@ public:
 	std::string resolution();
 	uint64_t framerate();
 	std::string colorSpace();
+	std::string colorSpacePrimaries();
+	std::string colorSpaceMatrix();
+	std::string colorSpaceTransfer();
+	std::string colorRange();
 	std::string streamId();
 
 	static WEBSOCKETCLIENT_API EvercastStreamInfo *instance();
@@ -44,16 +48,18 @@ public:
 	void WEBSOCKETCLIENT_API refreshStreamType();
 
 private:
+	static EvercastStreamInfo *_instance;
 	std::string _streamType = "";
 	std::string _userId = "";
 	std::string _roomId = "";
 	std::string _resolution = "";
 	uint64_t _framerate = 0;
 	std::string _colorSpace = "";
+	std::string _colorRange = "";
 	std::string _streamId = "";
 
 	EvercastStreamInfo(){};
-	static EvercastStreamInfo *_instance;
-	static std::string ResString(uint64_t cx, uint64_t cy);
+	static std::string resString(uint64_t cx, uint64_t cy);
+	std::string webRTCColorSpace();
 };
 

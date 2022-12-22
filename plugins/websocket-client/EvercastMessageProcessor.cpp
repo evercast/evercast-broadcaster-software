@@ -89,7 +89,12 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 		  {"roomId", streamInfo->roomId()},
 		  {"resolution", streamInfo->resolution()},
 		  {"framerate", streamInfo->framerate()},
-		  {"colorSpace", streamInfo->colorSpace()},
+		  {"colorSpace",
+		   {{"primaries", streamInfo->colorSpacePrimaries()},
+		    {"matrix", streamInfo->colorSpaceMatrix()},
+		    {"range", streamInfo->colorRange()},
+		    {"transfer", streamInfo->colorSpaceTransfer()}
+		  }},
 		  {"streamId", streamInfo->streamId()}}},
 	};
 
