@@ -67,7 +67,7 @@ static bool AppendName(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 		obs_source_t *source = obs_sceneitem_get_source(item);
 		std::string sourceId = obs_source_get_id(source);
 		std::string sourceDefaultName = mapSourceIdToName(sourceId);
-		(*names) << sourceId;
+		(*names) << sourceDefaultName;
 	}
 
 	return true;

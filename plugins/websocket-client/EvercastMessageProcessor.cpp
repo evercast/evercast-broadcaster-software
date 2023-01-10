@@ -78,46 +78,50 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 	string os = getOperatingSystemVersion();
 
 	EvercastStreamInfo *streamInfo = EvercastStreamInfo::instance();
+	json colorSpace = {{"primaries", streamInfo->colorSpacePrimaries()},
+			   {"matrix", streamInfo->colorSpaceMatrix()},
+			   {"range", streamInfo->colorRange()},
+			   {"transfer", streamInfo->colorSpaceTransfer()}};
+
 	json startStream = {
-		{"event", START_NATIVE_DESKTOP_STREAM},
-		{"transaction", to_string(rand())},
 		{"body",
-		 {{"platform", "EBS " OBS_VERSION},
+		 {{"client_version", "1.0"},
+		  {"request", START_NATIVE_DESKTOP_STREAM},
+		  {"platform", "EBS " OBS_VERSION},
 		  {"streamType", streamInfo->streamType()},
 		  {"os", os},
 		  {"userId", streamInfo->userId()},
 		  {"roomId", streamInfo->roomId()},
 		  {"resolution", streamInfo->resolution()},
 		  {"framerate", streamInfo->framerate()},
-		  {"colorSpace",
-		   {{"primaries", streamInfo->colorSpacePrimaries()},
-		    {"matrix", streamInfo->colorSpaceMatrix()},
-		    {"range", streamInfo->colorRange()},
-		    {"transfer", streamInfo->colorSpaceTransfer()}
+		  {"colorSpace", colorSpace.dump().c_str()},
+		  {"streamId", streamInfo->streamId()},
 		  }},
-		  {"streamId", streamInfo->streamId()}}},
+		 {"handle_id", handle_id},
+		 {"janus", "message"},
+		 {"session_id", session_id},
+		 {"transaction", to_string(rand())},
 	};
 
-	// TODO: Send instead of logging (is logged during send)
-	blog(LOG_ERROR, "Sending %s message...", START_NATIVE_DESKTOP_STREAM);
-	blog(LOG_ERROR, "MESSAGE: %s\n", startStream.dump().c_str());
-	// return sender->sendMessage(startStream, START_NATIVE_DESKTOP_STREAM);
-	return true;
+	return sender->sendMessage(startStream, START_NATIVE_DESKTOP_STREAM);
 }
 
 bool EvercastMessageProcessor::sendEndStreamMessage()
 {
 	EvercastStreamInfo *streamInfo = EvercastStreamInfo::instance();
 
-	json endStream = {{"event", END_NATIVE_DESKTOP_STREAM},
-			  {"transaction", to_string(rand())},
-			  {"body", {{"streamId", streamInfo->streamId()}}}};
+	json endStream = {
+		{"body", {
+			{"client_version", "1.0"},
+			{"request", END_NATIVE_DESKTOP_STREAM},
+			{"streamId", streamInfo->streamId()}}},
+		 {"handle_id", handle_id},
+		 {"janus", "message"},
+		 {"session_id", session_id},
+		 {"transaction", to_string(rand())},
+	};
 
-	// TODO: Send instead of logging (is logged during send)
-	blog(LOG_ERROR, "Sending %s message...", END_NATIVE_DESKTOP_STREAM);
-	blog(LOG_ERROR, "MESSAGE: %s\n", endStream.dump().c_str());
-	// return sender->sendMessage(endStream, END_NATIVE_DESKTOP_STREAM);
-	return true;
+	return sender->sendMessage(endStream, END_NATIVE_DESKTOP_STREAM);
 }
 
 bool EvercastMessageProcessor::sendAttachMessage()
