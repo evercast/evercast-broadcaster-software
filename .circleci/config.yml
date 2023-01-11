@@ -14,7 +14,7 @@ jobs:
     macos:
       xcode: <<parameters.xcode_version>>
     environment:
-      EBS_VERSION: 3.0.0
+      EBS_VERSION: 2.6.8
       NDI_PLUGIN_RELEASE_TAG: 4.9.1
 
       EBS_DEPS_PATH: /tmp/obs-deps
@@ -143,10 +143,10 @@ jobs:
     environment:
       NDI_PLUGIN_RELEASE_TAG: 4.9.1
       build_config: Release
-      EBS_VERSION: 3.0.0
-      EBS_VERSION_MAJOR: 3
-      EBS_VERSION_MINOR: 0
-      EBS_VERSION_PATCH: 0
+      EBS_VERSION: 2.6.8
+      EBS_VERSION_MAJOR: 2
+      EBS_VERSION_MINOR: 6
+      EBS_VERSION_PATCH: 8
     steps:
       - checkout
       - run: git submodule sync
