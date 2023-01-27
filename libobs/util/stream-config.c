@@ -30,7 +30,14 @@ bool stream_config_init() {
 void stream_config_assign(config_t* config) {
 	stream_info.output_resolution_x = config_get_uint(config, "Video", "OutputCX");
     stream_info.output_resolution_y = config_get_uint(config, "Video", "OutputCY");
-	stream_info.framerate = config_get_uint(config, "Video", "FPSInt");
+
+    if (NULL != stream_info.framerate) {
+	    bfree(stream_info.framerate);
+    }
+
+    const char *framerate = config_get_string(config, "Video", "FPSCommon");
+    stream_info.framerate = (char *)bzalloc(strlen(framerate));
+    strcpy(stream_info.framerate, framerate);
 
 	if (NULL != stream_info.color_space) {
 		bfree(stream_info.color_space);
@@ -39,6 +46,10 @@ void stream_config_assign(config_t* config) {
 	const char *space = config_get_string(config, "Video", "ColorSpace");
 	stream_info.color_space = (char*)bzalloc(strlen(space));
 	strcpy(stream_info.color_space, space);
+
+    if (NULL != stream_info.color_range) {
+	    bfree(stream_info.color_range);
+    }
 
 	const char *range = config_get_string(config, "Video", "ColorRange");
 	stream_info.color_range = (char *)bzalloc(strlen(range));

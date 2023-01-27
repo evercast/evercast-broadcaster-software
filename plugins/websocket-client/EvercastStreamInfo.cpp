@@ -46,7 +46,7 @@ std::string EvercastStreamInfo::resolution() {
 	return _resolution;
 }
 
-uint64_t EvercastStreamInfo::framerate() {
+std::string EvercastStreamInfo::framerate() {
 	return _framerate;
 }
 

@@ -29,7 +29,7 @@ public:
 	std::string userId();
 	std::string roomId();
 	std::string resolution();
-	uint64_t framerate();
+	std::string framerate();
 	std::string colorSpace();
 	std::string colorSpacePrimaries();
 	std::string colorSpaceMatrix();
@@ -53,7 +53,7 @@ private:
 	std::string _userId = "";
 	std::string _roomId = "";
 	std::string _resolution = "";
-	uint64_t _framerate = 0;
+	std::string _framerate = "";
 	std::string _colorSpace = "";
 	std::string _colorRange = "";
 	std::string _streamId = "";

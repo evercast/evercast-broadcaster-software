@@ -93,7 +93,7 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 		  {"userId", streamInfo->userId()},
 		  {"roomId", streamInfo->roomId()},
 		  {"resolution", streamInfo->resolution()},
-		  {"framerate", std::to_string(streamInfo->framerate())},
+		  {"framerate", streamInfo->framerate()},
 		  {"colorSpace", colorSpace.dump().c_str()},
 		  {"streamId", streamInfo->streamId()},
 		  }},
