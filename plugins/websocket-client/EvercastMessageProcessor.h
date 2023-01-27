@@ -6,6 +6,9 @@
 #include "WebsocketSender.h"
 #include "EvercastSessionData.h"
 
+#define START_NATIVE_DESKTOP_STREAM "start_native_desktop_stream"
+#define END_NATIVE_DESKTOP_STREAM "end_native_desktop_stream"
+
 using namespace std;
 
 class EvercastMessageProcessor : public VideoRoomMessageProcessor {
@@ -30,11 +33,19 @@ public:
 	bool sendLoginMessage() override;
 	bool sendAttachMessage() override;
 	bool sendJoinMessage(string room) override;
+	bool sendStartStreamMessage();
+	bool sendEndStreamMessage();
 	bool sendDestroyMessage() override;
+
+	void afterStreamStarted() override;
+	void beforeStreamEnded() override;
 
 protected:
 	void processErrorEvent(int errorCode, json &msg) override;
 	void processResponseEvent(json &msg) override;
+
+	void startStreamInfoNotifications();
+	void endStreamInfoNotifications();
 
 private:
 	bool processPluginData(json& msg);

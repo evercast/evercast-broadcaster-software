@@ -18,6 +18,9 @@ public:
 	virtual bool sendJoinMessage(std::string room) = 0;
 	virtual bool sendDestroyMessage() = 0;
 	virtual void close() = 0;
+
+	virtual void afterStreamStarted() = 0;
+	virtual void beforeStreamEnded() = 0;
 };
 
 #endif

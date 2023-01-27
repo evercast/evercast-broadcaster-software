@@ -48,6 +48,9 @@ public:
 	bool sendDestroyMessage() override;
 	void close() override;
 
+	void afterStreamStarted() override;
+	void beforeStreamEnded() override;
+
 protected:
 	enum VideoRoomState {
 		Created = 0,
