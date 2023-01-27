@@ -114,10 +114,12 @@ elseif(APPLE)
 		util/threading-posix.c
 		util/pipe-posix.c
 		util/platform-nix.c
-		util/platform-cocoa.m)
+		util/platform-cocoa.m
+		util/apple/osx-version.c)
 	set(libobs_PLATFORM_HEADERS
 		util/threading-posix.h
-		util/apple/cfstring-utils.h)
+		util/apple/cfstring-utils.h
+		util/apple/osx-version.h)
 	set(libobs_audio_monitoring_SOURCES
 		audio-monitoring/osx/coreaudio-enum-devices.c
 		audio-monitoring/osx/coreaudio-output.c
@@ -338,6 +340,7 @@ set(libobs_util_SOURCES
 	util/text-lookup.c
 	util/cf-parser.c
 	util/profiler.c
+	util/stream-config.c
 	util/bitstream.c)
 set(libobs_util_HEADERS
 	util/curl/curl-helper.h
@@ -365,6 +368,7 @@ set(libobs_util_HEADERS
 	util/platform.h
 	util/profiler.h
 	util/profiler.hpp
+	util/stream-config.h
 	util/bitstream.h
 	util/util.hpp)
 

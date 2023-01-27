@@ -55,6 +55,7 @@ VideoRoomMessageProcessor::~VideoRoomMessageProcessor() {
 void VideoRoomMessageProcessor::close()
 {
 	bool needsJoin = is_running.load();
+
 	is_running.store(false);
 	if (needsJoin) {
 	    if (keepAliveThread.joinable()) {
@@ -121,6 +122,7 @@ void VideoRoomMessageProcessor::processSuccessMessage(json &msg)
 	} else { // logged
 		handle_id = data["id"];
 		sendJoinMessage(room);
+		afterStreamStarted();
 		assignMinimumState(VideoRoomState::Attached);
 	}
 }
@@ -407,5 +409,12 @@ void VideoRoomMessageProcessor::assignMinimumState(VideoRoomState state)
 	}
 
 	stateListener.notify_all();
+}
+
+void VideoRoomMessageProcessor::afterStreamStarted() {
+}
+
+void VideoRoomMessageProcessor::beforeStreamEnded() {
+	sendDestroyMessage();
 }
 

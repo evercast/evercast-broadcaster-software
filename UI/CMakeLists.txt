@@ -201,6 +201,7 @@ set(obs_SOURCES
 	obs-app.cpp
 	window-dock.cpp
 	api-interface.cpp
+	scene-listener.cpp
 	window-basic-main.cpp
 	window-basic-stats.cpp
 	window-basic-filters.cpp
@@ -261,6 +262,7 @@ set(obs_HEADERS
 	../deps/json11/json11.hpp
 	obs-app.hpp
 	platform.hpp
+	scene-listener.hpp
 	window-dock.hpp
 	window-main.hpp
 	window-basic-main.hpp

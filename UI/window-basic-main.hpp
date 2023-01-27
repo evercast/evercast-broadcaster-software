@@ -25,6 +25,7 @@
 #include <obs.hpp>
 #include <vector>
 #include <memory>
+#include "scene-listener.hpp"
 #include "window-main.hpp"
 #include "window-basic-interaction.hpp"
 #include "window-basic-properties.hpp"
@@ -47,6 +48,7 @@ class QMessageBox;
 class QListWidgetItem;
 class VolControl;
 class OBSBasicStats;
+class SceneListener;
 
 #include "ui_OBSBasic.h"
 #include "ui_ColorSelect.h"
@@ -244,6 +246,8 @@ private:
 
 	QScopedPointer<QThread> patronJsonThread;
 	std::string patronJson;
+
+	SceneListener *sceneListener;
 
 	void UpdateMultiviewProjectorMenu();
 

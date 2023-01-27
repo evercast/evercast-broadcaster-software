@@ -148,7 +148,7 @@ bool JanusWebsocketManager::disconnect(const bool wait)
 	bool result = true;
 
 	is_running.store(false);
-	this->messageProcessor->sendDestroyMessage();
+	this->messageProcessor->beforeStreamEnded();
 	this->messageProcessor->close();
 
 	if (!connection)
@@ -193,7 +193,7 @@ bool JanusWebsocketManager::disconnect(const bool wait)
 
 void JanusWebsocketManager::destroy()
 {
-	this->messageProcessor->sendDestroyMessage();
+	this->messageProcessor->beforeStreamEnded();
 }
 
 void JanusWebsocketManager::initializeMessageProcessor(
