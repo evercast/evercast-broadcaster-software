@@ -25,7 +25,7 @@ extern "C" {
 struct stream_config {
 	uint64_t output_resolution_x;
 	uint64_t output_resolution_y;
-	uint64_t framerate;
+	char *framerate;
 	char *color_space;
 	char *color_range;
 	char *stream_type;
