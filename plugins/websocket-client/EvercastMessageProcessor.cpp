@@ -93,7 +93,7 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 		  {"userId", streamInfo->userId()},
 		  {"roomId", streamInfo->roomId()},
 		  {"resolution", streamInfo->resolution()},
-		  {"framerate", streamInfo->framerate()},
+		  {"framerate", std::to_string(streamInfo->framerate())},
 		  {"colorSpace", colorSpace.dump().c_str()},
 		  {"streamId", streamInfo->streamId()},
 		  }},
@@ -103,6 +103,7 @@ bool EvercastMessageProcessor::sendStartStreamMessage()
 		 {"transaction", to_string(rand())},
 	};
 
+	blog(LOG_DEBUG, startStream.dump().c_str());
 	return sender->sendMessage(startStream, START_NATIVE_DESKTOP_STREAM);
 }
 
@@ -121,6 +122,7 @@ bool EvercastMessageProcessor::sendEndStreamMessage()
 		 {"transaction", to_string(rand())},
 	};
 
+	blog(LOG_DEBUG, endStream.dump().c_str());
 	return sender->sendMessage(endStream, END_NATIVE_DESKTOP_STREAM);
 }
 
