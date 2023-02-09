@@ -42,17 +42,4 @@ target_link_libraries(vlc-video
 	libobs
 	${vlc-video_PLATFORM_DEPS})
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(BITS 64)
-else()
-	set(BITS 32)
-endif()
-
-add_custom_command(TARGET obs-ffmpeg POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy
-	"$ENV{DepsPath${BITS}}/bin/libsrt.dll"
-	"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
-)
-
-
 install_obs_plugin_with_data(vlc-video data)

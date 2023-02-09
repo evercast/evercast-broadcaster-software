@@ -62,24 +62,6 @@ target_link_libraries(obs-ffmpeg
 	${obs-ffmpeg_PLATFORM_DEPS}
 	${FFMPEG_LIBRARIES})
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(BITS 64)
-else()
-	set(BITS 32)
-endif()
-
-add_custom_command(TARGET obs-ffmpeg POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy
-	"$ENV{DepsPath${BITS}}/bin/libaom.dll"
-	"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
-	COMMAND ${CMAKE_COMMAND} -E copy
-	"$ENV{DepsPath${BITS}}/bin/libmbedcrypto.dll"
-	"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
-	COMMAND ${CMAKE_COMMAND} -E copy
-	"$ENV{DepsPath${BITS}}/bin/libSvtAv1Enc.dll"
-	"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
-)
-
 install_obs_plugin_with_data(obs-ffmpeg data)
 
 add_subdirectory(ffmpeg-mux)
