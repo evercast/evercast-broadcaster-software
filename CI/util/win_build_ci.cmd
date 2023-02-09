@@ -7,3 +7,10 @@ CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary
 CD ..\..\build
 CALL ..\CI\configure-script-win.cmd
 nmake
+
+rem copy required dependencies
+COPY "%DepsPath64%\bin\libaom.dll" .\rundir\%build_config%\bin\64bit\
+COPY "%DepsPath64%\bin\llibmbedcrypto.dll" .\rundir\%build_config%\bin\64bit\
+COPY "%DepsPath64%\bin\llibSvtAv1Enc.dll" .\rundir\%build_config%\bin\64bit\
+COPY "%DepsPath64%\bin\llibrist.dll" .\rundir\%build_config%\bin\64bit\
+
