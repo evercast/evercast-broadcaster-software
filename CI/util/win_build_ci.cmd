@@ -10,7 +10,7 @@ nmake
 
 rem copy required dependencies
 COPY "%DepsPath64%\bin\libaom.dll" .\rundir\%build_config%\bin\64bit\
-COPY "%DepsPath64%\bin\llibmbedcrypto.dll" .\rundir\%build_config%\bin\64bit\
-COPY "%DepsPath64%\bin\llibSvtAv1Enc.dll" .\rundir\%build_config%\bin\64bit\
-COPY "%DepsPath64%\bin\llibrist.dll" .\rundir\%build_config%\bin\64bit\
+COPY "%DepsPath64%\bin\libmbedcrypto.dll" .\rundir\%build_config%\bin\64bit\
+COPY "%DepsPath64%\bin\libSvtAv1Enc.dll" .\rundir\%build_config%\bin\64bit\
+COPY "%DepsPath64%\bin\librist.dll" .\rundir\%build_config%\bin\64bit\
 
