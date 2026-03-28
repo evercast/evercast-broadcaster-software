@@ -1,7 +1,7 @@
 
 # OBS-studio WebRTC
 
-## Data Classification: Internal
+## Data Classification: Public
 
 This project is a fork of OBS-studio with support for WebRTC. WebRTC supports comes from the inclusion of the open source implementation from webrtc.org used (at least in part) by chrome, firefox, and safari.
 
